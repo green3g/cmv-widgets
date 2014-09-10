@@ -16,6 +16,9 @@ Allows the user to save the current state of the map extent and visible layers.
 <h3>Limitations: </h3>
 Currently only works with dynamicMapService layers.
 
+<h3>Known Bugs</h3>
+The existing TOC widget does not check to see if layer visibility has been changed, so when this widget loads and refreshes the map to previous layers, the TOC does not update.
+
 <h3>Usage </h3>
 In viewer.js: 
 ```javascript      
