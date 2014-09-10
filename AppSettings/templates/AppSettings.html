@@ -1,0 +1,18 @@
+<div  class="${baseClass}">
+    <input data-dojo-attach-point="saveMapExtent" 
+           name="saveMapExtent" 
+           data-dojo-type="dijit/form/CheckBox" 
+           data-dojo-attach-event="onChange:setSaveMapExtent" />
+    <label for="saveMapExtent">Remember Map Extent</label><br />
+    <input data-dojo-attach-point="saveLayerVisibility" 
+        name="saveLayerVisibility" 
+        data-dojo-attach-event="onChange:setSaveLayerVisibility" 
+        data-dojo-type="dijit/form/CheckBox" />
+    <label for="saveLayerVisibility">Remember Layer Visibility</label><br />    
+    <input data-dojo-attach-point="shareURL" 
+        name="shareURL" 
+        data-dojo-attach-event="onChange:setShareURL" 
+        data-dojo-type="dijit/form/CheckBox" />
+    <label for="shareURL">Share Map Using URL Location</label><br />
+
+</div>
