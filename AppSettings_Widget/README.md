@@ -6,7 +6,8 @@ A widget designed for use in CMV that allows the user to save the current state 
 This widget is currently in beta stage, as it has not been thoroughly tested yet. Feel free to contact me with bugs and I will fix them as time permits.
 
 <h3>Description:</h3>
-Allows the user to save the current state of the map extent and visible layers.
+Allows the user to save the current state of the map extent and visible layers
+using html5 localStorage or URL.
  
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/URL_Screenshot.PNG)
  
