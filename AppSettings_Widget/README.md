@@ -8,13 +8,12 @@ This widget is currently in beta stage, as it has not been thoroughly tested yet
 <h3>Description:</h3>
 Allows the user to save the current state of the map extent and visible layers.
  
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/AppSettings_Widget/blob/master/URL_Screenshot.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/URL_Screenshot.PNG)
  
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/AppSettings_Widget/blob/master/Widget_screenshot.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/Widget_screenshot.PNG)
 
  
 <h3>Limitations: </h3>
-Currently only works with dynamicMapService layers.
 
 <h3>Known Bugs</h3>
 The existing TOC widget does not check to see if layer visibility has been changed, so when this widget loads and refreshes the map to previous layers, the TOC does not update.
