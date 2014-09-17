@@ -8,9 +8,9 @@ This widget is currently in beta stage, as it has not been thoroughly tested yet
 <h3>Description:</h3>
 Allows the user to save the current state of the map extent and visible layers.
  
-![URL Field](https://github.com/roemhildtg/CMV_AppSettings/blob/master/URL_Screenshot.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/AppSettings_Widget/blob/master/URL_Screenshot.PNG)
  
-![URL Field](https://github.com/roemhildtg/CMV_AppSettings/blob/master/Widget_screenshot.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/AppSettings_Widget/blob/master/Widget_screenshot.PNG)
 
  
 <h3>Limitations: </h3>
