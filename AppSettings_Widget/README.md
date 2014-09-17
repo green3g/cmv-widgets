@@ -3,11 +3,21 @@ AppSettings
 
 A widget designed for use in CMV that allows the user to save the current state of the map extent and visible layers.
 
-<h3>Description: Allows the user to save</h3>
- the current state of the map extent and visible layers.
+This widget is currently in beta stage, as it has not been thoroughly tested yet. Feel free to contact me with bugs and I will fix them as time permits.
+
+<h3>Description:</h3>
+Allows the user to save the current state of the map extent and visible layers.
+ 
+![URL Field](https://github.com/roemhildtg/CMV_AppSettings/blob/master/URL_Screenshot.PNG)
+ 
+![URL Field](https://github.com/roemhildtg/CMV_AppSettings/blob/master/Widget_screenshot.PNG)
+
  
 <h3>Limitations: </h3>
 Currently only works with dynamicMapService layers.
+
+<h3>Known Bugs</h3>
+The existing TOC widget does not check to see if layer visibility has been changed, so when this widget loads and refreshes the map to previous layers, the TOC does not update.
 
 <h3>Usage </h3>
 In viewer.js: 
