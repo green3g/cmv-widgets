@@ -58,7 +58,6 @@ define([
                 var parameters = decodeURI(window.location.hash);
                 if (parameters.indexOf('CMV_appSettings') !== -1) {
                     this._loadHashParameters(parameters);
-                    console.log(parameters)
                 } else if (window.localStorage) {
                     this._loadLocalStorage();
                     this._setHandles();
