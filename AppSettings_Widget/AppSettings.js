@@ -6,6 +6,7 @@
  * and URL
  * Documentation: https://github.com/roemhildtg/CMV_Widgets/tree/master/AppSettings_Widget
  * 
+ * Updated: 9/18/2014
  * 
  * Copyright (C) 2014 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -28,7 +29,8 @@ define([
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
-        appSettings: {
+        appSettings: null,
+        defaultAppSettings: {
             saveMapExtent: {
                 save: false,
                 value: null
@@ -38,27 +40,33 @@ define([
             },
             shareURL: {
                 save: false
+            },
+            shareLocalStorage: {
+                save: false
             }
         },
         layerHandles: null,
         postCreate: function () {
             this.inherited(arguments);
             this.layerHandles = [];
+            this.appSettings = this.defaultAppSettings;
 
             if (!this.map || !this.layerInfos) {
                 this._disable();
                 this._error('AppSettings requires map and tocLayerInfos');
-            }
-            var parameters = decodeURI(window.location.href.split('#')[1]);
-            if (parameters.indexOf('CMV_appSettings') !== -1) {
-                this._loadHashParameters(parameters);
-            } else if (window.localStorage) {
-                this._loadLocalStorage();
-                this._setHandles();
-            }
-            //if no localstorage capabilities exist, disable this widget
-            if (!window.localStorage) {
-                this._disable();
+            } else {
+                var parameters = decodeURI(window.location.hash);
+                if (parameters.indexOf('CMV_appSettings') !== -1) {
+                    this._loadHashParameters(parameters);
+                    console.log(parameters)
+                } else if (window.localStorage) {
+                    this._loadLocalStorage();
+                    this._setHandles();
+                }
+                //if no localstorage capabilities exist, disable this widget
+                if (!window.localStorage) {
+                    this._disable();
+                }
             }
         },
         /*
@@ -108,6 +116,9 @@ define([
         },
         setSaveMapExtent: function (value) {
             this.appSettings.saveMapExtent.save = value;
+            if (value) {
+                this.appSettings.saveMapExtent.value = this.map.extent;
+            }
             this._setHandles();
             this.saveSettings();
         },
@@ -117,6 +128,10 @@ define([
                 window.location.hash = '';
             }
             this._setHandles();
+            this.saveSettings();
+        },
+        setShareLocalStorage: function (value) {
+            this.appSettings.shareLocalStorage.save = value;
             this.saveSettings();
         },
         /*
@@ -160,36 +175,39 @@ define([
          */
         _setDefaults: function () {
             try {
-                //load checkbox settings
-                for (var setting in this.appSettings) {
-                    if (this.hasOwnProperty(setting)) {
-                        this[setting].set('checked', this.appSettings[setting].save);
+                if (this.appSettings.shareLocalStorage.save) {
+                    //load map extent
+                    if (this.appSettings.saveMapExtent.save) {
+                        this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
+                    }
+
+                    //load visible layers
+                    if (this.appSettings.saveLayerVisibility.save) {
+                        Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
+
+                            if (layer.layer.hasOwnProperty('visibleLayers')) {
+                                layer.layer.setVisibleLayers(this.appSettings
+                                        .saveLayerVisibility[layer.layer.id]
+                                        .visibleLayers
+                                        );
+                            }
+                            if (layer.layer.hasOwnProperty('visible')) {
+                                layer.layer.setVisibility(this.appSettings
+                                        .saveLayerVisibility[layer.layer.id]
+                                        .visible
+                                        );
+                            }
+                        }));
                     }
                 }
-
-                //load map extent
-                if (this.appSettings.saveMapExtent.save) {
-                    this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
-                }
-
-                //load visible layers
-                if (this.appSettings.saveLayerVisibility.save) {
-                    Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
-
-                        if (layer.layer.hasOwnProperty('visibleLayers')) {
-                            layer.layer.setVisibleLayers(this.appSettings
-                                    .saveLayerVisibility[layer.layer.id]
-                                    .visibleLayers
-                                    );
-                        }
-                        layer.layer.setVisibility(this.appSettings
-                                .saveLayerVisibility[layer.layer.id]
-                                .visible
-                                );
-                    }));
-                }
             } catch (error) {
-                this._error(error);
+                this._error('_setDefaults: ' + error);
+            }
+            //load checkbox settings
+            for (var setting in this.appSettings) {
+                if (this.hasOwnProperty(setting)) {
+                    this[setting].set('checked', this.appSettings[setting].save);
+                }
             }
         },
         /*
@@ -225,8 +243,15 @@ define([
             //layer visibility handles
             if (this.appSettings.saveLayerVisibility.save) {
                 Array.forEach(this.layerInfos, Lang.hitch(this, function (layer, i) {
-                    if (!this.layerHandles[2 * i]) {
-                        this.layerHandles[2 * i] = layer.layer.on('update-end',
+                    var index = 2 * i;
+                    if (!this.appSettings.saveLayerVisibility[layer.layer.id]) {
+                        this.appSettings.saveLayerVisibility[layer.layer.id] = {
+                            visible: null,
+                            visibleLayers: null
+                        }
+                    }
+                    if (!this.layerHandles[index]) {
+                        this.layerHandles[index] = layer.layer.on('update-end',
                                 Lang.hitch(this, function (event) {
                                     if (!this.appSettings.saveLayerVisibility[layer.layer.id]) {
                                         this.appSettings
@@ -239,17 +264,19 @@ define([
                                     this.saveSettings();
                                 }));
                     }
-                    if (!this.layerHandles[2 * i + 1]) {
-                        this.layerHandles[2 * i + 1] = layer.layer.on('visibility-change',
+                    if (!this.layerHandles[index + 1]) {
+                        this.layerHandles[index + 1] = layer.layer.on('visibility-change',
                                 Lang.hitch(this, function (event) {
-                                    this.appSettings.saveLayerVisibility[layer.layer.id]
-                                            .visible = event.visible;
+                                    if (event.hasOwnProperty('visible')) {
+                                        this.appSettings.saveLayerVisibility[layer.layer.id]
+                                                .visible = event.visible;
+                                    }
                                 }));
                     }
                 }));
             }
             else {
-                this.appSettings.saveLayerVisibility.value = null;
+                this.appSettings.saveLayerVisibility = {save: false};
                 Array.forEach(this.layerHandles, Lang.hitch(this, function (handle) {
                     if (handle) {
                         handle.remove();
@@ -273,11 +300,14 @@ define([
          * a helper error logging function
          */
         _error: function (e) {
-            //if an error occurs local storage corruption is probably the issue
+            //if an error occurs local storage corruption or hash corruption
+            // is probably the issue
             if (window.console) {
-                console.log(e, localStorage);
+                console.error(e, localStorage.CMV_appSettings);
             }
             localStorage.clear();
+            window.location.hash = '';
+            this.appSettings = this.defaultAppSettings;
         }
 
     });

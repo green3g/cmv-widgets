@@ -1,18 +1,25 @@
 <div>
+    <h3>Remember Current View:</h3>
     <input data-dojo-attach-point="saveMapExtent" 
            name="saveMapExtent" 
            data-dojo-type="dijit/form/CheckBox" 
            data-dojo-attach-event="onChange:setSaveMapExtent" />
-    <label for="saveMapExtent">Remember Map Extent</label><br />
+    <label for="saveMapExtent">Save Map Extent</label><br />
     <input data-dojo-attach-point="saveLayerVisibility" 
         name="saveLayerVisibility" 
         data-dojo-attach-event="onChange:setSaveLayerVisibility" 
         data-dojo-type="dijit/form/CheckBox" />
-    <label for="saveLayerVisibility">Remember Layer Visibility</label><br />    
+    <label for="saveLayerVisibility">Save Layer Visibility</label><br /> 
+    <h3>Save and Share Options:</h3>
     <input data-dojo-attach-point="shareURL" 
         name="shareURL" 
         data-dojo-attach-event="onChange:setShareURL" 
         data-dojo-type="dijit/form/CheckBox" />
-    <label for="shareURL">Share Map Using URL Location</label><br />
+    <label for="shareURL">Share Map Using URL Location</label><br />    
+    <input data-dojo-attach-point="shareLocalStorage" 
+        name="shareLocalStorage" 
+        data-dojo-attach-event="onChange:setShareLocalStorage" 
+        data-dojo-type="dijit/form/CheckBox" />
+    <label for="shareLocalStorage">Restore View When Loaded</label><br />
 
 </div>
