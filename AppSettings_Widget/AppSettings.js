@@ -33,8 +33,7 @@ define([
         appSettings: null,
         defaultAppSettings: {
             saveMapExtent: {
-                save: false,
-                value: null
+                save: false
             },
             saveLayerVisibility: {
                 save: false
@@ -77,8 +76,8 @@ define([
                         this.checkboxHandles[setting] =
                                 On(this[setting], 'change', Lang.hitch(this, function (setting) {
                                     return function (checked) {
-                                        this.setValue(setting, checked, true)
-                                    }
+                                        this.setValue(setting, checked, true);
+                                    };
                                 }(setting)));
                     }
                 }
@@ -238,7 +237,7 @@ define([
                         this.appSettings.saveLayerVisibility[id] = {
                             visible: null,
                             visibleLayers: null
-                        }
+                        };
                     }
                     if (!this.layerHandles[id + '-update-end']) {
                         this.layerHandles[id + '-update-end'] = layer.layer.on('update-end', Lang.hitch(this, function (event) {
