@@ -6,7 +6,7 @@ CMV Version: 1.2.0
 A widget designed for use in CMV that allows the user to save the current state of the map extent and visible layers.
 
 This widget is currently in beta stage, as it has not been thoroughly tested yet. 
-Since localStorage is used, clear cache in between updates. Updates may break existing app.
+Since localStorage is used, <b>clear cache in between updates. Otherwise, updates may break existing app.</b>
 Feel free to contact me with bugs and I will fix them as time permits.
 
 <h3>Description:</h3>
