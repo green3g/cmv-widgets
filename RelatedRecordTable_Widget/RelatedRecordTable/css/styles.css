@@ -1,0 +1,7 @@
+.dgrid-header-row {
+    z-index: 1;
+}
+
+.dgrid {
+    height:100% !important;
+}
