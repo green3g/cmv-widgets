@@ -3,23 +3,23 @@
     <input data-dojo-attach-point="saveMapExtent" 
            name="saveMapExtent" 
            data-dojo-type="dijit/form/CheckBox" 
-           data-dojo-attach-event="onChange:setSaveMapExtent" />
+         data-dojo-props="checked: this.appSettings.saveMapExtent.save"  />
     <label for="saveMapExtent">Save Map Extent</label><br />
     <input data-dojo-attach-point="saveLayerVisibility" 
         name="saveLayerVisibility" 
-        data-dojo-attach-event="onChange:setSaveLayerVisibility" 
-        data-dojo-type="dijit/form/CheckBox" />
+        data-dojo-type="dijit/form/CheckBox"
+         data-dojo-props="checked: this.appSettings.saveLayerVisibility.save" />
     <label for="saveLayerVisibility">Save Layer Visibility</label><br /><br/>
-    <p><strong>Save and Share Options:</strong></p>
-    <input data-dojo-attach-point="shareURL" 
-        name="shareURL" 
-        data-dojo-attach-event="onChange:setShareURL" 
-        data-dojo-type="dijit/form/CheckBox" />
-    <label for="shareURL">Share Map Using URL Location</label><br />    
-    <input data-dojo-attach-point="shareLocalStorage" 
-        name="shareLocalStorage" 
-        data-dojo-attach-event="onChange:setShareLocalStorage" 
-        data-dojo-type="dijit/form/CheckBox" />
-    <label for="shareLocalStorage">Restore View When Loaded</label><br />
+    <p><strong>Save and Store Options:</strong></p>
+    <input data-dojo-attach-point="storeURL" 
+        name="storeURL" 
+        data-dojo-type="dijit/form/CheckBox"
+        data-dojo-props="checked: this.appSettings.storeURL.save"/>
+    <label for="storeURL">Store Map Using URL Location</label><br />    
+    <input data-dojo-attach-point="storeLocalStorage" 
+        name="storeLocalStorage" 
+        data-dojo-type="dijit/form/CheckBox"
+         data-dojo-props="checked: this.appSettings.storeLocalStorage.save"/>
+    <label for="storeLocalStorage">Restore View When Loaded</label><br />
 
 </div>

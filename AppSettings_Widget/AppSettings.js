@@ -18,6 +18,7 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'dijit/_WidgetsInTemplateMixin',
+    'dojo/on',
     'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
@@ -25,7 +26,7 @@ define([
     'esri/geometry/Extent',
     'dojo/text!./AppSettings/templates/AppSettings.html'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        Array, Json, Lang, Checkbox, Extent, appSettingsTemplate) {
+        On, Array, Json, Lang, Checkbox, Extent, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
@@ -38,33 +39,48 @@ define([
             saveLayerVisibility: {
                 save: false
             },
-            shareURL: {
+            storeURL: {
                 save: false
             },
-            shareLocalStorage: {
+            storeLocalStorage: {
                 save: false
             }
         },
         layerHandles: null,
+        checkboxHandles: null,
+        constructor: function () {
+            this.appSettings = this.defaultAppSettings;
+            var parameters = decodeURI(window.location.hash);
+            if (parameters.indexOf('CMV_appSettings') !== -1) {
+                this._loadHashParameters(parameters);
+            } else if (window.localStorage) {
+                this._loadLocalStorage();
+            }
+            //if no localstorage capabilities exist, disable this widget
+            if (!window.localStorage) {
+                this._disable();
+            }
+        },
         postCreate: function () {
             this.inherited(arguments);
-            this.layerHandles = [];
-            this.appSettings = this.defaultAppSettings;
-
             if (!this.map || !this.layerInfos) {
                 this._disable();
                 this._error('AppSettings requires map and tocLayerInfos');
             } else {
-                var parameters = decodeURI(window.location.hash);
-                if (parameters.indexOf('CMV_appSettings') !== -1) {
-                    this._loadHashParameters(parameters);
-                } else if (window.localStorage) {
-                    this._loadLocalStorage();
-                    this._setHandles();
-                }
-                //if no localstorage capabilities exist, disable this widget
-                if (!window.localStorage) {
-                    this._disable();
+                this._loadAppSettings();
+                this.layerHandles = {};
+                this.checkboxHandles = {};
+                this._setHandles();
+
+                for (var setting in this.appSettings) {
+                    if (this.hasOwnProperty(setting)) {
+                        this.checkboxHandles[setting] =
+                                On(this[setting], 'change', Lang.hitch(this, function (setting) {
+                                    return function (checked) {
+                                        this.setValue(setting, checked, true)
+                                    }
+                                }(setting)));
+                    }
                 }
             }
         },
@@ -75,12 +91,10 @@ define([
          * @param {boolean} overwrite overwrites current value if overwrite is true
          * @returns {undefined}
          */
-        setValue: function (key, value, overwrite) {
-            if (!this.appSettings.hasOwnValue(key) || overwrite) {
-                this.appSettings[key] = value;
-            } else {
-                this._error("cannot overwrite appSetting without overwrite parameter");
-            }
+        setValue: function (key, value) {
+            this.appSettings[key].save = value;
+            this._setHandles();
+            this.saveSettings();
         },
         /*
          * gets an app setting
@@ -92,46 +106,19 @@ define([
         },
         /*
          * sets the current value of this.appSettings to localStorage
-         * and url hash if shareURL is true
+         * and url hash if storeURL is true
          */
         saveSettings: function () {
             var settingsString = Json.stringify(this.appSettings);
             localStorage.setItem('CMV_appSettings', settingsString);
 
-            //setup share url
-            if (this.appSettings.shareURL.save) {
-                var shareURL = encodeURI('CMV_appSettings=' + settingsString);
-                window.location.hash = shareURL;
-            }
-        },
-        /*
-         * setters for the appSettings
-         * @param {boolean} value
-         */
-        setSaveLayerVisibility: function (value) {
-            this.appSettings.saveLayerVisibility.save = value;
-            this._setHandles();
-            this.saveSettings();
-        },
-        setSaveMapExtent: function (value) {
-            this.appSettings.saveMapExtent.save = value;
-            if (value) {
-                this.appSettings.saveMapExtent.value = this.map.extent;
-            }
-            this._setHandles();
-            this.saveSettings();
-        },
-        setShareURL: function (value) {
-            this.appSettings.shareURL.save = value;
-            if (!value) {
+            //setup store url
+            if (this.appSettings.storeURL.save) {
+                var storeURL = encodeURI('CMV_appSettings=' + settingsString);
+                window.location.hash = storeURL;
+            } else {
                 window.location.hash = '';
             }
-            this._setHandles();
-            this.saveSettings();
-        },
-        setShareLocalStorage: function (value) {
-            this.appSettings.shareLocalStorage.save = value;
-            this.saveSettings();
         },
         /*
          * check for saved settings in url hash
@@ -149,7 +136,6 @@ define([
                         window.location.hash = '';
                     }
                 }
-                this._setDefaults();
             } catch (error) {
                 this._error('_loadHashParameters' + error);
             }
@@ -158,54 +144,58 @@ define([
          * check for saved settings in local storage
          */
         _loadLocalStorage: function () {
-            try {
-                var CMV_appSettings = localStorage.getItem('CMV_appSettings');
-                if (CMV_appSettings) {
+            if (localStorage.CMV_appSettings) {
+                try {
+                    var CMV_appSettings = localStorage.getItem('CMV_appSettings');
                     this.appSettings = Json.parse(CMV_appSettings);
-                }
-                this._setDefaults();
 
-            } catch (error) {
-                this._error('_loadLocalStorage: ' + error);
+                } catch (error) {
+                    this._error('_loadLocalStorage: ' + error);
+                }
             }
         },
         /*
-         * applies the default settings loaded
+         * applies the loaded settings
          */
-        _setDefaults: function () {
-            try {
-                if (this.appSettings.shareLocalStorage.save) {
+        _loadAppSettings: function () {
+            if (this.appSettings.storeLocalStorage.save) {
+
+                try {
                     //load map extent
                     if (this.appSettings.saveMapExtent.save) {
                         this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
                     }
+                } catch (error) {
+                    this._error('setSavedExtent' + error);
+                }
+                try {
 
                     //load visible layers
                     if (this.appSettings.saveLayerVisibility.save) {
                         Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
-
-                            if (layer.layer.hasOwnProperty('visibleLayers')) {
-                                layer.layer.setVisibleLayers(this.appSettings
+                            if (this.appSettings
+                                    .saveLayerVisibility
+                                    .hasOwnProperty(layer.layer.id)) {
+                                if (this.appSettings
                                         .saveLayerVisibility[layer.layer.id]
-                                        .visibleLayers
-                                        );
-                            }
-                            if (layer.layer.hasOwnProperty('visible')) {
-                                layer.layer.setVisibility(this.appSettings
+                                        .visibleLayers) {
+                                    layer.layer.setVisibleLayers(
+                                            this.appSettings
+                                            .saveLayerVisibility[layer.layer.id]
+                                            .visibleLayers);
+                                }
+                                if (this.appSettings
                                         .saveLayerVisibility[layer.layer.id]
-                                        .visible
-                                        );
+                                        .visible !== null) {
+                                    layer.layer.setVisibility(this.appSettings
+                                            .saveLayerVisibility[layer.layer.id]
+                                            .visible);
+                                }
                             }
                         }));
                     }
-                }
-            } catch (error) {
-                this._error('_setDefaults: ' + error);
-            }
-            //load checkbox settings
-            for (var setting in this.appSettings) {
-                if (this.hasOwnProperty(setting)) {
-                    this[setting].set('checked', this.appSettings[setting].save);
+                } catch (error) {
+                    this._error('setSavedtLayers: ' + error);
                 }
             }
         },
@@ -215,6 +205,7 @@ define([
         _setHandles: function () {
             //map extent handles
             if (this.appSettings.saveMapExtent.save) {
+                this.appSettings.saveMapExtent.value = this.map.extent;
                 if (!this.mapZoomHandle) {
                     this.mapZoomHandle = this.map.on('zoom-end', Lang.hitch(this, function (event) {
                         this.appSettings.saveMapExtent.value = event.extent;
@@ -242,46 +233,46 @@ define([
             //layer visibility handles
             if (this.appSettings.saveLayerVisibility.save) {
                 Array.forEach(this.layerInfos, Lang.hitch(this, function (layer, i) {
-                    var index = 2 * i;
-                    if (!this.appSettings.saveLayerVisibility[layer.layer.id]) {
-                        this.appSettings.saveLayerVisibility[layer.layer.id] = {
+                    var id = layer.layer.id;
+                    if (!this.appSettings.saveLayerVisibility[id]) {
+                        this.appSettings.saveLayerVisibility[id] = {
                             visible: null,
                             visibleLayers: null
                         }
                     }
-                    if (!this.layerHandles[index]) {
-                        this.layerHandles[index] = layer.layer.on('update-end',
-                                Lang.hitch(this, function (event) {
-                                    if (!this.appSettings.saveLayerVisibility[layer.layer.id]) {
-                                        this.appSettings
-                                                .saveLayerVisibility[layer.layer.id] = {};
-                                    }
-                                    if (event.target.hasOwnProperty('visibleLayers')) {
-                                        this.appSettings.saveLayerVisibility[layer.layer.id]
-                                                .visibleLayers = event.target.visibleLayers;
-                                    }
-                                    this.saveSettings();
-                                }));
+                    if (!this.layerHandles[id + '-update-end']) {
+                        this.layerHandles[id + '-update-end'] = layer.layer.on('update-end', Lang.hitch(this, function (event) {
+                            if (!this.appSettings.saveLayerVisibility[id]) {
+                                this.appSettings
+                                        .saveLayerVisibility[id] = {};
+                            }
+                            if (event.target.hasOwnProperty('visibleLayers')) {
+                                this.appSettings.saveLayerVisibility[id]
+                                        .visibleLayers = event.target.visibleLayers;
+                            }
+                            this.saveSettings();
+                        }));
                     }
-                    if (!this.layerHandles[index + 1]) {
-                        this.layerHandles[index + 1] = layer.layer.on('visibility-change',
-                                Lang.hitch(this, function (event) {
-                                    if (event.hasOwnProperty('visible')) {
-                                        this.appSettings.saveLayerVisibility[layer.layer.id]
-                                                .visible = event.visible;
-                                    }
-                                }));
+                    if (!this.layerHandles[id + '-visibility-change']) {
+                        this.layerHandles[id + '-visibility-change'] =
+                                layer.layer.on('visibility-change',
+                                        Lang.hitch(this, function (event) {
+                                            if (event.hasOwnProperty('visible')) {
+                                                this.appSettings.saveLayerVisibility[id]
+                                                        .visible = event.visible;
+                                            }
+                                        }));
                     }
                 }));
-            }
-            else {
+            } else {
                 this.appSettings.saveLayerVisibility = {save: false};
-                Array.forEach(this.layerHandles, Lang.hitch(this, function (handle) {
-                    if (handle) {
-                        handle.remove();
-                        handle = null;
+                for (var handle in this.layerHandles) {
+                    if (this.layerHandles.hasOwnProperty(handle)) {
+                        this.layerHandles[handle].remove();
+                        this.layerHandles[handle] = null;
                     }
-                }));
+                }
+                ;
             }
 
         },
