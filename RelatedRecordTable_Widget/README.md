@@ -4,6 +4,8 @@ Related Record Table
 A tabbed widget for displaying and interacting with tables related to feature layers.
 Intended for use in [CMV v1.2.0](https://github.com/cmv/cmv-app/releases/tag/v1.2.0) 
 
+![Screenshot!](https://github.com/roemhildtg/CMV_Widgets/blob/master/RelatedRecordTable_Widget/Widget.PNG)
+
 Options:
 ========
 
