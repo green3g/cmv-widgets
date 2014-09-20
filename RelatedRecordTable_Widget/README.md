@@ -7,13 +7,13 @@ Intended for use in [CMV v1.2.0](https://github.com/cmv/cmv-app/releases/tag/v1.
 Options:
 ========
 
-key        |      Value      | Notes
+key        |      Type      | Notes
 ---|-----|-------
-map | true | required
-layerInfos | true | required (layerInfos object with feature layers)
-hiddenColumns | [field_names] | array of field names to hide by default
-unhideableColumns | [field_names] | array of field names to always show
-formatters | {object} | key, value pairs of formatter functions for field name or field type
+map | boolean | set true, map is required
+layerInfos | boolean | set tocLayerInfos or layerControlLayerInfos to true, a layerInfos object is required
+hiddenColumns | [field_names] | optional array of field names to hide by default
+unhideableColumns | [field_names] | optional array of field names to always show
+formatters | {object} | key, value pairs of formatter functions. Key is either a field name or esri field type.
 
 Limitations:
 ============
