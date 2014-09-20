@@ -1,7 +1,7 @@
 Related Record Table
 ====================
 
-A table for displaying and interacting with tables related to feature layers.
+A tabbed widget for displaying and interacting with tables related to feature layers.
 Intended for use in [CMV v1.2.0](https://github.com/cmv/cmv-app/releases/tag/v1.2.0) 
 
 Options:
