@@ -18,7 +18,9 @@ formatters | {object} | key, value pairs of formatter functions for field name o
 Limitations:
 ============
 
-Currently only handles one relationship per layer
+- Currently only handles one relationship per layer.
+- Widget should be placed in a region currently visible, like a titlePane with open:true set
+- Tested with panes object as well, see Example below
 
 CMV Widget Config Example
 =========================
@@ -33,6 +35,7 @@ CMV Widget Config Example
     type: 'titlePane',
     path: 'gis/dijit/RelatedRecordTable',
     title: 'Inspection Reports',
+    placeAt: 'bottom', //bottom pane
     options: {
         map: true,
         tocLayerInfos: true,
