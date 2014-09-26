@@ -18,15 +18,17 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'dijit/_WidgetsInTemplateMixin',
+    'dojo/topic',
     'dojo/on',
     'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
     'dijit/form/CheckBox',
+    'dijit/form/Button',
     'esri/geometry/Extent',
     'dojo/text!./AppSettings/templates/AppSettings.html'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        On, Array, Json, Lang, Checkbox, Extent, appSettingsTemplate) {
+        Topic, On, Array, Json, Lang, Checkbox, Button, Extent, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
@@ -62,25 +64,30 @@ define([
         },
         postCreate: function () {
             this.inherited(arguments);
+            this.layerHandles = [];
+            this.checkboxHandles = {};
             if (!this.map || !this.layerInfos) {
                 this._disable();
                 this._error('AppSettings requires map and tocLayerInfos');
             } else {
                 this._loadAppSettings();
-                this.layerHandles = {};
-                this.checkboxHandles = {};
                 this._setHandles();
-
                 for (var setting in this.appSettings) {
                     if (this.hasOwnProperty(setting)) {
                         this.checkboxHandles[setting] =
                                 On(this[setting], 'change', Lang.hitch(this, function (setting) {
                                     return function (checked) {
-                                        this.setValue(setting, checked, true);
+                                        this.setValue(setting, checked);
                                     };
                                 }(setting)));
                     }
                 }
+
+                On(this.clearCacheButton, 'click', Lang.hitch(this, function () {
+                    this.appSettings = this.defaultAppSettings;
+                    this.saveAppSettings();
+                    this.refreshView();
+                }));
             }
         },
         /*
@@ -93,7 +100,7 @@ define([
         setValue: function (key, value) {
             this.appSettings[key].save = value;
             this._setHandles();
-            this.saveSettings();
+            this.saveAppSettings();
         },
         /*
          * gets an app setting
@@ -107,7 +114,7 @@ define([
          * sets the current value of this.appSettings to localStorage
          * and url hash if storeURL is true
          */
-        saveSettings: function () {
+        saveAppSettings: function () {
             var settingsString = Json.stringify(this.appSettings);
             localStorage.setItem('CMV_appSettings', settingsString);
 
@@ -159,17 +166,17 @@ define([
         _loadAppSettings: function () {
             if (this.appSettings.storeLocalStorage.save) {
 
+                //load map extent
                 try {
-                    //load map extent
                     if (this.appSettings.saveMapExtent.save) {
                         this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
                     }
                 } catch (error) {
-                    this._error('setSavedExtent' + error);
+                    this._error('setSavedExtent: ' + error);
                 }
-                try {
 
-                    //load visible layers
+                //load visible layers
+                try {
                     if (this.appSettings.saveLayerVisibility.save) {
                         Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
                             if (this.appSettings
@@ -182,6 +189,7 @@ define([
                                             this.appSettings
                                             .saveLayerVisibility[layer.layer.id]
                                             .visibleLayers);
+
                                 }
                                 if (this.appSettings
                                         .saveLayerVisibility[layer.layer.id]
@@ -208,13 +216,13 @@ define([
                 if (!this.mapZoomHandle) {
                     this.mapZoomHandle = this.map.on('zoom-end', Lang.hitch(this, function (event) {
                         this.appSettings.saveMapExtent.value = event.extent;
-                        this.saveSettings();
+                        this.saveAppSettings();
                     }));
                 }
                 if (!this.mapPanHandle) {
                     this.mapPanHandle = this.map.on('pan-end', Lang.hitch(this, function (event) {
                         this.appSettings.saveMapExtent.value = event.extent;
-                        this.saveSettings();
+                        this.saveAppSettings();
                     }));
                 }
             } else {
@@ -231,49 +239,51 @@ define([
 
             //layer visibility handles
             if (this.appSettings.saveLayerVisibility.save) {
+
                 Array.forEach(this.layerInfos, Lang.hitch(this, function (layer, i) {
                     var id = layer.layer.id;
-                    if (!this.appSettings.saveLayerVisibility[id]) {
+                    if (!this.appSettings.saveLayerVisibility.hasOwnProperty(id)) {
                         this.appSettings.saveLayerVisibility[id] = {
-                            visible: null,
-                            visibleLayers: null
+                            visible: layer.layer.visible,
+                            visibleLayers: layer.layer.visibleLayers
                         };
                     }
-                    if (!this.layerHandles[id + '-update-end']) {
-                        this.layerHandles[id + '-update-end'] = layer.layer.on('update-end', Lang.hitch(this, function (event) {
-                            if (!this.appSettings.saveLayerVisibility[id]) {
-                                this.appSettings
-                                        .saveLayerVisibility[id] = {};
-                            }
-                            if (event.target.hasOwnProperty('visibleLayers')) {
-                                this.appSettings.saveLayerVisibility[id]
-                                        .visibleLayers = event.target.visibleLayers;
-                            }
-                            this.saveSettings();
-                        }));
-                    }
-                    if (!this.layerHandles[id + '-visibility-change']) {
-                        this.layerHandles[id + '-visibility-change'] =
-                                layer.layer.on('visibility-change',
-                                        Lang.hitch(this, function (event) {
-                                            if (event.hasOwnProperty('visible')) {
-                                                this.appSettings.saveLayerVisibility[id]
-                                                        .visible = event.visible;
-                                            }
-                                        }));
-                    }
                 }));
+                this.layerHandles.push({
+                    setVisibleLayers: Topic.subscribe('layerControl/setVisibleLayers', Lang.hitch(this, function (layer) {
+                        this.appSettings.saveLayerVisibility[layer.id] = {
+                            visibleLayers: layer.visibleLayers,
+                            visible: true
+                        }
+                        this.saveAppSettings();
+                    })),
+                    layerToggle: Topic.subscribe('layerControl/layerToggle', Lang.hitch(this, function (layer) {
+                        this.appSettings.saveLayerVisibility[layer.id].visible = layer.visible;
+                        this.saveAppSettings();
+                    }))
+                });
             } else {
                 this.appSettings.saveLayerVisibility = {save: false};
-                for (var handle in this.layerHandles) {
-                    if (this.layerHandles.hasOwnProperty(handle)) {
-                        this.layerHandles[handle].remove();
-                        this.layerHandles[handle] = null;
-                    }
-                }
-                ;
+//                for (var handle in this.layerHandles) {
+//                    if (this.layerHandles.hasOwnProperty(handle)) {
+//                        this.layerHandles[handle].remove();
+//                        this.layerHandles[handle] = null;
+//                    }
+//                };
+                Array.forEach(this.layerHandles, function (handle) {
+                    handle.setVisibleLayers.remove();
+                    handle.layerToggle.remove();
+                });
+                this.saveAppSettings();
             }
 
+        },
+        refreshView: function() {
+            for(var setting in this.appSettings){
+                if(this.hasOwnProperty(setting)){
+                    this[setting].set('checked', this.appSettings[setting].save)
+                }
+            }
         },
         /*
          * disables this widget ui
