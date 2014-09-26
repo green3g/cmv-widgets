@@ -1,3 +1,11 @@
+/*
+ * 
+ * RelatedRecordTable widget
+ * Copyright (C) 2014 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
@@ -20,74 +28,91 @@ define([
     var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, _FloatingWidgetMixin], {
         templateString:
-                '<div class="${baseClass}">' +
-                '<div data-dojo-type="dijit/layout/TabContainer" data-dojo-props="doLayout:false" data-dojo-attach-point="tabContainer">' +
+                '<div class="${baseClass}" data-dojo-type="dijit/layout/ContentPane">' +
+                '<div data-dojo-type="dijit/layout/TabContainer" ' + 
+                'data-dojo-props="doLayout:false, tabPosition: this.tabPosition"' +
+                'data-dojo-attach-point="tabContainer">' +
                 '</div>' +
                 '</div>',
         relationshipLayers: null,
         formatters: null,
-        hiddenColumns: null,
-        unhideableColumns: null,
+        tabPosition: 'left-h',
         constructor: function () {
             this.relationshipLayers = [];
-            this.hiddenColumns = [];
-            this.unhideableColumns = [];
             this.formatters = {};
 
         },
         postCreate: function () {
             this.inherited(arguments);
-
             Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
                 if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
-                    this.relationshipLayers.push(layerInfo.layer);
-                }
-            }));
-
-            Array.forEach(this.relationshipLayers, Lang.hitch(this, function (layer) {
-                Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
-                    relationship.contentPane = new ContentPane({
-                        title: relationship.name,
-                        id: layer.id + '-' + relationship.name + 'Grid',
-                        style: 'height:300px;width:100%;',
-                        content: ''
-                    });
-                    //this.tabContainer.layout();
-                    relationship.store = new Memory({
-                        id: layer.objectIdField
-                    });
-                    relationship.grid = new customGrid({
-                        store: relationship.store
-                    });
-                    this.tabContainer.addChild(relationship.contentPane);
-                    relationship.contentPane.addChild(relationship.grid);
-
-                    layer.on('click', Lang.hitch(this, function (clickEvent) {
-                        this._onLayerClick(layer, clickEvent);
+                    var relationshipLayer = {
+                        layer: layerInfo.layer,
+                        relationships: []
+                    };
+                    Array.forEach(layerInfo.layer.relationships, Lang.hitch(this, function (relationshipInfo) {
+                        var relationship = {
+                            relationship: relationshipInfo,
+                            title: layerInfo.layer.name + '-' + relationshipInfo.name,
+                            formatters: {},
+                            hiddenColumns: [],
+                            unhideableColumns: [],
+                            grid: null,
+                            store: null
+                        };
+                        if (this.columnInfos.hasOwnProperty(layerInfo.layer.id) &&
+                                this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
+                            declare.safeMixin(
+                                    relationship,
+                                    this.columnInfos[layerInfo.layer.id][relationshipInfo.id]
+                                    );
+                        }
+                        relationship.contentPane = new ContentPane({
+                            title: relationship.title,
+                            style: 'height:200px;width:100%;',
+                            content: ''
+                        });
+                        //this.tabContainer.layout();
+                        relationship.store = new Memory({
+                            id: relationshipLayer.layer.objectIdField
+                        });
+                        relationship.grid = new customGrid({
+                            store: relationship.store
+                        });
+                        this.tabContainer.addChild(relationship.contentPane);
+                        relationship.contentPane.addChild(relationship.grid);
+                        relationshipLayer.relationships.push(relationship);
                     }));
-                }));
+                    relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
+                        this._onLayerClick(relationshipLayer, clickEvent);
+                    }));
+                    this.relationshipLayers.push(relationshipLayer);
+                }
             }));
         },
         _onLayerClick: function (layer, clickEvent) {
             var relationship = layer.relationships[0];
             var attributes = clickEvent.graphic.attributes;
-            var objectID = attributes[layer.objectIdField];
+            var objectID = attributes[layer.layer.objectIdField];
             var query = {
-                url: layer.url,
+                url: layer.layer.url,
                 objectIds: [objectID],
                 outFields: ['*'],
-                relationshipId: relationship.id
+                relationshipId: relationship.relationship.id
             };
             this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
                 if (!relationship.grid.get('columns').length) {
                     relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
+                        var formatter = relationship.formatters[field.name] ||
+                                relationship.formatters[field.type] ||
+                                this.formatters[field.name] ||
+                                this.formatters[field.type] || null;
                         return {
                             label: field.alias,
                             field: field.name,
-                            formatter: this.formatters[field.name] ||
-                                    this.formatters[field.type] || null,
-                            hidden: this.hiddenColumns.indexOf(field.name) !== -1,
-                            unhidable: this.unhideableColumns.indexOf(field.name) !== -1
+                            formatter: formatter,
+                            hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
+                            unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
                         };
                     })));
                 }
@@ -98,6 +123,8 @@ define([
                     });
                 }
                 relationship.grid.refresh();
+                //automatically switch tab to selected feature layer
+                //this.tabContainer.selectChild(relationship.contentPane);
             }));
         },
         /*
