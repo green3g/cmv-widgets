@@ -16,7 +16,6 @@ relatedRecords: {
 //relatedRecords.js:
             
 define({
-    map: true,
     layerControlLayerInfos: true,
     columnInfos: {
         bikepathDocuments: {//layer id
@@ -25,6 +24,9 @@ define({
                 hiddenColumns: ['GlobalID', 'Related_GUID', 'OBJECTID'],
                 unhideableColumns: [],
                 formatters: {
+                    /*
+                     * format this field into a clickable link
+                     */
                     Link_URL: function (url) {
                         if (url) {
                             //if url is a network file insert text for firefox/chrome
@@ -59,6 +61,9 @@ define({
     },
     //global formatters
     formatters: {
+        /*
+         * format all esri date fields into Month Year
+         */
         esriFieldTypeDate: function (date) {
             if (date) {
                 var date = new Date(date);
