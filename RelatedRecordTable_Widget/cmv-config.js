@@ -52,7 +52,7 @@ define({
             }
         },
         culvertInspections: {
-            0: {
+            0: { 
                 title: "Culvert Inspections",
                 hiddenColumns: ['CULVERTID', 'OBJECTID', 'INSPECTOR'],
                 unhideableColumns: []
