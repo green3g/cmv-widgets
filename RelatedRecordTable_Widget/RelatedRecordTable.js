@@ -29,7 +29,7 @@ define([
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, _FloatingWidgetMixin], {
         templateString:
                 '<div class="${baseClass}" data-dojo-type="dijit/layout/ContentPane">' +
-                '<div data-dojo-type="dijit/layout/TabContainer" ' + 
+                '<div data-dojo-type="dijit/layout/TabContainer" ' +
                 'data-dojo-props="doLayout:false, tabPosition: this.tabPosition"' +
                 'data-dojo-attach-point="tabContainer">' +
                 '</div>' +
@@ -37,6 +37,7 @@ define([
         relationshipLayers: null,
         formatters: null,
         tabPosition: 'left-h',
+        columnInfos: {},
         constructor: function () {
             this.relationshipLayers = [];
             this.formatters = {};
@@ -64,8 +65,7 @@ define([
                                 this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
                             declare.safeMixin(
                                     relationship,
-                                    this.columnInfos[layerInfo.layer.id][relationshipInfo.id]
-                                    );
+                                    this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
                         }
                         relationship.contentPane = new ContentPane({
                             title: relationship.title,
@@ -140,10 +140,15 @@ define([
          *  - relationshipId: integer
          */
         _queryRelatedRecords: function (query, callback) {
+            console.log(query)
             query.f = 'json'
             new Request({
                 url: query.url + '/queryRelatedRecords?',
-                content: query,
+                content: {
+                    objectIDs: query.objectIds,
+                    outFields: query.outFields,
+                    relationshipId: query.relationshipId
+                },
                 handleAs: 'json'
             }).then(function (response) {
                 callback(response.fields, response.relatedRecordGroups);
