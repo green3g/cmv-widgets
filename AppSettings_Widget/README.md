@@ -1,7 +1,7 @@
 AppSettings
 ===============
 
-CMV Version: 1.2.0
+CMV Version: 1.3.0
 
 A widget designed for use in CMV that allows the user to save the current state of the map extent and visible layers.
 

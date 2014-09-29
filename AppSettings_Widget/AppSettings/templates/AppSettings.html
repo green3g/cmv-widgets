@@ -20,6 +20,9 @@
         name="storeLocalStorage" 
         data-dojo-type="dijit/form/CheckBox"
          data-dojo-props="checked: this.appSettings.storeLocalStorage.save"/>
-    <label for="storeLocalStorage">Restore View When Loaded</label><br />
-
+    <label for="storeLocalStorage">Restore View When Loaded</label><br /><br />
+    <p>Settings are saved Automatically, If you are experiencing issues, please try to clear your settings cache:<br />
+    <button data-dojo-attach-point="clearCacheButton" 
+            data-dojo-props="iconClass:'clearIcon'"
+            data-dojo-type="dijit/form/Button">Clear Cache</button>
 </div>
