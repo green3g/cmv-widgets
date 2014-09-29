@@ -142,11 +142,12 @@ define([
         _queryRelatedRecords: function (query, callback) {
             query.f = 'json'
             new Request({
-                url: query.url + '/queryRelatedRecords?',
+                url: query.url + '/queryRelatedRecords',
                 content: {
                     objectIDs: query.objectIds,
                     outFields: query.outFields,
-                    relationshipId: query.relationshipId
+                    relationshipId: query.relationshipId,
+                    f: 'json'
                 },
                 handleAs: 'json'
             }).then(function (response) {
