@@ -2,64 +2,59 @@ Related Record Table
 ====================
 
 A tabbed widget for displaying and interacting with tables related to feature layers.
-Intended for use in [CMV v1.2.0](https://github.com/cmv/cmv-app/releases/tag/v1.2.0) 
+Intended for use in [CMV v1.3.0](https://github.com/cmv/cmv-app/releases/tag/v1.2.0) 
 
 ![Screenshot!](https://github.com/roemhildtg/CMV_Widgets/blob/master/RelatedRecordTable_Widget/Widget.PNG)
-
-Options:
-========
-
-key        |      Type      | Notes
----|-----|-------
-map | boolean | set true, map is required
-layerInfos | boolean | set tocLayerInfos or layerControlLayerInfos to true, a layerInfos object is required
-hiddenColumns | [field_names] | optional array of field names to hide by default
-unhideableColumns | [field_names] | optional array of field names to always show
-formatters | {object} | key, value pairs of formatter functions. Key is either a field name or esri field type.
 
 Usage
 ======
 
-1. Add feature layers that have a relationship
-2. Set the widget config to include map and a layerInfos
+1. Add feature layers that have a relationship. Note: the layers must be type: 'feature', this widget will not display related records in dynamic layers. Also, mode should be set to ON_DEMAND or SNAPSHOT. SELECTION will not work currently.
+2. Ensure a proxy is configured and working
+2. Set the widget config to include a layerInfos
 3. Set the widget to be 'open' or visible by default ( this is important for the tab container to render correctly )
-3. click on a feature layer to see related records.
+3. Click on a feature layer to see related records.
+4. Bonus: Set up columnInfos to format relationship table.
 
-- Currently only handles one relationship per layer.
-- Widget should be placed in a region currently visible, like a titlePane with open:true set
-- Tested with panes object as well, see Example below
+Options:
+========
 
-CMV Widget Config Example
-=========================
+Key        |      Type      | Description
+---|-----|-------
+layerInfos | boolean | set tocLayerInfos or layerControlLayerInfos to true, a layerInfos object is required
+formatters | {object} | key, value pairs of column formatter functions. Key is either a field name or esri field type.
+columnInfos | {object} | An object describing each relationship
 
-```javascript
- relatedRecords: {
-    include: true,
-    id: 'relatedRecords',
-    position: 0,
-    open: true,
-    type: 'contentPane',
-    placeAt: 'bottom',
-    path: 'gis/dijit/RelatedRecordTable',
-    title: 'Inspection Reports',
-    placeAt: 'bottom', //bottom pane
-    options: {
-        map: true,
-        tocLayerInfos: true,
-        hiddenColumns: ['CULVERTID', 'OBJECTID', 'INSPECTOR'],
-        unhideableColumns: [],
-        formatters: {
-            esriFieldTypeDate: function (date) {
-                var date = new Date(date);
-                var monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-                    'July', 'August', 'September', 'October', 'November', 'December'];
-                return monthNames[date.getMonth()] + ' ' + date.getFullYear();
-            }
-        }
-    }
+###formatters properties
+Usage: 
+```JavaScript
+formatters: {
+ key: function(value) { return newValue },
+ ...
 }
 ```
+Key can either be an esriFieldType Example: `esriFieldTypeDate` or a name of a field. Formatters specified in this formatters object will be applied to all columns that meet the field type or name specified.
+
+###columnInfos Properties
+Usage:
+```JavaScript
+columnInfos: {
+ layerID: { //referrs to the featurelayer id
+  relationshipID { //integer, referrs to the relationship id on the rest services page
+   //columnInfos definition (below)
+  }
+ }
+}
+```
+Key | Type | Description
+---|---|---
+title | string | The title of the tab, overrides default "layer name - relationship name
+hiddenColumns | [field_names] | Array of field names to hide from this relationship table
+unhideableColumns | [field_names] | Array of field names that can't be hidden by the user
+formatters | {object} | a key-value object consisting of column formatter functions specific to this relationship table
+
 Limitations:
 ============
 
-Currently only handles one relationship per layer
+- Currently only handles one relationship per layer
+- Widget must be set to a visible state by default, example `open: true` should be set for a titlePane type widget.
