@@ -140,7 +140,6 @@ define([
          *  - relationshipId: integer
          */
         _queryRelatedRecords: function (query, callback) {
-            console.log(query)
             query.f = 'json'
             new Request({
                 url: query.url + '/queryRelatedRecords?',
