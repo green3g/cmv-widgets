@@ -1,8 +1,12 @@
-.dgrid-header-row {
-    z-index: 1;
-}
-
 .dgrid {
-    height:100% !important;
-    width: 100%;
+    height: auto;
+}
+.dgrid .dgrid-scroller {
+    position: relative;
+    overflow: visible;
+}
+.dgrid .dgrid-scroller {
+    position: relative;
+    max-height: 250px;
+    overflow: auto;
 }

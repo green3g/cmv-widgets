@@ -21,23 +21,19 @@ define([
     'dijit/layout/TabContainer',
     'dijit/layout/ContentPane',
     'xstyle/css!./RelatedRecordTable/css/styles.css',
+    'dojo/text!./RelatedRecordTable/templates/RelatedRecordTable.html',
     'dojo/domReady!'
 ], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, _WidgetsInTemplateMixin,
         Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
-        TabContainer, ContentPane, css) {
+        TabContainer, ContentPane, css, tableTemplate) {
     var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, _FloatingWidgetMixin], {
-        templateString:
-                '<div class="${baseClass}" data-dojo-type="dijit/layout/ContentPane">' +
-                '<div data-dojo-type="dijit/layout/TabContainer" ' +
-                'data-dojo-props="doLayout:false, tabPosition: this.tabPosition"' +
-                'data-dojo-attach-point="tabContainer">' +
-                '</div>' +
-                '</div>',
+        templateString: tableTemplate,
         relationshipLayers: null,
         formatters: null,
         tabPosition: 'left-h',
         columnInfos: {},
+        baseClass: 'relatedRecordTableWidget',
         constructor: function () {
             this.relationshipLayers = [];
             this.formatters = {};
@@ -69,7 +65,7 @@ define([
                         }
                         relationship.contentPane = new ContentPane({
                             title: relationship.title,
-                            style: 'height:200px;width:100%;',
+                            style: 'height:250px;width:100%;',
                             content: ''
                         });
                         //this.tabContainer.layout();
@@ -91,40 +87,42 @@ define([
             }));
         },
         _onLayerClick: function (layer, clickEvent) {
-            var relationship = layer.relationships[0];
-            var attributes = clickEvent.graphic.attributes;
-            var objectID = attributes[layer.layer.objectIdField];
-            var query = {
-                url: layer.layer.url,
-                objectIds: [objectID],
-                outFields: ['*'],
-                relationshipId: relationship.relationship.id
-            };
-            this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
-                if (!relationship.grid.get('columns').length) {
-                    relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
-                        var formatter = relationship.formatters[field.name] ||
-                                relationship.formatters[field.type] ||
-                                this.formatters[field.name] ||
-                                this.formatters[field.type] || null;
-                        return {
-                            label: field.alias,
-                            field: field.name,
-                            formatter: formatter,
-                            hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
-                            unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
-                        };
-                    })));
-                }
+            Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
                 relationship.store.setData([{}]);
-                if (recordGroups.length > 0) {
-                    Array.forEach(recordGroups[0].relatedRecords, function (record) {
-                        relationship.store.put(record.attributes);
-                    });
-                }
                 relationship.grid.refresh();
-                //automatically switch tab to selected feature layer
-                //this.tabContainer.selectChild(relationship.contentPane);
+                var attributes = clickEvent.graphic.attributes;
+                var objectID = attributes[layer.layer.objectIdField];
+                var query = {
+                    url: layer.layer.url,
+                    objectIds: [objectID],
+                    outFields: ['*'],
+                    relationshipId: relationship.relationship.id
+                };
+                this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
+                    if (!relationship.grid.get('columns').length) {
+                        relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
+                            var formatter = relationship.formatters[field.name] ||
+                                    relationship.formatters[field.type] ||
+                                    this.formatters[field.name] ||
+                                    this.formatters[field.type] || null;
+                            return {
+                                label: field.alias,
+                                field: field.name,
+                                formatter: formatter,
+                                hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
+                                unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
+                            };
+                        })));
+                    }
+                    if (recordGroups.length > 0) {
+                        Array.forEach(recordGroups[0].relatedRecords, function (record) {
+                            relationship.store.put(record.attributes);
+                        });
+                    }
+                    relationship.grid.refresh();
+                    //automatically switch tab to selected feature layer
+                    //this.tabContainer.selectChild(relationship.contentPane);
+                }));
             }));
         },
         /*
@@ -140,10 +138,10 @@ define([
          *  - relationshipId: integer
          */
         _queryRelatedRecords: function (query, callback) {
-            query.f = 'json'
             new Request({
                 url: query.url + '/queryRelatedRecords',
                 content: {
+                    returnGeometry: false,
                     objectIDs: query.objectIds,
                     outFields: query.outFields,
                     relationshipId: query.relationshipId,
