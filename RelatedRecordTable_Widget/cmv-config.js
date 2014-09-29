@@ -51,8 +51,8 @@ define({
                 }
             }
         },
-        culvertInspections: {
-            0: { 
+        culvertInspections: {//layer id
+            0: { //relationship id
                 title: "Culvert Inspections",
                 hiddenColumns: ['CULVERTID', 'OBJECTID', 'INSPECTOR'],
                 unhideableColumns: []
