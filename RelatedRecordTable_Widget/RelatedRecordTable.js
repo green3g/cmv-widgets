@@ -12,6 +12,7 @@ define([
     'dijit/_TemplatedMixin',
     'gis/dijit/_FloatingWidgetMixin',
     'dijit/_WidgetsInTemplateMixin',
+    'dojo/aspect',
     'dojo/_base/array',
     'dojo/_base/lang',
     'esri/request',
@@ -24,7 +25,7 @@ define([
     'dojo/text!./RelatedRecordTable/templates/RelatedRecordTable.html',
     'dojo/domReady!'
 ], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, _WidgetsInTemplateMixin,
-        Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
+        Aspect, Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
         TabContainer, ContentPane, css, tableTemplate) {
     var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, _FloatingWidgetMixin], {
@@ -54,6 +55,7 @@ define([
                             formatters: {},
                             hiddenColumns: [],
                             unhideableColumns: [],
+                            include: true,
                             grid: null,
                             store: null
                         };
@@ -63,20 +65,25 @@ define([
                                     relationship,
                                     this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
                         }
-                        relationship.contentPane = new ContentPane({
-                            title: relationship.title,
-                            style: 'height:250px;width:100%;',
-                            content: ''
-                        });
-                        //this.tabContainer.layout();
-                        relationship.store = new Memory({
-                            id: relationshipLayer.layer.objectIdField
-                        });
-                        relationship.grid = new customGrid({
-                            store: relationship.store
-                        });
-                        this.tabContainer.addChild(relationship.contentPane);
-                        relationship.contentPane.addChild(relationship.grid);
+                        if (relationship.include) {
+                            relationship.contentPane = new ContentPane({
+                                title: relationship.title,
+                                style: 'height:250px;width:100%;',
+                                content: ''
+                            });
+                            //this.tabContainer.layout();
+                            relationship.store = new Memory({
+                                id: relationshipLayer.layer.objectIdField
+                            });
+                            relationship.grid = new customGrid({
+                                store: relationship.store
+                            });
+                            this.tabContainer.addChild(relationship.contentPane);
+                            relationship.contentPane.addChild(relationship.grid);
+                            Aspect.after(relationship.contentPane, 'resize', function () {
+                                relationship.grid.resize();
+                            });
+                        }
                         relationshipLayer.relationships.push(relationship);
                     }));
                     relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
@@ -88,42 +95,46 @@ define([
         },
         _onLayerClick: function (layer, clickEvent) {
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
-                relationship.store.setData([{}]);
-                relationship.grid.refresh();
-                var attributes = clickEvent.graphic.attributes;
-                var objectID = attributes[layer.layer.objectIdField];
-                var query = {
-                    url: layer.layer.url,
-                    objectIds: [objectID],
-                    outFields: ['*'],
-                    relationshipId: relationship.relationship.id
-                };
-                this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
-                    if (!relationship.grid.get('columns').length) {
-                        relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
-                            var formatter = relationship.formatters[field.name] ||
-                                    relationship.formatters[field.type] ||
-                                    this.formatters[field.name] ||
-                                    this.formatters[field.type] || null;
-                            return {
-                                label: field.alias,
-                                field: field.name,
-                                formatter: formatter,
-                                hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
-                                unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
-                            };
-                        })));
-                    }
-                    if (recordGroups.length > 0) {
-                        Array.forEach(recordGroups[0].relatedRecords, function (record) {
-                            relationship.store.put(record.attributes);
-                        });
-                    }
+                if (relationship.include) {
+                    relationship.store.setData([{}]);
                     relationship.grid.refresh();
-                    //automatically switch tab to selected feature layer
-                    //this.tabContainer.selectChild(relationship.contentPane);
-                }));
-            }));
+                    var attributes = clickEvent.graphic.attributes;
+                    var objectID = attributes[layer.layer.objectIdField];
+                    var query = {
+                        url: layer.layer.url,
+                        objectIds: [objectID],
+                        outFields: ['*'],
+                        relationshipId: relationship.relationship.id
+                    };
+                    this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
+                        if (!relationship.grid.get('columns').length) {
+                            relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
+                                var formatter = relationship.formatters[field.name] ||
+                                        relationship.formatters[field.type] ||
+                                        this.formatters[field.name] ||
+                                        this.formatters[field.type] || null;
+                                return {
+                                    label: field.alias,
+                                    field: field.name,
+                                    formatter: formatter,
+                                    hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
+                                    unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
+                                };
+                            })));
+                        }
+                        if (recordGroups.length > 0) {
+                            Array.forEach(recordGroups[0].relatedRecords, function (record) {
+                                relationship.store.put(record.attributes);
+                            });
+                        }
+                        relationship.grid.refresh();
+                        //automatically switch tab to selected feature layer
+                        //this.tabContainer.selectChild(relationship.contentPane);
+
+                    }));
+                }
+            }
+            ));
         },
         /*
          * custom queryRelatedRecords function
