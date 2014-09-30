@@ -24,6 +24,7 @@ Key        |      Type      | Description
 layerInfos | boolean | set tocLayerInfos or layerControlLayerInfos to true, a layerInfos object is required
 formatters | {object} | key, value pairs of column formatter functions. Key is either a field name or esri field type.
 columnInfos | {object} | An object describing each relationship
+tabPosition | string |  'top', 'bottom', 'left-h', or 'right-h' 
 
 ###formatters properties
 Usage: 
@@ -49,12 +50,12 @@ columnInfos: {
 Key | Type | Description
 ---|---|---
 title | string | The title of the tab, overrides default "layer name - relationship name
+include | boolean | set to false to exclude this relationship from the widget
 hiddenColumns | [field_names] | Array of field names to hide from this relationship table
 unhideableColumns | [field_names] | Array of field names that can't be hidden by the user
 formatters | {object} | a key-value object consisting of column formatter functions specific to this relationship table
 
-Limitations:
+Additional Notes:
 ============
 
-- Currently only handles one relationship per layer
 - Widget must be set to a visible state by default, example `open: true` should be set for a titlePane type widget.
