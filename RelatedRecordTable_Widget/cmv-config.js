@@ -1,4 +1,4 @@
-//Viewer.js: 
+//Viewer.js widget config: 
             
 relatedRecords: {
     include: true,
@@ -9,7 +9,7 @@ relatedRecords: {
     type: 'contentPane',
     placeAt: 'bottom',
     path: 'gis/dijit/RelatedRecordTable',
-    title: 'Inspection Reports',
+    title: 'Related Records',
     options: 'config/relatedRecords'
 },
                     
@@ -24,9 +24,7 @@ define({
                 hiddenColumns: ['GlobalID', 'Related_GUID', 'OBJECTID'],
                 unhideableColumns: [],
                 formatters: {
-                    /*
-                     * format this field into a clickable link
-                     */
+                    //format this field into links
                     Link_URL: function (url) {
                         if (url) {
                             //if url is a network file insert text for firefox/chrome
@@ -51,8 +49,8 @@ define({
                 }
             }
         },
-        culvertInspections: {//layer id
-            0: { //relationship id
+        culvertInspections: {
+            0: {
                 title: "Culvert Inspections",
                 hiddenColumns: ['CULVERTID', 'OBJECTID', 'INSPECTOR'],
                 unhideableColumns: []
@@ -61,9 +59,7 @@ define({
     },
     //global formatters
     formatters: {
-        /*
-         * format all esri date fields into Month Year
-         */
+        //format all esri date types into Month-Year format
         esriFieldTypeDate: function (date) {
             if (date) {
                 var date = new Date(date);
@@ -72,6 +68,6 @@ define({
                 return monthNames[date.getMonth()] + ' ' + date.getFullYear();
             }
             return '';
-        },
+        }
     }
 });

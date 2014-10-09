@@ -11,7 +11,6 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'gis/dijit/_FloatingWidgetMixin',
-    'dijit/_WidgetsInTemplateMixin',
     'dojo/aspect',
     'dojo/_base/array',
     'dojo/_base/lang',
@@ -19,16 +18,16 @@ define([
     'dojo/store/Memory',
     'dgrid/OnDemandGrid',
     'dgrid/extensions/ColumnHider',
+    'dgrid/extensions/DijitRegistry',
     'dijit/layout/TabContainer',
-    'dijit/layout/ContentPane',
     'xstyle/css!./RelatedRecordTable/css/styles.css',
     'dojo/text!./RelatedRecordTable/templates/RelatedRecordTable.html',
     'dojo/domReady!'
-], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, _WidgetsInTemplateMixin,
-        Aspect, Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
-        TabContainer, ContentPane, css, tableTemplate) {
-    var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider]);
-    return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, _FloatingWidgetMixin], {
+], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin,
+        Aspect, Array, Lang, Request, Memory, OnDemandGrid, ColumnHider, DijitRegistry,
+        TabContainer, css, tableTemplate) {
+    var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider, DijitRegistry]);
+    return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _FloatingWidgetMixin], {
         templateString: tableTemplate,
         relationshipLayers: null,
         formatters: null,
@@ -38,10 +37,15 @@ define([
         constructor: function () {
             this.relationshipLayers = [];
             this.formatters = {};
-
         },
         postCreate: function () {
             this.inherited(arguments);
+            this.tabContainer = new TabContainer({
+                tabPosition: this.tabPosition,
+                style: 'height:100%;width:100%;',
+                doLayout: false
+            }, this.containerNode);
+            
             Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
                 if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
                     var relationshipLayer = {
@@ -66,25 +70,17 @@ define([
                                     this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
                         }
                         if (relationship.include) {
-                            relationship.contentPane = new ContentPane({
-                                title: relationship.title,
-                                style: 'height:250px;width:100%;',
-                                content: ''
-                            });
-                            //this.tabContainer.layout();
                             relationship.store = new Memory({
                                 id: relationshipLayer.layer.objectIdField
                             });
                             relationship.grid = new customGrid({
+                                title: relationship.title,
                                 store: relationship.store
                             });
-                            this.tabContainer.addChild(relationship.contentPane);
-                            relationship.contentPane.addChild(relationship.grid);
-                            Aspect.after(relationship.contentPane, 'resize', function () {
-                                relationship.grid.resize();
-                            });
+                            relationshipLayer.relationships.push(relationship);
+                            this.tabContainer.addChild( relationship.grid );
                         }
-                        relationshipLayer.relationships.push(relationship);
+
                     }));
                     relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
                         this._onLayerClick(relationshipLayer, clickEvent);
@@ -92,6 +88,11 @@ define([
                     this.relationshipLayers.push(relationshipLayer);
                 }
             }));
+        },
+        startup: function () {
+            this.inherited(arguments);
+            this.tabContainer.startup();
+            this.tabContainer.resize();
         },
         _onLayerClick: function (layer, clickEvent) {
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
@@ -128,9 +129,6 @@ define([
                             });
                         }
                         relationship.grid.refresh();
-                        //automatically switch tab to selected feature layer
-                        //this.tabContainer.selectChild(relationship.contentPane);
-
                     }));
                 }
             }

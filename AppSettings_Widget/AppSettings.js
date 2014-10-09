@@ -6,7 +6,6 @@
  * and URL
  * Documentation: https://github.com/roemhildtg/CMV_Widgets/tree/master/AppSettings_Widget
  * 
- * Updated: 9/18/2014
  * 
  * Copyright (C) 2014 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -249,39 +248,35 @@ define([
                         };
                     }
                 }));
-                this.layerHandles.push({
+                this.layerHandles = {
                     setVisibleLayers: Topic.subscribe('layerControl/setVisibleLayers', Lang.hitch(this, function (layer) {
                         this.appSettings.saveLayerVisibility[layer.id] = {
                             visibleLayers: layer.visibleLayers,
                             visible: true
-                        }
+                        };
                         this.saveAppSettings();
                     })),
                     layerToggle: Topic.subscribe('layerControl/layerToggle', Lang.hitch(this, function (layer) {
                         this.appSettings.saveLayerVisibility[layer.id].visible = layer.visible;
                         this.saveAppSettings();
                     }))
-                });
+                };
             } else {
                 this.appSettings.saveLayerVisibility = {save: false};
-//                for (var handle in this.layerHandles) {
-//                    if (this.layerHandles.hasOwnProperty(handle)) {
-//                        this.layerHandles[handle].remove();
-//                        this.layerHandles[handle] = null;
-//                    }
-//                };
-                Array.forEach(this.layerHandles, function (handle) {
-                    handle.setVisibleLayers.remove();
-                    handle.layerToggle.remove();
-                });
+                if (this.layerHandles.setVisibleLayers) {
+                    this.layerHandles.setVisibleLayers.remove();
+                }
+                if (this.layerHandles.layerToggle) {
+                    this.layerHandles.layerToggle.remove();
+                }
                 this.saveAppSettings();
             }
 
         },
-        refreshView: function() {
-            for(var setting in this.appSettings){
-                if(this.hasOwnProperty(setting)){
-                    this[setting].set('checked', this.appSettings[setting].save)
+        refreshView: function () {
+            for (var setting in this.appSettings) {
+                if (this.hasOwnProperty(setting)) {
+                    this[setting].set('checked', this.appSettings[setting].save);
                 }
             }
         },

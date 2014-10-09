@@ -1,12 +1,8 @@
-.dgrid {
-    height: auto;
+.relatedRecordTableWidget .dijitTabPaneWrapper {
+    height:95%;
 }
-.dgrid .dgrid-scroller {
-    position: relative;
-    overflow: visible;
-}
-.dgrid .dgrid-scroller {
-    position: relative;
-    max-height: 250px;
-    overflow: auto;
+
+.relatedRecordTableWidget .dijitTabContainerLeftChildWrapper,
+.relatedRecordTableWidget .dgrid {
+    height: 100%;
 }
