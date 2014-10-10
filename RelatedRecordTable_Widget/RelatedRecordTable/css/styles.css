@@ -1,8 +1,15 @@
-.relatedRecordTableWidget .dijitTabPaneWrapper {
-    height:95%;
+
+
+.relatedRecordTableWidget .dijitTabPaneWrapper,
+.relatedRecordTableWidget .dijitTabContainerLeftChildWrapper,
+.relatedRecordTableWidget .dgrid,
+.relatedRecordTableWidget .dijitTabContainerTopChildWrapper,
+.RelatedRecordsTableParent {
+     height: 100%; 
 }
 
-.relatedRecordTableWidget .dijitTabContainerLeftChildWrapper,
-.relatedRecordTableWidget .dgrid {
-    height: 100%;
+
+.top .relatedRecordTableWidget .dijitTabPaneWrapper, 
+.bottom .relatedRecordTableWidget .dijitTabPaneWrapper {
+    height:80%;
 }

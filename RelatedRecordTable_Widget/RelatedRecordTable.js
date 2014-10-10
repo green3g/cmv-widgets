@@ -11,7 +11,7 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'gis/dijit/_FloatingWidgetMixin',
-    'dojo/aspect',
+    'dojo/dom-class',
     'dojo/_base/array',
     'dojo/_base/lang',
     'esri/request',
@@ -23,8 +23,8 @@ define([
     'xstyle/css!./RelatedRecordTable/css/styles.css',
     'dojo/text!./RelatedRecordTable/templates/RelatedRecordTable.html',
     'dojo/domReady!'
-], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin,
-        Aspect, Array, Lang, Request, Memory, OnDemandGrid, ColumnHider, DijitRegistry,
+], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, DomClass,
+        Array, Lang, Request, Memory, OnDemandGrid, ColumnHider, DijitRegistry,
         TabContainer, css, tableTemplate) {
     var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider, DijitRegistry]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _FloatingWidgetMixin], {
@@ -40,6 +40,10 @@ define([
         },
         postCreate: function () {
             this.inherited(arguments);
+            if(this.hasOwnProperty('parentWidget')){
+                DomClass.add(this.parentWidget.id, 'RelatedRecordsTableParent ' + this.tabPosition);
+            } 
+            
             this.tabContainer = new TabContainer({
                 tabPosition: this.tabPosition,
                 style: 'height:100%;width:100%;',
