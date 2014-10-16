@@ -1,13 +1,14 @@
-
-
-.relatedRecordTableWidget .dijitTabPaneWrapper,
 .relatedRecordTableWidget .dijitTabContainerLeftChildWrapper,
 .relatedRecordTableWidget .dgrid,
 .relatedRecordTableWidget .dijitTabContainerTopChildWrapper,
-.RelatedRecordsTableParent {
+.RelatedRecordsTableParent.dijitContentPane {
      height: 100%; 
+     padding: 0;
 }
 
+.relatedRecordTableWidget .dijitTabPaneWrapper {
+    height:99%;
+}
 
 .top .relatedRecordTableWidget .dijitTabPaneWrapper, 
 .bottom .relatedRecordTableWidget .dijitTabPaneWrapper {

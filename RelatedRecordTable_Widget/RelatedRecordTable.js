@@ -93,6 +93,10 @@ define([
                 }
             }));
         },
+        onShow: function() {
+            this.inherited(arguments);
+            this.tabContainer.resize();
+        },
         startup: function () {
             this.inherited(arguments);
             this.tabContainer.startup();
