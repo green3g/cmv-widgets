@@ -25,9 +25,12 @@ define([
     'dijit/form/CheckBox',
     'dijit/form/Button',
     'esri/geometry/Extent',
-    'dojo/text!./AppSettings/templates/AppSettings.html'
+    'dojo/text!./AppSettings/templates/AppSettings.html',
+    'dijit/Menu',
+    'dijit/MenuItem',
+    'dijit/PopupMenuItem'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        Topic, On, Array, Json, Lang, Checkbox, Button, Extent, appSettingsTemplate) {
+        Topic, On, Array, Json, Lang, Checkbox, Button, Extent, appSettingsTemplate, Menu, MenuItem, PopupMenuItem) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
@@ -44,6 +47,20 @@ define([
             },
             storeLocalStorage: {
                 save: false
+            }
+        },
+        emailAppSettings: {
+            saveMapExtent: {
+                save: true
+            },
+            saveLayerVisibility: {
+                save: true
+            },
+            storeURL: {
+                save: true
+            },
+            storeLocalStorage: {
+                save: true
             }
         },
         layerHandles: null,
@@ -87,7 +104,33 @@ define([
                     this.saveAppSettings();
                     this.refreshView();
                 }));
+                On(this.emailMapButton, 'click', Lang.hitch(this, function(){
+                    this.emailLink();
+                }));
+                if (this.mapRightClickMenu) {
+                    this.addRightClickMenu();
+                }
             }
+        },
+        addRightClickMenu: function () {
+            this.menu = new Menu();
+            this.mapRightClickMenu.addChild(new MenuItem({
+                label: 'Share Map',
+                onClick: Lang.hitch(this, 'emailLink')
+            }));
+        },
+        emailLink: function() {
+            this.appSettings.saveMapExtent.save;
+            this.appSettings.saveLayerVisibility.save;
+            this.appSettings.storeLocalStorage.save;
+            this._setHandles();
+            for (var setting in this.emailAppSettings) {
+                if (this.hasOwnProperty(setting)) {
+                    this.setValue(setting, true);
+                }
+            }
+            var link = encodeURIComponent(window.location + '\r\n\r\n');
+            window.open('mailto:' + this.address + '?subject=' + this.subject + '&body=' + this.body + link, '_self');
         },
         /*
          * 
