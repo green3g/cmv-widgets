@@ -34,8 +34,12 @@ settings: {
     path: 'gis/dijit/AppSettings',
     title: 'Save/Share Current Map',
     options: {
-        map: true,
-        tocLayerInfos: true
+     map: true,
+     tocLayerInfos: true,
+     mapRightClickMenu: true,
+     address: 'email@email.com',
+     subject: 'Review Map',
+     body: 'Sharing this map'
     }
 }
 ```
