@@ -6,7 +6,6 @@
  * and URL
  * Documentation: https://github.com/roemhildtg/CMV_Widgets/tree/master/AppSettings_Widget
  * 
- * 
  * Copyright (C) 2014 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
@@ -17,6 +16,7 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'dijit/_WidgetsInTemplateMixin',
+    'dojo/dom-construct',
     'dojo/topic',
     'dojo/on',
     'dojo/_base/array',
@@ -30,7 +30,9 @@ define([
     'dijit/MenuItem',
     'dijit/PopupMenuItem'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        Topic, On, Array, Json, Lang, Checkbox, Button, Extent, appSettingsTemplate, Menu, MenuItem, PopupMenuItem) {
+        DomConstruct, Topic, On, Array, Json, Lang, Checkbox, Button, Extent,
+        appSettingsTemplate, Menu, MenuItem, PopupMenuItem) {
+
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
@@ -44,25 +46,18 @@ define([
             },
             storeURL: {
                 save: false
-            },
-            storeLocalStorage: {
-                save: false
             }
         },
-        emailAppSettings: {
-            saveMapExtent: {
-                save: true
-            },
-            saveLayerVisibility: {
-                save: true
-            },
-            storeURL: {
-                save: true
-            },
-            storeLocalStorage: {
-                save: true
-            }
-        },
+        
+        //email settings
+        shareNode: null,
+        shareTemplate: '<a href="#">Share Map</a>',
+        emailSettings: ['saveMapExtent', 'saveLayerVisibility', 'storeURL'],
+        address: '',
+        subject: 'Share Map',
+        body: '',
+        
+        //layer handles
         layerHandles: null,
         checkboxHandles: null,
         constructor: function () {
@@ -80,6 +75,7 @@ define([
         },
         postCreate: function () {
             this.inherited(arguments);
+            console.log(this);
             this.layerHandles = [];
             this.checkboxHandles = {};
             if (!this.map || !this.layerInfos) {
@@ -104,9 +100,12 @@ define([
                     this.saveAppSettings();
                     this.refreshView();
                 }));
-                On(this.emailMapButton, 'click', Lang.hitch(this, function(){
-                    this.emailLink();
-                }));
+                if (this.shareNode !== null) {
+                    var share = DomConstruct.place(this.shareTemplate, this.shareNode);
+                    On(share, 'click', Lang.hitch(this, function () {
+                        this.emailLink();
+                    }));
+                }
                 if (this.mapRightClickMenu) {
                     this.addRightClickMenu();
                 }
@@ -119,30 +118,30 @@ define([
                 onClick: Lang.hitch(this, 'emailLink')
             }));
         },
-        emailLink: function() {
-            this.appSettings.saveMapExtent.save;
-            this.appSettings.saveLayerVisibility.save;
-            this.appSettings.storeLocalStorage.save;
-            this._setHandles();
-            for (var setting in this.emailAppSettings) {
-                if (this.hasOwnProperty(setting)) {
-                    this.setValue(setting, true);
-                }
-            }
+        emailLink: function () {
+            var currentSettings = Lang.clone(this.appSettings);
+            //enable required settings for email
+            Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
+                this.setValue(setting, true);
+            }));
             var link = encodeURIComponent(window.location + '\r\n\r\n');
-            window.open('mailto:' + this.address + '?subject=' + this.subject + '&body=' + this.body + link, '_self');
+            window.open('mailto:' + this.address + '?subject=' + this.subject + '&body=' + this.body + '\n\n' + link, '_self');
+            this.appSettings = currentSettings;
+            this._setHandles();
+            this.saveAppSettings();
+            this.refreshView();
         },
         /*
          * 
          * @param {type} key string to identify setting to set
          * @param {object} value value to set as setting
-         * @param {boolean} overwrite overwrites current value if overwrite is true
          * @returns {undefined}
          */
         setValue: function (key, value) {
             this.appSettings[key].save = value;
             this._setHandles();
             this.saveAppSettings();
+            this.refreshView();
         },
         /*
          * gets an app setting
@@ -181,7 +180,6 @@ define([
                 for (var i in parameters) {
                     if (parameters[i].indexOf('CMV_appSettings') !== -1) {
                         this.appSettings = Json.parse(parameters[i].split('=')[1]);
-                        window.location.hash = '';
                     }
                 }
             } catch (error) {
@@ -206,46 +204,43 @@ define([
          * applies the loaded settings
          */
         _loadAppSettings: function () {
-            if (this.appSettings.storeLocalStorage.save) {
-
-                //load map extent
-                try {
-                    if (this.appSettings.saveMapExtent.save) {
-                        this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
-                    }
-                } catch (error) {
-                    this._error('setSavedExtent: ' + error);
+            //load map extent
+            try {
+                if (this.appSettings.saveMapExtent.save) {
+                    this.map.setExtent(new Extent(this.appSettings.saveMapExtent.value));
                 }
+            } catch (error) {
+                this._error('_loadAppSettings:mapextent: ' + error);
+            }
 
-                //load visible layers
-                try {
-                    if (this.appSettings.saveLayerVisibility.save) {
-                        Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
+            //load visible layers
+            try {
+                if (this.appSettings.saveLayerVisibility.save) {
+                    Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
+                        if (this.appSettings
+                                .saveLayerVisibility
+                                .hasOwnProperty(layer.layer.id)) {
                             if (this.appSettings
-                                    .saveLayerVisibility
-                                    .hasOwnProperty(layer.layer.id)) {
-                                if (this.appSettings
+                                    .saveLayerVisibility[layer.layer.id]
+                                    .visibleLayers) {
+                                layer.layer.setVisibleLayers(
+                                        this.appSettings
                                         .saveLayerVisibility[layer.layer.id]
-                                        .visibleLayers) {
-                                    layer.layer.setVisibleLayers(
-                                            this.appSettings
-                                            .saveLayerVisibility[layer.layer.id]
-                                            .visibleLayers);
+                                        .visibleLayers);
 
-                                }
-                                if (this.appSettings
-                                        .saveLayerVisibility[layer.layer.id]
-                                        .visible !== null) {
-                                    layer.layer.setVisibility(this.appSettings
-                                            .saveLayerVisibility[layer.layer.id]
-                                            .visible);
-                                }
                             }
-                        }));
-                    }
-                } catch (error) {
-                    this._error('setSavedtLayers: ' + error);
+                            if (this.appSettings
+                                    .saveLayerVisibility[layer.layer.id]
+                                    .visible !== null) {
+                                layer.layer.setVisibility(this.appSettings
+                                        .saveLayerVisibility[layer.layer.id]
+                                        .visible);
+                            }
+                        }
+                    }));
                 }
+            } catch (error) {
+                this._error('_loadAppSettings:layervisibility: ' + error);
             }
         },
         /*
