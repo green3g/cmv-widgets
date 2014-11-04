@@ -34,13 +34,9 @@ define([
         appSettingsTemplate, Menu, MenuItem, PopupMenuItem) {
 
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
-        //email settings
-        shareNode: null,
-        shareTemplate: '<a href="#">Share Map</a>',
-        emailSettings: ['saveMapExtent', 'saveLayerVisibility', 'storeURL'],
-        address: '',
-        subject: 'Share Map',
-        body: '',
+        widgetsInTemplate: true,
+        templateString: appSettingsTemplate,
+        appSettings: null,
         defaultAppSettings: {
             saveMapExtent: {
                 save: false
@@ -52,8 +48,14 @@ define([
                 save: false
             }
         },
-        templateString: appSettingsTemplate,
-        _appSettings: null,
+        //email settings
+        shareNode: null,
+        shareTemplate: '<a href="#">Share Map</a>',
+        emailSettings: ['saveMapExtent', 'saveLayerVisibility', 'storeURL'],
+        address: '',
+        subject: 'Share Map',
+        body: '',
+        //layer handles
         layerHandles: null,
         checkboxHandles: null,
         constructor: function () {
@@ -84,13 +86,13 @@ define([
                         this.checkboxHandles[setting] =
                                 On(this[setting], 'change', Lang.hitch(this, function (setting) {
                                     return function (checked) {
-                                        this._setValue(setting, { save: checked });
+                                        this._setValue(setting, {save: checked});
                                     };
                                 }(setting)));
                     }
                 }
                 Topic.publish('AppSettings/onSettingsLoad', Lang.clone(this._appSettings));
-                Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function(key, value){
+                Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function (key, value) {
                     this._setValue(key, value);
                 }));
 
@@ -99,6 +101,8 @@ define([
                     this._saveAppSettings();
                     this._refreshView();
                 }));
+
+                //place share button/link
                 var share;
                 if (this.shareNode !== null) {
                     share = DomConstruct.place(this.shareTemplate, this.shareNode);
@@ -136,7 +140,7 @@ define([
             //this._appSettings = currentSettings;
             //set values back to original
             Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
-                this._setValue(setting, {save: currentSettings[setting].save });
+                this._setValue(setting, {save: currentSettings[setting].save});
             }));
         },
         /*
@@ -306,8 +310,8 @@ define([
                 if (this.layerHandles.layerToggle) {
                     this.layerHandles.layerToggle.remove();
                 }
+                this._saveAppSettings();
             }
-            this._saveAppSettings();
 
         },
         _refreshView: function () {
@@ -334,7 +338,7 @@ define([
             //if an error occurs local storage corruption or hash corruption
             // is probably the issue
             topic.publish('viewer/handleError', {
-                    source: 'AppSettings',
+                source: 'AppSettings',
                 error: e
             });
             localStorage.clear();
