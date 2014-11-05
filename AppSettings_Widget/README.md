@@ -1,15 +1,14 @@
 AppSettings
 ===============
 
-CMV Version: 1.3.0
+CMV Version: 1.3.1
 
-A widget designed for use in CMV that allows the user to save the current state of the map extent and visible layers.
+A widget designed for use in CMV that allows the user to save the current 
+state of the map extent and visible layers.
+Additional functionality using Topic/subscribe and Topic/publish 
+allows widget developers to save additional settings. **This has not yet been tested.**
 
-This widget is currently in beta stage, as it has not been thoroughly tested yet. 
-Since localStorage is used, <b>clear cache in between updates. Otherwise, updates may break existing app.</b>
-Feel free to contact me with bugs and I will fix them as time permits.
-
-<h3>Description:</h3>
+##Description:
 Allows the user to save the current state of the map extent and visible layers
 using html5 localStorage or URL.
  
@@ -17,13 +16,7 @@ using html5 localStorage or URL.
  
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/Widget_screenshot.PNG)
 
- 
-<h3>Limitations: </h3>
-
-<h3>Known Bugs</h3>
-The existing TOC widget does not check to see if layer visibility has been changed, so when this widget loads and refreshes the map to previous layers, the TOC does not update.
-
-<h3>Usage </h3>
+##Usage 
 In viewer.js: 
 ```javascript      
 settings: {
@@ -34,37 +27,36 @@ settings: {
     path: 'gis/dijit/AppSettings',
     title: 'Save/Share Current Map',
     options: {
+    //required:
      map: true,
      tocLayerInfos: true,
+
+     //optional: 
      mapRightClickMenu: true,
      address: 'email@email.com',
-     subject: 'Review Map',
-     body: 'Sharing this map'
+     subject: 'Share Map',
+     body: 'Check out this map! <br /> '
+
     }
 }
 ```
 
-Optionally, place it somewhere else, like in the help dijit:
-HelpDialog.html: add another content pane to tab widget
-```html
-...
-<div data-dojo-type="dijit/layout/ContentPane" title="Settings">
-    <div id="settingsDijit" 
-         data-dojo-type="gis/dijit/AppSettings"
-         data-dojo-props="map: this.map, layerInfos: this.layerInfos"></div>
-</div>
-...
-```
-Help.js: tell dojo to include the additional AppSettings widget
+##Developing
+See: http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html
+
+###Storing a setting:
 ```javascript
-define([
-    //...other includes here
-    'gis/dijit/AppSettings'
-], function (//other objects here...
-         AppSettings
-        ) {
- ```
- Copyright (C) 2014 
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//writes the object value to the appSettings[key] and stores it in localStorage
+Topic.publish('AppSettings/setValue', key, value);
+```
+
+###Retrieving a value when the widget is loaded:
+```javascript
+//waits for the settings to be loaded and prints the appSettings object
+Topic.subscribe('AppSettings/onSettingsLoad', Lang.hitch(this, function (appSettings) {
+    console.log(appSettings)
+}));
+```
+Note: the `appSettings` object is a clone of the internal data structure
+
+License: MIT
