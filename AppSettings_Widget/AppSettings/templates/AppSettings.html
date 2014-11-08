@@ -1,31 +1,23 @@
-<div>
-    <p><strong>Remember Current View:</strong></p>
+<div>  
     <input data-dojo-attach-point="saveMapExtent" 
            name="saveMapExtent" 
            data-dojo-type="dijit/form/CheckBox" 
-         data-dojo-props="checked: this.appSettings.saveMapExtent.save"  />
+           data-dojo-props="checked: this._appSettings.saveMapExtent.save"  />
     <label for="saveMapExtent">Save Map Extent</label><br />
     <input data-dojo-attach-point="saveLayerVisibility" 
-        name="saveLayerVisibility" 
-        data-dojo-type="dijit/form/CheckBox"
-         data-dojo-props="checked: this.appSettings.saveLayerVisibility.save" />
-    <label for="saveLayerVisibility">Save Layer Visibility</label><br /><br/>
-    <p><strong>Save and Store Options:</strong></p>
+           name="saveLayerVisibility" 
+           data-dojo-type="dijit/form/CheckBox"
+           data-dojo-props="checked: this._appSettings.saveLayerVisibility.save" />
+    <label for="saveLayerVisibility">Save Visible Layers</label><br /><br/>
     <input data-dojo-attach-point="storeURL" 
-        name="storeURL" 
-        data-dojo-type="dijit/form/CheckBox"
-        data-dojo-props="checked: this.appSettings.storeURL.save"/>
-    <label for="storeURL">Store Map Using URL Location</label><br />    
-    <input data-dojo-attach-point="storeLocalStorage" 
-        name="storeLocalStorage" 
-        data-dojo-type="dijit/form/CheckBox"
-         data-dojo-props="checked: this.appSettings.storeLocalStorage.save"/>
-    <label for="storeLocalStorage">Restore View When Loaded</label><br /><br />
-    <p>Settings are saved Automatically, If you are experiencing issues, please try to clear your settings cache:<br />
-    <button data-dojo-attach-point="clearCacheButton" 
-            data-dojo-props="iconClass:'clearIcon'"
-            data-dojo-type="dijit/form/Button">Clear Cache</button>
-    <button data-dojo-attach-point="emailMapButton" 
-            data-dojo-props="iconClass:'emailMap'"
-            data-dojo-type="dijit/form/Button">Share Map</button>
+           name="storeURL" 
+           data-dojo-type="dijit/form/CheckBox"
+           data-dojo-props="checked: this._appSettings.storeURL.save"/>
+    <label for="storeURL">Save Map Using Current URL</label><br />
+    <p>
+        <span data-dojo-attach-point="defaultShareNode"></span> 
+        <button data-dojo-attach-point="clearCacheButton" 
+                data-dojo-props="iconClass:'dijitIconUndo'"
+                data-dojo-type="dijit/form/Button">Reset Settings</button>
+    </p>
 </div>
