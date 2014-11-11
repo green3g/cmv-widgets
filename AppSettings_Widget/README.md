@@ -29,7 +29,7 @@ settings: {
     options: {
     //required:
      map: true,
-     tocLayerInfos: true,
+     layerControlLayerInfos: true,
 
      //optional: 
      mapRightClickMenu: true,
