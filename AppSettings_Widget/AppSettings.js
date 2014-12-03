@@ -1,16 +1,3 @@
-/**
- * 
- * Dijit Title: AppSettings
- * Description: A dijit that allows the user to save 
- * the current state of the map extent and visible layers via localStorage
- * and URL
- * Documentation: https://github.com/roemhildtg/CMV_Widgets/tree/master/AppSettings_Widget
- * 
- * Copyright (C) 2014 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- */
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
@@ -22,21 +9,20 @@ define([
     'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
-    'dijit/form/CheckBox',
     'dijit/form/Button',
     'esri/geometry/Extent',
+    'dijit/registry',
+    'dojo/ready',
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/Menu',
     'dijit/MenuItem',
-    'dijit/PopupMenuItem'
+    'dijit/PopupMenuItem',
+    'dijit/form/CheckBox'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, Topic, On, Array, Json, Lang, Checkbox, Button, Extent,
-        appSettingsTemplate, Menu, MenuItem, PopupMenuItem) {
-
+        DomConstruct, Topic, On, Array, Json, Lang, Button, Extent, registry, ready, 
+        appSettingsTemplate, Menu, MenuItem) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
-        widgetsInTemplate: true,
-        templateString: appSettingsTemplate,
-        appSettings: null,
+        /* params */
         defaultAppSettings: {
             saveMapExtent: {
                 save: false
@@ -50,11 +36,15 @@ define([
         },
         //email settings
         shareNode: null,
-        shareTemplate: '<a href="#">Share Map</a>',
+        shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
         emailSettings: ['saveMapExtent', 'saveLayerVisibility', 'storeURL'],
         address: '',
         subject: 'Share Map',
         body: '',
+        /* private */
+        widgetsInTemplate: true,
+        templateString: appSettingsTemplate,
+        _appSettings: null,
         //layer handles
         layerHandles: null,
         checkboxHandles: null,
@@ -70,11 +60,12 @@ define([
             if (!window.localStorage) {
                 this._disable();
             }
+
+            this.layerHandles = [];
+            this.checkboxHandles = {};
         },
         postCreate: function () {
             this.inherited(arguments);
-            this.layerHandles = [];
-            this.checkboxHandles = {};
             if (!this.map || !this.layerInfos) {
                 this._disable();
                 this._error('AppSettings requires map and layerInfos objects');
@@ -91,35 +82,42 @@ define([
                                 }(setting)));
                     }
                 }
-                Topic.publish('AppSettings/onSettingsLoad', Lang.clone(this._appSettings));
-                Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function (key, value) {
-                    this._setValue(key, value);
-                }));
-
+                this._handleTopics();
                 On(this.clearCacheButton, 'click', Lang.hitch(this, function () {
                     this._appSettings = this.defaultAppSettings;
                     this._saveAppSettings();
                     this._refreshView();
                 }));
-
-                //place share button/link
-                var share;
-                if (this.shareNode !== null) {
-                    share = DomConstruct.place(this.shareTemplate, this.shareNode);
-                } else {
-                    share = new Button({
-                        iconClass: 'dijitIconMail',
-                        showLabel: true,
-                        label: 'Email Map'
-                    }, this.defaultShareNode);
-                }
-                On(share, 'click', Lang.hitch(this, function () {
-                    this._emailLink();
-                }));
-                if (this.mapRightClickMenu) {
-                    this._addRightClickMenu();
-                }
+                this._handleShare();
             }
+        },
+        startup: function () {
+            this.inherited(arguments);
+        },
+        _handleShare: function () {
+//place share button/link
+            var share;
+            if (this.shareNode !== null) {
+                share = DomConstruct.place(this.shareTemplate, this.shareNode);
+            } else {
+                share = new Button({
+                    iconClass: 'fa fa-envelope-o fa-fw',
+                    showLabel: true,
+                    label: 'Email Map'
+                }, this.defaultShareNode);
+            }
+            On(share, 'click', Lang.hitch(this, function () {
+                this._emailLink();
+            }));
+            if (this.mapRightClickMenu) {
+                this._addRightClickMenu();
+            }
+        },
+        _handleTopics: function () {
+            Topic.publish('AppSettings/onSettingsLoad', Lang.clone(this._appSettings));
+            Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function (key, value) {
+                this._setValue(key, value);
+            }));
         },
         _addRightClickMenu: function () {
             this.menu = new Menu();
@@ -134,9 +132,9 @@ define([
             Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
                 this._setValue(setting, {save: true});
             }));
-            var link = encodeURIComponent(window.location + '\r\n\r\n');
+            var link = encodeURIComponent(window.location);
             window.open('mailto:' + this.address + '?subject=' + this.subject +
-                    '&body=' + this.body + '\n\n' + link, '_self');
+                    '&body=' + this.body + link, '_self');
             //this._appSettings = currentSettings;
             //set values back to original
             Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
@@ -162,7 +160,6 @@ define([
         _saveAppSettings: function () {
             var settingsString = Json.stringify(this._appSettings);
             localStorage.setItem('CMV_appSettings', settingsString);
-
             //setup store url
             if (this._appSettings.storeURL.save) {
                 var storeURL = encodeURI('CMV_appSettings=' + settingsString);
@@ -198,7 +195,6 @@ define([
                 try {
                     var CMV_appSettings = localStorage.getItem('CMV_appSettings');
                     this._appSettings = Json.parse(CMV_appSettings);
-
                 } catch (error) {
                     this._error('_loadLocalStorage: ' + error);
                 }
@@ -217,6 +213,8 @@ define([
                 this._error('_loadAppSettings:mapextent: ' + error);
             }
 
+            ready(Lang.hitch(this, function() {
+                console.log(this)
             //load visible layers
             try {
                 if (this._appSettings.saveLayerVisibility.save) {
@@ -231,7 +229,6 @@ define([
                                         this._appSettings
                                         .saveLayerVisibility[layer.layer.id]
                                         .visibleLayers);
-
                             }
                             if (this._appSettings
                                     .saveLayerVisibility[layer.layer.id]
@@ -246,6 +243,7 @@ define([
             } catch (error) {
                 this._error('_loadAppSettings:layervisibility: ' + error);
             }
+        }));
         },
         /*
          * a helper function to manage event handlers
