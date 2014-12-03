@@ -214,7 +214,6 @@ define([
             }
 
             ready(Lang.hitch(this, function() {
-                console.log(this)
             //load visible layers
             try {
                 if (this._appSettings.saveLayerVisibility.save) {
