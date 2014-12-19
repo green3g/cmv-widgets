@@ -6,11 +6,12 @@ CMV Version: 1.3.1
 A widget designed for use in CMV that allows the user to save the current 
 state of the map extent and visible layers.
 Additional functionality using Topic/subscribe and Topic/publish 
-allows widget developers to save additional settings. **This has not yet been tested.**
+allows widget developers to save additional settings.
 
 ##Description:
 Allows the user to save the current state of the map extent and visible layers
-using html5 localStorage or URL.
+using html5 localStorage. 
+Also allows the user to 'share' a current snapshot of the map state with others via email client.
  
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/URL_Screenshot.PNG)
  
@@ -60,3 +61,9 @@ Topic.subscribe('AppSettings/onSettingsLoad', Lang.hitch(this, function (appSett
 Note: the `appSettings` object is a clone of the internal data structure
 
 License: MIT
+
+##Changes
+
+12/19/2014: 
+* Settings will now load after other widgets are ready. IE 9 was throwing errors when the settings were loaded before.
+* Continuous url saving has been removed to allow for compatibility with the navigation hash widget, and other widgets using the hash. To share via url, the share map button can be used.
