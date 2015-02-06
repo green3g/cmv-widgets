@@ -64,7 +64,11 @@ define([
                                 topic.publish('AppSettings/setValue', 'saveBasemap', {
                                     value: basemap
                                 });
-
+                                topic.publish('googleAnalytics/events', {
+                                    category: 'Basemap',
+                                    action: 'basemap-change',
+                                    label: basemap
+                                });
                                 this.currentBasemap = basemap;
                                 if (this.mode === 'custom') {
                                     this.gallery.select(basemap);
@@ -90,36 +94,36 @@ define([
         },
         startup: function () {
             this.inherited(arguments);
-            /* load the saved basemap value */
-            topic.subscribe('AppSettings/onSettingsLoad', lang.hitch(this, function (settings) {
-                if (settings.saveBasemap &&
-                        settings.saveBasemap.value &&
-                        (settings.saveBasemap.save || settings.saveBasemap.urlLoad)) {
-                    if (this.mode === 'custom') {
-                        if (this.map.getBasemap() !== settings.saveBasemap.value) { //based off the title of custom basemaps in viewer.js config
-                            this.gallery.select(settings.saveBasemap.value);
-                        }
+            if (this.waitAppSettings) {
+                /* load the saved basemap value */
+                topic.subscribe('AppSettings/onSettingsLoad', lang.hitch(this, 'initBasemap'));
+            } else {
+                this.initBasemap();
+            }
+        },
+        initBasemap: function (settings) {
+            if (settings && settings.saveBasemap && 
+                    (settings.saveBasemap.save || settings.saveBasemap.urlLoad)) {
+                var b = this.mapStartBasemap = settings.saveBasemap.value;
+                array.forEach(this.menu.getChildren(), function (c) {
+                    if (c.id === b) {
+                        c.set('iconClass', 'selectedIcon');
                     } else {
-                        if (this.mapStartBasemap) {
-                            if (this.map.getBasemap() !== settings.saveBasemap.value) { //based off the agol basemap name
-                                this.map.setBasemap(settings.saveBasemap.value);
-                            }
-                        }
+                        c.set('iconClass', 'emptyIcon');
                     }
-                } else {
-                    if (this.mode === 'custom') {
-                        if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the title of custom basemaps in viewer.js config
-                            this.gallery.select(this.mapStartBasemap);
-                        }
-                    } else {
-                        if (this.mapStartBasemap) {
-                            if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the agol basemap name
-                                this.map.setBasemap(this.mapStartBasemap);
-                            }
-                        }
+                });
+            }
+            if (this.mode === 'custom') {
+                if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the title of custom basemaps in viewer.js config 
+                    this.gallery.select(this.mapStartBasemap);
+                }
+            } else {
+                if (this.mapStartBasemap) {
+                    if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the agol basemap name 
+                        this.map.setBasemap(this.mapStartBasemap);
                     }
                 }
-            }));
+            }
         }
     });
 });

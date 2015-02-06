@@ -9,31 +9,28 @@ define([
     'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
-    'dijit/form/Button',
-    'esri/geometry/Extent',
-    'dijit/registry',
     'dojo/ready',
-    'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/Menu',
     'dijit/MenuItem',
-    'dijit/PopupMenuItem',
     'dijit/form/CheckBox',
     'dijit/Dialog',
-    'dijit/Toolbar'
+    'dojo/text!./AppSettings/templates/AppSettings.html',
+    'dijit/form/Button',
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, Topic, On, Array, Json, Lang, Button, Extent, registry, ready,
-        appSettingsTemplate, Menu, MenuItem, PopupMenuItem, Checkbox, Dialog) {
+        DomConstruct, Topic, On, Array, Json, Lang, ready,
+        Menu, MenuItem, Checkbox, Dialog, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         /* params */
         /**
          * each app setting may have the following properties:
-         * save - whether or not to save this setting
-         * value: the currently saved value
-         * checkbox: whether or not to display a user checkbox
-         * label: a checkbox label
+         * save - boolean, whether or not to save this setting
+         * value: object, the currently saved value
+         * checkbox: boolean, whether or not to display a user checkbox
+         * label: string, a checkbox label
          * urlLoad: whether or not a value has been loaded via url
          */
         appSettings: {},
+        parameterName: 'cmvSettings',
         //email settings
         shareNode: null,
         shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
@@ -62,11 +59,7 @@ define([
             }
         },
         _appSettings: null,
-        layerHandles: null,
-        constructor: function () {
-            this.inherited(arguments);
-            this.layerHandles = [];
-        },
+        layerHandles: [],
         postCreate: function () {
             this.inherited(arguments);
             Lang.mixin(this._defaultAppSettings, this.appSettings);
@@ -80,22 +73,6 @@ define([
         _init: function () {
             this._loadAppSettings();
             this._handleShare();
-
-            On(this.clearCacheButton, 'click', Lang.hitch(this, function () {
-                for (var s in this._defaultAppSettings) {
-                    if (this._defaultAppSettings.hasOwnProperty(s)) {
-                        if (this._appSettings.hasOwnProperty(s)) {
-                            Lang.mixin(this._appSettings[s], this._defaultAppSettings[s]);
-                        } else {
-                            this._appSettings[s] = this._defaultAppSettings[s];
-                        }
-
-                    }
-                }
-                this._saveAppSettings();
-                this._refreshView();
-            }));
-
             this._setCheckboxHandles();
 
             ready(1, this, '_loadSavedExtent');
@@ -107,9 +84,9 @@ define([
             //start with default
             this._appSettings = Lang.clone(this._defaultAppSettings);
             //mixin local storage
-            if (localStorage.CMV_appSettings) {
+            if (localStorage[this.parameterName]) {
                 try {
-                    var loadedSettings = Json.parse(localStorage.getItem('CMV_appSettings'));
+                    var loadedSettings = Json.parse(localStorage.getItem(this.parameterName));
                     for (var setting in loadedSettings) {
                         if (loadedSettings.hasOwnProperty(setting) &&
                                 loadedSettings[setting].save) {
@@ -126,7 +103,7 @@ define([
             }
             //url parameters override 
             var parameters = decodeURI(window.location.search);
-            if (parameters.indexOf('CMV_appSettings') !== -1) {
+            if (parameters.indexOf(this.parameterName) !== -1) {
                 try {
                     if (parameters.indexOf('&') !== -1) {
                         parameters = parameters.split('&');
@@ -134,9 +111,8 @@ define([
                         parameters = [parameters];
                     }
                     for (var i in parameters) {
-                        if (parameters[i].indexOf('CMV_appSettings') !== -1) {
+                        if (parameters[i].indexOf(this.parameterName) !== -1) {
                             var settings = Json.parse(decodeURIComponent(parameters[i].split('=')[1]));
-                            //don't override this users preferences, just the values
                             for (var s in settings) {
                                 if (settings.hasOwnProperty(s) && this._appSettings.hasOwnProperty(s)) {
                                     this._appSettings[s].value = settings[s];
@@ -165,9 +141,15 @@ define([
                 checked: this._appSettings[setting].save,
                 onChange: Lang.hitch(this, function (setting) {
                     return function (checked) {
+                        Topic.publish('googleAnalytics/events', {
+                            category: 'AppSettings',
+                            action: 'checkbox',
+                            label: setting,
+                            value: checked ? 1 : 0
+                        });
                         this._appSettings[setting].save = checked;
                         this._saveAppSettings();
-                    }
+                    };
                 }(setting))
             });
             this._appSettings[setting]._checkboxNode.placeAt(li);
@@ -209,7 +191,7 @@ define([
          * saves the current value of this._appSettings to localStorage
          */
         _saveAppSettings: function () {
-            localStorage.setItem('CMV_appSettings', this._settingsToJSON());
+            localStorage.setItem(this.parameterName, this._settingsToJSON());
         },
         /**
          * returns a simplified _appSettings object encoded in JSON
@@ -224,7 +206,7 @@ define([
                     settings[setting] = {
                         save: this._appSettings[setting].save,
                         value: Lang.clone(this._appSettings[setting].value)
-                    }
+                    };
                 }
             }
             return Json.stringify(settings);
@@ -265,9 +247,6 @@ define([
                 setting.urlLoad = false;
             }
         },
-        /*
-         * a helper function to manage event handlers
-         */
         _setHandles: function () {
             //map extent handles
             this._setExtentHandles();
@@ -277,14 +256,9 @@ define([
         },
         _setExtentHandles: function () {
             this._appSettings.saveMapExtent.value = {};
-            this._appSettings.saveMapExtent.value.center = this.map.extent.getCenter();
-            this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
-            this.own(this.map.on('zoom-end', Lang.hitch(this, function (event) {
-                this._appSettings.saveMapExtent.value.zoom = event.level;
-                this._saveAppSettings();
-            })));
-            this.own(this.map.on('pan-end', Lang.hitch(this, function (event) {
-                this._appSettings.saveMapExtent.value.center = event.extent.getCenter();
+            this.own(this.map.on('extent-change', Lang.hitch(this, function (event) {
+                this._appSettings.saveMapExtent.value.center = this.map.extent.getCenter();
+                this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
                 this._saveAppSettings();
             })));
         },
@@ -324,9 +298,9 @@ define([
         _settingsToURL: function (settings) {
             var queryString;
             if (window.location.search !== '') {
-                if (window.location.search.indexOf('CMV_appSettings') !== -1 &&
-                        window.location.search.split('CMV_appSettings')[0].length > 1) {
-                    queryString = window.location.search.split('CMV_appSettings')[0] + '&';
+                if (window.location.search.indexOf(this.parameterName) !== -1 &&
+                        window.location.search.split(this.parameterName)[0].length > 1) {
+                    queryString = window.location.search.split(this.parameterName)[0] + '&';
                 } else {
                     queryString = '?';
                 }
@@ -336,10 +310,24 @@ define([
             return [window.location.protocol + '//',
                 window.location.host,
                 window.location.pathname,
-                queryString + 'CMV_appSettings=',
+                queryString + this.parameterName + '=',
                 encodeURIComponent(Json.stringify(settings))].join('');
         },
+        _clearCache: function () {
+            for (var s in this._defaultAppSettings) {
+                if (this._defaultAppSettings.hasOwnProperty(s)) {
+                    if (this._appSettings.hasOwnProperty(s)) {
+                        Lang.mixin(this._appSettings[s], this._defaultAppSettings[s]);
+                    } else {
+                        this._appSettings[s] = Lang.clone(this._defaultAppSettings[s]);
+                    }
+                }
+            }
+            this._saveAppSettings();
+            this._refreshView();
+        },
         _emailLink: function () {
+
             var settings = {};
             Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
                 if (this._appSettings.hasOwnProperty(setting)) {
@@ -353,12 +341,16 @@ define([
             } catch (e) {
                 this._error('_emailLink: ' + e);
             }
-            myDialog = new Dialog({
+            new Dialog({
                 title: "Share Map",
                 content: ['<p>Right click the link below and choose Copy Link or Copy Shortcut:</p>',
                     '<p><a href="', link, '">Share this map</a></p>'].join(''),
                 style: "width: 300px; overflow:hidden;"
             }).show();
+            Topic.publish('googleAnalytics/events', {
+                category: 'AppSettings',
+                action: 'map-share'
+            });
         },
         _handleShare: function () {
             //place share button/link
@@ -377,7 +369,8 @@ define([
             for (var setting in this._appSettings) {
                 if (this._appSettings.hasOwnProperty(setting) &&
                         this._appSettings[setting].checkbox) {
-                    this._appSettings[setting]._checkboxNode.set('checked', this._appSettings[setting].save);
+                    this._appSettings[setting]._checkboxNode.set('checked',
+                            this._appSettings[setting].save);
                 }
             }
         },
@@ -385,11 +378,7 @@ define([
          * disables this widget ui
          */
         _disable: function () {
-//            for (var setting in this._appSettings) {
-//                if (this.hasOwnProperty(setting)) {
-//                    this[setting].set('disabled', 'disabled');
-//                }
-//            }
+
         },
         /*
          * a helper error logging function

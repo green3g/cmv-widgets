@@ -8,6 +8,7 @@
                        data-dojo-type="dijit/form/Button">Share Map</button>
         <button data-dojo-attach-point="clearCacheButton" 
                 data-dojo-props="iconClass:'fa fa-fw fa-undo'"
-                data-dojo-type="dijit/form/Button">Reset Settings</button></p>
+                data-dojo-type="dijit/form/Button"
+                data-dojo-attach-event="onClick:_clearCache">Reset Settings</button></p>
     <div data-dojo-attach-point="containerNode" class="${baseClass}Container"></div>
 </div>
