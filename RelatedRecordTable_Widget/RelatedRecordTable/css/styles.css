@@ -1,16 +1,18 @@
 .relatedRecordTableWidget .dijitTabContainerLeftChildWrapper,
 .relatedRecordTableWidget .dgrid,
 .relatedRecordTableWidget .dijitTabContainerTopChildWrapper,
-.RelatedRecordsTableParent.dijitContentPane {
+.RelatedRecordsTableParent.dijitContentPane,
+.relatedRecordTableWidget .dijitTabPaneWrapper{
      height: 100%; 
      padding: 0;
 }
 
-.relatedRecordTableWidget .dijitTabPaneWrapper {
-    height:99%;
+.RelatedRecordsTableParent {
+    overflow:hidden;
 }
 
-.top .relatedRecordTableWidget .dijitTabPaneWrapper, 
+
+/*.top .relatedRecordTableWidget .dijitTabPaneWrapper, 
 .bottom .relatedRecordTableWidget .dijitTabPaneWrapper {
     height:80%;
-}
+}*/

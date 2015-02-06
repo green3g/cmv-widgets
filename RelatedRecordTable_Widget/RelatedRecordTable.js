@@ -42,49 +42,52 @@ define([
                 doLayout: false
             }, this.containerNode);
             var self = this;
-            Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
-                if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
-                    var relationshipLayer = {
-                        layer: layerInfo.layer,
-                        relationships: []
-                    };
-                    Array.forEach(layerInfo.layer.relationships, Lang.hitch(this, function (relationshipInfo) {
-                        var relationship = {
-                            relationship: relationshipInfo,
-                            title: layerInfo.layer.name + '-' + relationshipInfo.name,
-                            formatters: {},
-                            hiddenColumns: [],
-                            unhideableColumns: [],
-                            include: true,
-                            grid: null,
-                            store: null
+            if (this.layerInfos.length > 0) {
+                Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
+                    if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
+                        var relationshipLayer = {
+                            layer: layerInfo.layer,
+                            relationships: []
                         };
-                        if (this.columnInfos.hasOwnProperty(layerInfo.layer.id) &&
-                                this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
-                            declare.safeMixin(
-                                    relationship,
-                                    this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
-                        }
-                        if (relationship.include) {
-                            relationship.store = new Memory({
-                                id: relationshipLayer.layer.objectIdField
-                            });
-                            relationship.grid = new customGrid({
-                                title: relationship.title,
-                                store: relationship.store,
-                                noDataMessage: 'Click a feature from the map to find related records'
-                            });
-                            relationshipLayer.relationships.push(relationship);
-                            this.tabContainer.addChild(relationship.grid);
-                        }
+                        Array.forEach(layerInfo.layer.relationships, Lang.hitch(this, function (relationshipInfo) {
+                            var relationship = {
+                                relationship: relationshipInfo,
+                                title: layerInfo.layer.name + '-' + relationshipInfo.name,
+                                formatters: {},
+                                hiddenColumns: [],
+                                unhideableColumns: [],
+                                include: true,
+                                grid: null,
+                                store: null
+                            };
+                            if (this.columnInfos.hasOwnProperty(layerInfo.layer.id) &&
+                                    this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
+                                declare.safeMixin(
+                                        relationship,
+                                        this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
+                            }
+                            if (relationship.include) {
+                                relationship.store = new Memory({
+                                    id: relationshipLayer.layer.objectIdField
+                                });
+                                relationship.grid = new customGrid({
+                                    title: relationship.title,
+                                    store: relationship.store,
+                                    noDataMessage: 'Click a feature from the map to find related records'
+                                });
+                                relationshipLayer.relationships.push(relationship);
+                                this.tabContainer.addChild(relationship.grid);
+                            }
 
-                    }));
-                    relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
-                        this._onLayerClick(relationshipLayer, clickEvent);
-                    }));
-                    this.relationshipLayers.push(relationshipLayer);
-                }
-            }));
+                        }));
+                        relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
+                            this._onLayerClick(relationshipLayer, clickEvent);
+                        }));
+                        this.relationshipLayers.push(relationshipLayer);
+                    }
+                }));
+            }
+            //this._initMapClick();
         },
         onShow: function () {
             this.inherited(arguments);
@@ -99,7 +102,6 @@ define([
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
                 if (relationship.include) {
                     relationship.store.setData([]);
-                    relationship.grid.refresh();
                     var attributes = clickEvent.graphic.attributes;
                     var objectID = attributes[layer.layer.objectIdField];
                     var query = {
@@ -161,6 +163,18 @@ define([
             }).then(function (response) {
                 callback(response.fields, response.relatedRecordGroups);
             });
+        },
+        _initMapClick: function () {
+            this.layerInfos[0].layer.getMap().on('click', Lang.hitch(this, function () {
+                Array.forEach(this.relationshipLayers, Lang.hitch(this, function (relationshipLayer) {
+                    Array.forEach(relationshipLayer.relationships, Lang.hitch(this, function (relationship) {
+                        if (relationship.include) {
+                            relationship.store.setData([]);
+                            relationship.grid.refresh();
+                        }
+                    }));
+                }));
+            }));
         }
     });
 });
