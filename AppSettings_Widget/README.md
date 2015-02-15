@@ -52,11 +52,13 @@ Options Parameters:
 Key | Type | Default | Description
 ---|---|---|---
 map | - | - | In CMV config set to true to include map
-layerInfos | - | - | In CMV config, set layerControlLayerInfos to true
+layerInfos | - | - | In CMV config, set layerControlLayerInfos to true to include layerInfos
 mapRightClickMenu | - | - | In CMV config, set to true to add a right click menu option for sharing the map
-appSettings | object | {} | Additional app settings to be stored, by default map extent and layer visibility are saved, widget developers may add more
+appSettings | object | `{}` | Additional app settings to be stored, by default map extent and layer visibility are saved, widget developers may add more
+parameterName | string | 'cmvSettings' | Name of the parameter stored in localStorage and via url
+emailSettings | array | `['saveMapExtent', 'saveLayerVisibility']` | Keys of the settings that will be included in the Share Map email link
 shareNode | string or domNode | '' | an optional domnode to place a link to share map
-parameterName | string | cmvSettings | the name of the parameter stored in localStorage and via url
+shareTemplate | html template string | `<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>` | The html template that will be placed at the shareNode
 address | string | '' | the default email address in the Share Map email
 subject | string | 'Share map' | the default subject in the Share Map email
 body | string | '' | the default body message in the Share Map email
