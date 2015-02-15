@@ -345,7 +345,10 @@ define([
                 title: "Share Map",
                 content: ['<p>Right click the link below and choose Copy Link or Copy Shortcut:</p>',
                     '<p><a href="', link, '">Share this map</a></p>'].join(''),
-                style: "width: 300px; overflow:hidden;"
+                style: "width: 300px; overflow:hidden;",
+                onHide: function() {
+                    this.destroyRecursive();
+                }
             }).show();
             Topic.publish('googleAnalytics/events', {
                 category: 'AppSettings',
