@@ -21,7 +21,7 @@ Options:
 
 Key        |      Type      | Default |  Description
 ---|-----|-------|----
-layerInfos | boolean | `null` | set tocLayerInfos or layerControlLayerInfos to true, a layerInfos object is required
+layerInfos | boolean | `null` | set layerControlLayerInfos to true, a layerInfos object is required
 formatters | {object} | `{}` |  key, value pairs of column formatter functions. Key is either a field name or esri field type.
 columnInfos | {object} | `{}` | An object describing each relationship
 tabPosition | string |  `'left-h'` | dijit tabContainer.tabPosition property: `'top'`, `'left-h'`, Not working due to layout issues: `'bottom'`, `'right-h'` 
