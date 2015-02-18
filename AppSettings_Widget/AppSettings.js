@@ -27,7 +27,7 @@ define([
          * value: object, the currently saved value
          * checkbox: boolean, whether or not to display a user checkbox
          * label: string, a checkbox label
-         * urlLoad: whether or not a value has been loaded via url
+         * urlLoad: whether or not a value has been loaded via url - this is set by this widget
          */
         appSettings: {},
         parameterName: 'cmvSettings',
@@ -62,10 +62,11 @@ define([
         layerHandles: [],
         postCreate: function () {
             this.inherited(arguments);
+            //mix in additional default settings
             Lang.mixin(this._defaultAppSettings, this.appSettings);
             if (!this.map || !this.layerInfos) {
-                this._disable();
                 this._error('AppSettings requires map and layerInfos objects');
+                return;
             } else {
                 this._init();
             }
@@ -80,19 +81,29 @@ define([
             ready(2, this, '_setHandles');
             ready(3, this, '_handleTopics');
         },
+        /**
+         * loads the settings from localStorage and overrides the loaded settings
+         * with values in the url parameters
+         */
         _loadAppSettings: function () {
             //start with default
             this._appSettings = Lang.clone(this._defaultAppSettings);
             //mixin local storage
             if (localStorage[this.parameterName]) {
+                //this may fail if Json is invalid
                 try {
+                    //parse the settings
                     var loadedSettings = Json.parse(localStorage.getItem(this.parameterName));
+                    //store each setting that was loaded
+                    //override the default
                     for (var setting in loadedSettings) {
                         if (loadedSettings.hasOwnProperty(setting) &&
                                 loadedSettings[setting].save) {
                             if (!this._appSettings.hasOwnProperty(setting)) {
+                                //if the property is not in the default settings, create it
                                 this._appSettings[setting] = loadedSettings[setting];
                             } else {
+                                //otherwise mixin the setting
                                 Lang.mixin(this._appSettings[setting], loadedSettings[setting]);
                             }
                         }
@@ -104,6 +115,7 @@ define([
             //url parameters override 
             var parameters = decodeURI(window.location.search);
             if (parameters.indexOf(this.parameterName) !== -1) {
+                //this can also throw errors if the json is invalid
                 try {
                     if (parameters.indexOf('&') !== -1) {
                         parameters = parameters.split('&');
@@ -117,6 +129,8 @@ define([
                                 if (settings.hasOwnProperty(s) && this._appSettings.hasOwnProperty(s)) {
                                     this._appSettings[s].value = settings[s];
                                     //set urlLoad flag override
+                                    //this tells the widget that the settings were loaded via 
+                                    //url and should be loaded regardless of the user's checkbox
                                     this._appSettings[s].urlLoad = true;
                                 }
                             }
@@ -127,6 +141,9 @@ define([
                 }
             }
         },
+        /**
+         * if the checkbox property is set to true, calls the _addCheckbox function
+         */ 
         _setCheckboxHandles: function () {
             for (var setting in this._appSettings) {
                 if (this._appSettings.hasOwnProperty(setting) && this._appSettings[setting].checkbox) {
@@ -134,6 +151,9 @@ define([
                 }
             }
         },
+        /**
+         * creates a checkbox and sets the event handlers
+         */
         _addCheckbox: function (setting) {
             var li = DomConstruct.create('li', null, this.settingsList);
             this._appSettings[setting]._checkboxNode = new Checkbox({
@@ -141,6 +161,7 @@ define([
                 checked: this._appSettings[setting].save,
                 onChange: Lang.hitch(this, function (setting) {
                     return function (checked) {
+                        //optional, publish a google analytics event
                         Topic.publish('googleAnalytics/events', {
                             category: 'AppSettings',
                             action: 'checkbox',
@@ -159,12 +180,18 @@ define([
                 'for': setting
             }, li);
         },
+        /**
+         * publishes and subscribes to the AppSettings topics
+         */
         _handleTopics: function () {
             this.own(Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function (key, value) {
                 this._setValue(key, value);
             })));
             Topic.publish('AppSettings/onSettingsLoad', Lang.clone(this._appSettings));
         },
+        /**
+         * creates the right click map menu
+         */
         _addRightClickMenu: function () {
             this.menu = new Menu();
             this.mapRightClickMenu.addChild(new MenuItem({
@@ -211,6 +238,10 @@ define([
             }
             return Json.stringify(settings);
         },
+        /**
+         * recovers the saved extent from the _appSettings object
+         * if the settings's save or urlLoad property is true
+         */
         _loadSavedExtent: function () {
             //load map extent
             if (this._appSettings.saveMapExtent.save ||
@@ -224,6 +255,9 @@ define([
                 this._appSettings.saveMapExtent.urlLoad = false;
             }
         },
+        /**
+         * sets the visibility of the loaded layers if save or urlLoad is true
+         */
         _loadSavedLayers: function () {
             var setting = this._appSettings.saveLayerVisibility;
             //load visible layers
@@ -247,6 +281,9 @@ define([
                 setting.urlLoad = false;
             }
         },
+        /**
+         * sets the extent and layer visibility handles
+         */
         _setHandles: function () {
             //map extent handles
             this._setExtentHandles();
@@ -295,24 +332,36 @@ define([
                 this._saveAppSettings();
             })));
         },
+        /**
+         * creates a share url form the settings
+         * @param {object} settings - the settings to generate a url from
+         * @returns {string} url
+         */
         _settingsToURL: function (settings) {
             var queryString;
+            //if the current url has query parameters, remove the appSettings property if it exists
+            //and try to preserve the rest of it. 
             if (window.location.search !== '') {
-                if (window.location.search.indexOf(this.parameterName) !== -1 &&
-                        window.location.search.split(this.parameterName)[0].length > 1) {
+                if (window.location.search.indexOf(this.parameterName) !== -1 ) {
+                    //the appSettings parameter will always be the last, so preserve anything before it
                     queryString = window.location.search.split(this.parameterName)[0] + '&';
                 } else {
-                    queryString = '?';
+                    queryString = window.location.search;
                 }
             } else {
                 queryString = '?';
             }
+            //build url using window.location
             return [window.location.protocol + '//',
                 window.location.host,
                 window.location.pathname,
                 queryString + this.parameterName + '=',
                 encodeURIComponent(Json.stringify(settings))].join('');
         },
+        /**
+         * in case something goes wrong, the settings are reset.
+         * the user has the option to reset without manually clearing their cache
+         */
         _clearCache: function () {
             for (var s in this._defaultAppSettings) {
                 if (this._defaultAppSettings.hasOwnProperty(s)) {
@@ -326,6 +375,10 @@ define([
             this._saveAppSettings();
             this._refreshView();
         },
+        /**
+         * handles the opening of a new email and displays a temporary dialog
+         * in case the email fails to open
+         */
         _emailLink: function () {
 
             var settings = {};
@@ -350,11 +403,15 @@ define([
                     this.destroyRecursive();
                 }
             }).show();
+            //optional google analytics event
             Topic.publish('googleAnalytics/events', {
                 category: 'AppSettings',
                 action: 'map-share'
             });
         },
+        /**
+         * creates the domnode for the share button
+         */
         _handleShare: function () {
             //place share button/link
             if (this.shareNode !== null) {
@@ -368,6 +425,10 @@ define([
                 this._addRightClickMenu();
             }
         },
+        /**
+         * in case something changes programatically, this can be called to update
+         * the checkboxes
+         */
         _refreshView: function () {
             for (var setting in this._appSettings) {
                 if (this._appSettings.hasOwnProperty(setting) &&
@@ -376,12 +437,6 @@ define([
                             this._appSettings[setting].save);
                 }
             }
-        },
-        /*
-         * disables this widget ui
-         */
-        _disable: function () {
-
         },
         /*
          * a helper error logging function
