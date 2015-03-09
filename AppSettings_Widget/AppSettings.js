@@ -9,6 +9,8 @@ define([
     'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
+    'esri/geometry/Point',
+    'esri/SpatialReference',
     'dojo/ready',
     'dijit/Menu',
     'dijit/MenuItem',
@@ -17,7 +19,7 @@ define([
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button',
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, Topic, On, Array, Json, Lang, ready,
+        DomConstruct, Topic, On, Array, Json, lang, Point, SpatialReference, ready,
         Menu, MenuItem, Checkbox, Dialog, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         /* params */
@@ -63,7 +65,7 @@ define([
         postCreate: function () {
             this.inherited(arguments);
             //mix in additional default settings
-            Lang.mixin(this._defaultAppSettings, this.appSettings);
+            lang.mixin(this._defaultAppSettings, this.appSettings);
             if (!this.map || !this.layerInfos) {
                 this._error('AppSettings requires map and layerInfos objects');
                 return;
@@ -76,10 +78,29 @@ define([
             this._handleShare();
             this._setCheckboxHandles();
 
-            ready(1, this, '_loadSavedExtent');
-            ready(1, this, '_loadSavedLayers');
-            ready(2, this, '_setHandles');
-            ready(3, this, '_handleTopics');
+            if (this._appSettings.saveMapExtent.save ||
+                    this._appSettings.saveMapExtent.urlLoad) {
+                //once the saved map has finished zooming, set the handle
+                var handle = this.map.on('zoom-end', lang.hitch(this, function () {
+                    handle.remove();
+                    this._setExtentHandles();
+                }));
+                this._loadSavedExtent();
+            } else {
+                this._setExtentHandles();
+            }
+            if (this._appSettings.saveLayerVisibility.save ||
+                    this._appSettings.saveLayerVisibility.urlLoad) {
+                //needs to be ready so other widgets can update layers
+                //accordingly
+                ready(3, this, '_loadSavedLayers');
+            }
+            //needs to come after the loadSavedLayers function
+            //so also needs to be ready
+            ready(4, this, '_setLayerVisibilityHandles');
+            //needs to wait for other widgets to load
+            //so they can subscribe to topic
+            ready(5, this, '_handleTopics');
         },
         /**
          * loads the settings from localStorage and overrides the loaded settings
@@ -87,7 +108,7 @@ define([
          */
         _loadAppSettings: function () {
             //start with default
-            this._appSettings = Lang.clone(this._defaultAppSettings);
+            this._appSettings = lang.clone(this._defaultAppSettings);
             //mixin local storage
             if (localStorage[this.parameterName]) {
                 //this may fail if Json is invalid
@@ -104,7 +125,7 @@ define([
                                 this._appSettings[setting] = loadedSettings[setting];
                             } else {
                                 //otherwise mixin the setting
-                                Lang.mixin(this._appSettings[setting], loadedSettings[setting]);
+                                lang.mixin(this._appSettings[setting], loadedSettings[setting]);
                             }
                         }
                     }
@@ -143,7 +164,7 @@ define([
         },
         /**
          * if the checkbox property is set to true, calls the _addCheckbox function
-         */ 
+         */
         _setCheckboxHandles: function () {
             for (var setting in this._appSettings) {
                 if (this._appSettings.hasOwnProperty(setting) && this._appSettings[setting].checkbox) {
@@ -159,7 +180,7 @@ define([
             this._appSettings[setting]._checkboxNode = new Checkbox({
                 id: setting,
                 checked: this._appSettings[setting].save,
-                onChange: Lang.hitch(this, function (setting) {
+                onChange: lang.hitch(this, function (setting) {
                     return function (checked) {
                         //optional, publish a google analytics event
                         Topic.publish('googleAnalytics/events', {
@@ -174,7 +195,6 @@ define([
                 }(setting))
             });
             this._appSettings[setting]._checkboxNode.placeAt(li);
-
             DomConstruct.create('label', {
                 innerHTML: this._appSettings[setting].label,
                 'for': setting
@@ -184,10 +204,10 @@ define([
          * publishes and subscribes to the AppSettings topics
          */
         _handleTopics: function () {
-            this.own(Topic.subscribe('AppSettings/setValue', Lang.hitch(this, function (key, value) {
+            this.own(Topic.subscribe('AppSettings/setValue', lang.hitch(this, function (key, value) {
                 this._setValue(key, value);
             })));
-            Topic.publish('AppSettings/onSettingsLoad', Lang.clone(this._appSettings));
+            Topic.publish('AppSettings/onSettingsLoad', lang.clone(this._appSettings));
         },
         /**
          * creates the right click map menu
@@ -196,7 +216,7 @@ define([
             this.menu = new Menu();
             this.mapRightClickMenu.addChild(new MenuItem({
                 label: 'Share Map',
-                onClick: Lang.hitch(this, '_emailLink')
+                onClick: lang.hitch(this, '_emailLink')
             }));
         },
         /*
@@ -207,12 +227,13 @@ define([
          */
         _setValue: function (key, settingsObj) {
             if (this._appSettings.hasOwnProperty(key)) {
-                Lang.mixin(this._appSettings[key], settingsObj);
+                lang.mixin(this._appSettings[key], settingsObj);
             } else {
                 this._appSettings[key] = settingsObj;
             }
             this._saveAppSettings();
             this._refreshView();
+
         },
         /**
          * saves the current value of this._appSettings to localStorage
@@ -232,7 +253,7 @@ define([
                 if (this._appSettings.hasOwnProperty(setting)) {
                     settings[setting] = {
                         save: this._appSettings[setting].save,
-                        value: Lang.clone(this._appSettings[setting].value)
+                        value: lang.clone(this._appSettings[setting].value)
                     };
                 }
             }
@@ -244,16 +265,16 @@ define([
          */
         _loadSavedExtent: function () {
             //load map extent
-            if (this._appSettings.saveMapExtent.save ||
-                    this._appSettings.saveMapExtent.urlLoad) {
-                this.map.centerAndZoom(
-                        this._appSettings.saveMapExtent.value.center,
-                        this._appSettings.saveMapExtent.value.zoom
-                        );
-
-                //reset url flag
-                this._appSettings.saveMapExtent.urlLoad = false;
-            }
+            var point = new Point(
+                    this._appSettings.saveMapExtent.value.center.x,
+                    this._appSettings.saveMapExtent.value.center.y,
+                    new SpatialReference({
+                        wkid: this._appSettings.saveMapExtent.value.center.spatialReference.wkid
+                    }));
+            this.map.centerAndZoom(point,
+                    this._appSettings.saveMapExtent.value.zoom);
+            //reset url flag
+            this._appSettings.saveMapExtent.urlLoad = false;
         },
         /**
          * sets the visibility of the loaded layers if save or urlLoad is true
@@ -261,39 +282,27 @@ define([
         _loadSavedLayers: function () {
             var setting = this._appSettings.saveLayerVisibility;
             //load visible layers
-            if (setting.save || setting.urlLoad) {
-                Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
-                    if (setting.value.hasOwnProperty(layer.layer.id)) {
-                        if (setting.value[layer.layer.id].visibleLayers) {
-                            layer.layer.setVisibleLayers(setting.value[layer.layer.id].visibleLayers);
-                            Topic.publish('layerControl/setVisibleLayers', {
-                                id: layer.layer.id,
-                                visibleLayers: setting.value[layer.layer.id]
-                                        .visibleLayers
-                            });
-                        }
-                        if (setting.value[layer.layer.id].visible !== null) {
-                            layer.layer.setVisibility(setting.value[layer.layer.id].visible);
-                        }
+            Array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
+                if (setting.value.hasOwnProperty(layer.layer.id)) {
+                    if (setting.value[layer.layer.id].visibleLayers) {
+                        layer.layer.setVisibleLayers(setting.value[layer.layer.id].visibleLayers);
+                        Topic.publish('layerControl/setVisibleLayers', {
+                            id: layer.layer.id,
+                            visibleLayers: setting.value[layer.layer.id]
+                                    .visibleLayers
+                        });
                     }
-                }));
-                //reset url flag
-                setting.urlLoad = false;
-            }
-        },
-        /**
-         * sets the extent and layer visibility handles
-         */
-        _setHandles: function () {
-            //map extent handles
-            this._setExtentHandles();
-
-            //layer visibility handles
-            this._setLayerVisibilityHandles();
+                    if (setting.value[layer.layer.id].visible !== null) {
+                        layer.layer.setVisibility(setting.value[layer.layer.id].visible);
+                    }
+                }
+            }));
+            //reset url flag
+            setting.urlLoad = false;
         },
         _setExtentHandles: function () {
             this._appSettings.saveMapExtent.value = {};
-            this.own(this.map.on('extent-change', Lang.hitch(this, function (event) {
+            this.own(this.map.on('extent-change', lang.hitch(this, function (event) {
                 this._appSettings.saveMapExtent.value.center = this.map.extent.getCenter();
                 this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
                 this._saveAppSettings();
@@ -302,7 +311,10 @@ define([
         _setLayerVisibilityHandles: function () {
             var setting = this._appSettings.saveLayerVisibility;
             setting.value = {};
-            Array.forEach(this.layerInfos, Lang.hitch(this, function (layer) {
+            //since the javascript api visibleLayers property starts
+            //with a different set of layers than what is actually turned
+            //on, we need to iterate through, find the parent layers, 
+            Array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
                 var id = layer.layer.id;
                 var visibleLayers;
                 if (layer.layer.hasOwnProperty('visibleLayers')) {
@@ -323,11 +335,11 @@ define([
                     visibleLayers: visibleLayers
                 };
             }));
-            this.own(Topic.subscribe('layerControl/setVisibleLayers', Lang.hitch(this, function (layer) {
+            this.own(Topic.subscribe('layerControl/setVisibleLayers', lang.hitch(this, function (layer) {
                 setting.value[layer.id].visibleLayers = layer.visibleLayers;
                 this._saveAppSettings();
             })));
-            this.own(Topic.subscribe('layerControl/layerToggle', Lang.hitch(this, function (layer) {
+            this.own(Topic.subscribe('layerControl/layerToggle', lang.hitch(this, function (layer) {
                 setting.value[layer.id].visible = layer.visible;
                 this._saveAppSettings();
             })));
@@ -339,24 +351,37 @@ define([
          */
         _settingsToURL: function (settings) {
             var queryString;
-            //if the current url has query parameters, remove the appSettings property if it exists
-            //and try to preserve the rest of it. 
+            var json = encodeURIComponent(Json.stringify(settings));
             if (window.location.search !== '') {
-                if (window.location.search.indexOf(this.parameterName) !== -1 ) {
-                    //the appSettings parameter will always be the last, so preserve anything before it
-                    queryString = window.location.search.split(this.parameterName)[0] + '&';
-                } else {
-                    queryString = window.location.search;
+                if (window.location.search.indexOf(this.parameterName) !== -1) {
+
+                    queryString = this._updateUrlParameter(
+                            window.location.search,
+                            this.parameterName,
+                            json
+                            );
+                }
+                else {
+                    queryString = [window.location.search,
+                        '&',
+                        this.parameterName,
+                        '=',
+                        json].join('');
+
                 }
             } else {
-                queryString = '?';
+                queryString = ['?', this.parameterName, '=', json].join('');
+
             }
             //build url using window.location
             return [window.location.protocol + '//',
                 window.location.host,
                 window.location.pathname,
-                queryString + this.parameterName + '=',
-                encodeURIComponent(Json.stringify(settings))].join('');
+                queryString].join('');
+        },
+        _updateUrlParameter: function (url, param, value) {
+            var regex = new RegExp("([?|&]" + param + "=)[^\&]+");
+            return url.replace(regex, '$1' + value);
         },
         /**
          * in case something goes wrong, the settings are reset.
@@ -366,9 +391,9 @@ define([
             for (var s in this._defaultAppSettings) {
                 if (this._defaultAppSettings.hasOwnProperty(s)) {
                     if (this._appSettings.hasOwnProperty(s)) {
-                        Lang.mixin(this._appSettings[s], this._defaultAppSettings[s]);
+                        lang.mixin(this._appSettings[s], this._defaultAppSettings[s]);
                     } else {
-                        this._appSettings[s] = Lang.clone(this._defaultAppSettings[s]);
+                        this._appSettings[s] = lang.clone(this._defaultAppSettings[s]);
                     }
                 }
             }
@@ -382,7 +407,7 @@ define([
         _emailLink: function () {
 
             var settings = {};
-            Array.forEach(this.emailSettings, Lang.hitch(this, function (setting) {
+            Array.forEach(this.emailSettings, lang.hitch(this, function (setting) {
                 if (this._appSettings.hasOwnProperty(setting)) {
                     settings[setting] = this._appSettings[setting].value;
                 }
@@ -394,15 +419,19 @@ define([
             } catch (e) {
                 this._error('_emailLink: ' + e);
             }
-            new Dialog({
-                title: "Share Map",
-                content: ['<p>Right click the link below and choose Copy Link or Copy Shortcut:</p>',
-                    '<p><a href="', link, '">Share this map</a></p>'].join(''),
-                style: "width: 300px; overflow:hidden;",
-                onHide: function() {
-                    this.destroyRecursive();
-                }
-            }).show();
+            var shareContent = ['<p>Right click the link below',
+                'and choose Copy Link or Copy Shortcut:</p>',
+                '<p><a href="', link, '">Share this map</a></p>'].join('')
+            if (!this.shareDialog) {
+                this.shareDialog = new Dialog({
+                    title: "Share Map",
+                    content: shareContent,
+                    style: "width: 300px; overflow:hidden;"
+                });
+            } else {
+                this.shareDialog.setContent(shareContent);
+            }
+            this.shareDialog.show();
             //optional google analytics event
             Topic.publish('googleAnalytics/events', {
                 category: 'AppSettings',
@@ -416,11 +445,10 @@ define([
             //place share button/link
             if (this.shareNode !== null) {
                 var share = DomConstruct.place(this.shareTemplate, this.shareNode);
-                On(share, 'click', Lang.hitch(this, '_emailLink'));
+                On(share, 'click', lang.hitch(this, '_emailLink'));
             }
 
-            On(this.defaultShareButton, 'click', Lang.hitch(this, '_emailLink'));
-
+            On(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink'));
             if (this.mapRightClickMenu) {
                 this._addRightClickMenu();
             }
@@ -449,7 +477,7 @@ define([
                 error: e
             });
             localStorage.clear();
-            Lang.mixin(this._appSettings, this._defaultAppSettings);
+            lang.mixin(this._appSettings, this._defaultAppSettings);
         }
 
     });
