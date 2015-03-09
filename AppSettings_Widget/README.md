@@ -47,14 +47,13 @@ settings: {
 }
 ```
 
-Options Parameters:
-==================
+##Options Parameters:
 Key | Type | Default | Description
 ---|---|---|---
 map | - | - | In CMV config set to true to include map
 layerInfos | - | - | In CMV config, set layerControlLayerInfos to true to include layerInfos
 mapRightClickMenu | - | - | In CMV config, set to true to add a right click menu option for sharing the map
-appSettings | object | `{}` | Additional app settings to be stored, by default map extent and layer visibility are saved, widget developers may add more
+appSettings | object | `{}` | Additional app settings to be stored, by default map extent and layer visibility are saved, widget developers may add more (see below)
 parameterName | string | 'cmvSettings' | Name of the parameter stored in localStorage and via url
 emailSettings | array | `['saveMapExtent', 'saveLayerVisibility']` | Keys of the settings that will be included in the Share Map email link
 shareNode | string or domNode | '' | an optional domnode to place a link to share map
@@ -63,12 +62,22 @@ address | string | '' | the default email address in the Share Map email
 subject | string | 'Share map' | the default subject in the Share Map email
 body | string | '' | the default body message in the Share Map email
 
+###appSettings Parameter:
+Key | Type | Default | Description
+---|---|---|---
+save | boolean | - | a flag to identify whether or not this value should be saved
+value | object | - | the current value that is saved for this setting
+checkbox | boolean | - | whether the user should have a checkbox displayed for this setting
+label | string | - | the checkbox label
+
 ##Developing
-- See: http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html
-- Storing a custom value in the appSettings widget can be used to set and retrieve values in localStorage and via url when the user clicks 'Share Map'.
+Storing a custom value in the appSettings widget can be used to set and retrieve values in localStorage and via url when the user clicks 'Share Map'.
+
+- First, see http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html to find out how dojo.topic works.
 - Add key to appSettings option parameter array
-- Use topic.publish to save your value, and topic.subscrive to retrieve it when the widget loads. 
-- To add your custom saved value to the email link, add the key to the emailSettings option parameter array (also include the default ones)
+- In your widget, use topic.subscribe (example below) in the postCreate or startup function to load the values that were saved.
+- In your widget, use topic.publish (example below) to save your value any time it changes.
+- To add your custom saved value to the email link, add the key to the emailSettings option parameter array (also include the default ones). Note: this may result in a very long url depending on how big your setting value is.
 
 ###Storing a setting:
 ```javascript
@@ -80,7 +89,16 @@ Topic.publish('AppSettings/setValue', key, value);
 ```javascript
 //waits for the settings to be loaded and prints the appSettings object
 Topic.subscribe('AppSettings/onSettingsLoad', Lang.hitch(this, function (appSettings) {
-    console.log(appSettings)
+   //appSettings is a clone of the entire data structure, if your setting is saved
+   //it will be directly accessible via appSettings.mySetting
+   
+   //if your using the checkbox, then the following is relevant
+   if(appSettings.mySetting && //make sure it exists
+   (appSettings.mySetting.save || //the user had the checkbox checked
+    appSettings.mySetting.urlLoad) //the user has loaded a url with this setting in it
+    ) {
+     console.log(appSettings.mySetting);
+     }
 }));
 ```
 Note: the `appSettings` object is a clone of the internal data structure
