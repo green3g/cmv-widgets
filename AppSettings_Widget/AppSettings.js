@@ -421,7 +421,7 @@ define([
             }
             var shareContent = ['<p>Right click the link below',
                 'and choose Copy Link or Copy Shortcut:</p>',
-                '<p><a href="', link, '">Share this map</a></p>'].join('')
+                '<p><a href="', link, '">Share this map</a></p>'].join('');
             if (!this.shareDialog) {
                 this.shareDialog = new Dialog({
                     title: "Share Map",
