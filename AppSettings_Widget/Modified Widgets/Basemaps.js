@@ -31,7 +31,7 @@ define([
         validBasemaps: [],
         postCreate: function () {
             this.inherited(arguments);
-            this.currentBasemap = this.mapStartBasemap || null;
+            //this.currentBasemap = this.mapStartBasemap || null;
 
             if (this.mode === 'custom') {
                 this.gallery = new BasemapGallery({
@@ -57,7 +57,7 @@ define([
                     var menuItem = new MenuItem({
                         id: basemap,
                         label: this.basemaps[basemap].title,
-                        iconClass: (basemap == this.mapStartBasemap) ? 'selectedIcon' : 'emptyIcon',
+                        iconClass: (basemap === this.mapStartBasemap) ? 'selectedIcon' : 'emptyIcon',
                         onClick: lang.hitch(this, function () {
                             if (basemap !== this.currentBasemap) {
                                 /* save the current basemap value */
@@ -78,6 +78,10 @@ define([
             }, this);
 
             this.dropDownButton.set('dropDown', this.menu);
+
+            /* load the saved basemap value */
+            topic.subscribe('AppSettings/onSettingsLoad', lang.hitch(this, '_loadBasemapFromSettings'));
+
         },
         setBasemap: function (basemap) {
             if (this.currentBasemap !== basemap) {
@@ -99,25 +103,11 @@ define([
         },
         startup: function () {
             this.inherited(arguments);
-            /* load the saved basemap value */
-            topic.subscribe('AppSettings/onSettingsLoad', lang.hitch(this, '_loadBasemapFromSettings'));
-            this.initBasemap();
-        },
-        initBasemap: function (settings) {
-            if (this.mode === 'custom') {
-                if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the title of custom basemaps in viewer.js config 
-                    this.gallery.select(this.mapStartBasemap);
-                }
-            } else {
-                if (this.mapStartBasemap) {
-                    if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the agol basemap name 
-                        this.map.setBasemap(this.mapStartBasemap);
-                    }
-                }
-            }
+            this.setBasemap(this.mapStartBasemap);
         },
         _loadBasemapFromSettings: function (settings) {
             if (settings && settings.saveBasemap &&
+                    settings.saveBasemap.value &&
                     (settings.saveBasemap.save || settings.saveBasemap.urlLoad)) {
                 this.setBasemap(settings.saveBasemap.value);
             }
