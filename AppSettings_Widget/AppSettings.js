@@ -34,7 +34,6 @@ define([
          */
         appSettings: {},
         parameterName: 'cmvSettings',
-//        serverParameterName: 'cmvServerSettings',
         //email settings
         shareNode: null,
         shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
@@ -143,13 +142,6 @@ define([
             if (settings) {
                 this._loadSettingsFromParameter(settings);
             }
-//            else {
-//                settings = this._getQueryStringParameter(this.serverParameterName);
-//                if (settings) {
-//                    //call a function to fetch the app settings from a server
-//                    //this._fetchAppSettings(settings, lang.hitch(this, '_loadSettingsFromURL'));
-//                }
-//            }
         },
         /**
          * 
