@@ -11,15 +11,16 @@ define([
     'dojo/_base/lang',
     'esri/geometry/Point',
     'esri/SpatialReference',
+    'dojo/sniff',
     'dojo/ready',
     'dijit/Menu',
     'dijit/MenuItem',
     'dijit/form/CheckBox',
     'dijit/Dialog',
     'dojo/text!./AppSettings/templates/AppSettings.html',
-    'dijit/form/Button',
+    'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, Topic, On, Array, Json, lang, Point, SpatialReference, ready,
+        DomConstruct, topic, on, Array, Json, lang, Point, SpatialReference, has, ready,
         Menu, MenuItem, Checkbox, Dialog, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         /* params */
@@ -33,6 +34,7 @@ define([
          */
         appSettings: {},
         parameterName: 'cmvSettings',
+//        serverParameterName: 'cmvServerSettings',
         //email settings
         shareNode: null,
         shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
@@ -62,6 +64,7 @@ define([
         },
         _appSettings: null,
         layerHandles: [],
+        baseClass: 'appSettings',
         postCreate: function () {
             this.inherited(arguments);
             //mix in additional default settings
@@ -85,7 +88,9 @@ define([
                     handle.remove();
                     this._setExtentHandles();
                 }));
-                this._loadSavedExtent();
+                //other widgets need to be ready to listen to extent
+                //changes in the map
+                ready(2, this, '_loadSavedExtent');
             } else {
                 this._setExtentHandles();
             }
@@ -100,7 +105,7 @@ define([
             ready(4, this, '_setLayerVisibilityHandles');
             //needs to wait for other widgets to load
             //so they can subscribe to topic
-            ready(5, this, '_handleTopics');
+            ready(5, this, '_handletopics');
         },
         /**
          * loads the settings from localStorage and overrides the loaded settings
@@ -134,32 +139,58 @@ define([
                 }
             }
             //url parameters override 
-            var parameters = decodeURI(window.location.search);
-            if (parameters.indexOf(this.parameterName) !== -1) {
-                //this can also throw errors if the json is invalid
-                try {
-                    if (parameters.indexOf('&') !== -1) {
-                        parameters = parameters.split('&');
-                    } else {
-                        parameters = [parameters];
-                    }
-                    for (var i in parameters) {
-                        if (parameters[i].indexOf(this.parameterName) !== -1) {
-                            var settings = Json.parse(decodeURIComponent(parameters[i].split('=')[1]));
-                            for (var s in settings) {
-                                if (settings.hasOwnProperty(s) && this._appSettings.hasOwnProperty(s)) {
-                                    this._appSettings[s].value = settings[s];
-                                    //set urlLoad flag override
-                                    //this tells the widget that the settings were loaded via 
-                                    //url and should be loaded regardless of the user's checkbox
-                                    this._appSettings[s].urlLoad = true;
-                                }
-                            }
-                        }
-                    }
-                } catch (error) {
-                    this._error('_loadURLParameters' + error);
+            var settings = this._getQueryStringParameter(this.parameterName);
+            if (settings) {
+                this._loadSettingsFromParameter(settings);
+            }
+//            else {
+//                settings = this._getQueryStringParameter(this.serverParameterName);
+//                if (settings) {
+//                    //call a function to fetch the app settings from a server
+//                    //this._fetchAppSettings(settings, lang.hitch(this, '_loadSettingsFromURL'));
+//                }
+//            }
+        },
+        /**
+         * 
+         * @param {type} parameter
+         * @returns {Boolean}
+         */
+        _getQueryStringParameter: function (parameter) {
+            var search = decodeURI(window.location.search), parameters;
+            if (search.indexOf(parameter) !== -1) {
+                if (search.indexOf('&') !== -1) {
+                    parameters = search.split('&');
+                } else {
+                    parameters = [search];
                 }
+                for (var i in parameters) {
+                    if (parameters[i].indexOf(parameter) !== -1) {
+                        return parameters[i].split('=')[1];
+                    }
+                }
+            }
+            return false;
+        },
+        /**
+         * 
+         * @param {type} parameters
+         * @returns {undefined}
+         */
+        _loadSettingsFromParameter: function (parameters) {
+            try {
+                var settings = Json.parse(decodeURIComponent(parameters));
+                for (var s in settings) {
+                    if (settings.hasOwnProperty(s) && this._appSettings.hasOwnProperty(s)) {
+                        this._appSettings[s].value = settings[s];
+                        //set urlLoad flag override
+                        //this tells the widget that the settings were loaded via 
+                        //url and should be loaded regardless of the user's checkbox
+                        this._appSettings[s].urlLoad = true;
+                    }
+                }
+            } catch (error) {
+                this._error('_loadURLParameters' + error);
             }
         },
         /**
@@ -174,16 +205,17 @@ define([
         },
         /**
          * creates a checkbox and sets the event handlers
+         * @param {object} setting
          */
         _addCheckbox: function (setting) {
             var li = DomConstruct.create('li', null, this.settingsList);
             this._appSettings[setting]._checkboxNode = new Checkbox({
                 id: setting,
                 checked: this._appSettings[setting].save,
-                onChange: lang.hitch(this, function (setting) {
+                onChange: lang.hitch(this, (function (setting) {
                     return function (checked) {
                         //optional, publish a google analytics event
-                        Topic.publish('googleAnalytics/events', {
+                        topic.publish('googleAnalytics/events', {
                             category: 'AppSettings',
                             action: 'checkbox',
                             label: setting,
@@ -192,7 +224,7 @@ define([
                         this._appSettings[setting].save = checked;
                         this._saveAppSettings();
                     };
-                }(setting))
+                }(setting)))
             });
             this._appSettings[setting]._checkboxNode.placeAt(li);
             DomConstruct.create('label', {
@@ -203,11 +235,16 @@ define([
         /**
          * publishes and subscribes to the AppSettings topics
          */
-        _handleTopics: function () {
-            this.own(Topic.subscribe('AppSettings/setValue', lang.hitch(this, function (key, value) {
+        _handletopics: function () {
+            this.own(topic.subscribe('AppSettings/setValue', lang.hitch(this, function (key, value) {
                 this._setValue(key, value);
             })));
-            Topic.publish('AppSettings/onSettingsLoad', lang.clone(this._appSettings));
+            //handle external widget errors
+            try {
+                topic.publish('AppSettings/onSettingsLoad', lang.clone(this._appSettings));
+            } catch (e) {
+                this._error({location: 'AppSettings:_handletopics:onSettingsLoad', error: e});
+            }
         },
         /**
          * creates the right click map menu
@@ -243,6 +280,7 @@ define([
         },
         /**
          * returns a simplified _appSettings object encoded in JSON
+         * @param {object} settings
          * @returns {object <settings>} simplified settings object
          */
         _settingsToJSON: function (settings) {
@@ -265,14 +303,20 @@ define([
          */
         _loadSavedExtent: function () {
             //load map extent
-            var point = new Point(
-                    this._appSettings.saveMapExtent.value.center.x,
-                    this._appSettings.saveMapExtent.value.center.y,
-                    new SpatialReference({
-                        wkid: this._appSettings.saveMapExtent.value.center.spatialReference.wkid
-                    }));
-            this.map.centerAndZoom(point,
-                    this._appSettings.saveMapExtent.value.zoom);
+            var center = this._appSettings.saveMapExtent.value.center;
+            var point = new Point(center.x, center.y, new SpatialReference({
+                wkid: center.spatialReference.wkid
+            }));
+            if (has('ie')) {
+                //work around an ie bug
+                setTimeout(lang.hitch(this, function () {
+                    this.map.centerAndZoom(point,
+                            this._appSettings.saveMapExtent.value.zoom);
+                }), 800);
+            } else {
+                this.map.centerAndZoom(point,
+                        this._appSettings.saveMapExtent.value.zoom);
+            }
             //reset url flag
             this._appSettings.saveMapExtent.urlLoad = false;
         },
@@ -280,29 +324,29 @@ define([
          * sets the visibility of the loaded layers if save or urlLoad is true
          */
         _loadSavedLayers: function () {
-            var setting = this._appSettings.saveLayerVisibility;
+            var layers = this._appSettings.saveLayerVisibility.value;
             //load visible layers
             Array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
-                if (setting.value.hasOwnProperty(layer.layer.id)) {
-                    if (setting.value[layer.layer.id].visibleLayers) {
-                        layer.layer.setVisibleLayers(setting.value[layer.layer.id].visibleLayers);
-                        Topic.publish('layerControl/setVisibleLayers', {
+                if (layers.hasOwnProperty(layer.layer.id)) {
+                    if (layers[layer.layer.id].visibleLayers) {
+                        layer.layer.setVisibleLayers(layers[layer.layer.id].visibleLayers);
+                        topic.publish('layerControl/setVisibleLayers', {
                             id: layer.layer.id,
-                            visibleLayers: setting.value[layer.layer.id]
+                            visibleLayers: layers[layer.layer.id]
                                     .visibleLayers
                         });
                     }
-                    if (setting.value[layer.layer.id].visible !== null) {
-                        layer.layer.setVisibility(setting.value[layer.layer.id].visible);
+                    if (layers[layer.layer.id].visible !== null) {
+                        layer.layer.setVisibility(layers[layer.layer.id].visible);
                     }
                 }
             }));
             //reset url flag
-            setting.urlLoad = false;
+            this._appSettings.saveLayerVisibility.urlLoad = false;
         },
         _setExtentHandles: function () {
             this._appSettings.saveMapExtent.value = {};
-            this.own(this.map.on('extent-change', lang.hitch(this, function (event) {
+            this.own(this.map.on('extent-change', lang.hitch(this, function () {
                 this._appSettings.saveMapExtent.value.center = this.map.extent.getCenter();
                 this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
                 this._saveAppSettings();
@@ -335,11 +379,11 @@ define([
                     visibleLayers: visibleLayers
                 };
             }));
-            this.own(Topic.subscribe('layerControl/setVisibleLayers', lang.hitch(this, function (layer) {
+            this.own(topic.subscribe('layerControl/setVisibleLayers', lang.hitch(this, function (layer) {
                 setting.value[layer.id].visibleLayers = layer.visibleLayers;
                 this._saveAppSettings();
             })));
-            this.own(Topic.subscribe('layerControl/layerToggle', lang.hitch(this, function (layer) {
+            this.own(topic.subscribe('layerControl/layerToggle', lang.hitch(this, function (layer) {
                 setting.value[layer.id].visible = layer.visible;
                 this._saveAppSettings();
             })));
@@ -380,7 +424,7 @@ define([
                 queryString].join('');
         },
         _updateUrlParameter: function (url, param, value) {
-            var regex = new RegExp("([?|&]" + param + "=)[^\&]+");
+            var regex = new RegExp('([?|&]' + param + '=)[^\&]+');
             return url.replace(regex, '$1' + value);
         },
         /**
@@ -388,15 +432,7 @@ define([
          * the user has the option to reset without manually clearing their cache
          */
         _clearCache: function () {
-            for (var s in this._defaultAppSettings) {
-                if (this._defaultAppSettings.hasOwnProperty(s)) {
-                    if (this._appSettings.hasOwnProperty(s)) {
-                        lang.mixin(this._appSettings[s], this._defaultAppSettings[s]);
-                    } else {
-                        this._appSettings[s] = lang.clone(this._defaultAppSettings[s]);
-                    }
-                }
-            }
+            this._appSettings = lang.clone(this._defaultAppSettings);
             this._saveAppSettings();
             this._refreshView();
         },
@@ -424,16 +460,16 @@ define([
                 '<p><a href="', link, '">Share this map</a></p>'].join('');
             if (!this.shareDialog) {
                 this.shareDialog = new Dialog({
-                    title: "Share Map",
+                    title: 'Share Map',
                     content: shareContent,
-                    style: "width: 300px; overflow:hidden;"
+                    style: 'width: 300px; overflow:hidden;'
                 });
             } else {
                 this.shareDialog.setContent(shareContent);
             }
             this.shareDialog.show();
             //optional google analytics event
-            Topic.publish('googleAnalytics/events', {
+            topic.publish('googleAnalytics/events', {
                 category: 'AppSettings',
                 action: 'map-share'
             });
@@ -445,10 +481,10 @@ define([
             //place share button/link
             if (this.shareNode !== null) {
                 var share = DomConstruct.place(this.shareTemplate, this.shareNode);
-                On(share, 'click', lang.hitch(this, '_emailLink'));
+                this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
             }
 
-            On(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink'));
+            this.own(on(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink')));
             if (this.mapRightClickMenu) {
                 this._addRightClickMenu();
             }
@@ -472,12 +508,17 @@ define([
         _error: function (e) {
             //if an error occurs local storage corruption
             // is probably the issue
-            Topic.publish('viewer/handleError', {
+            topic.publish('viewer/handleError', {
                 source: 'AppSettings',
                 error: e
             });
-            localStorage.clear();
-            lang.mixin(this._appSettings, this._defaultAppSettings);
+            topic.publish('growler/growl', {
+                title: 'Settings',
+                message: ['Something went wrong..and your saved settings were cleared.',
+                    'To re-enable them click Help/Settings'].join(' '),
+                timeout: 7000
+            });
+            this._clearCache();
         }
 
     });
