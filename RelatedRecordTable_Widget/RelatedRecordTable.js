@@ -11,37 +11,57 @@ define([
     'dgrid/OnDemandGrid',
     'dgrid/extensions/ColumnHider',
     'dgrid/extensions/DijitRegistry',
+    'dijit/registry',
+    'dojo/ready',
     'dijit/layout/TabContainer',
     'xstyle/css!./RelatedRecordTable/css/styles.css',
-    'dojo/text!./RelatedRecordTable/templates/RelatedRecordTable.html',
     'dojo/domReady!'
 ], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, DomClass,
         Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
-        DijitRegistry, TabContainer, css, tableTemplate) {
-    var customGrid = declare('customGrid', [OnDemandGrid, ColumnHider, DijitRegistry]);
+        RegistryMixin, registry, ready, TabContainer) {
+    var CustomGrid = declare('customGrid', [OnDemandGrid, ColumnHider, RegistryMixin]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _FloatingWidgetMixin], {
-        templateString: tableTemplate,
+        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
         relationshipLayers: null,
         formatters: null,
         tabPosition: 'left-h',
         columnInfos: {},
         baseClass: 'relatedRecordTableWidget',
+        //this id can be the dijit id of a tabcontainer or
+        //a widget that has a tabContainer property, like tmgee's attribute
+        //table widget
+        tabContainerId: null,
         constructor: function () {
             this.relationshipLayers = [];
             this.formatters = {};
         },
         postCreate: function () {
             this.inherited(arguments);
-            if (this.hasOwnProperty('parentWidget')) {
-                DomClass.add(this.parentWidget.id, 'RelatedRecordsTableParent ' + this.tabPosition);
+            if (this.tabContainerId) {
+                ready(10, this, '_init');
+            } else {
+                if (this.hasOwnProperty('parentWidget')) {
+                    DomClass.add(this.parentWidget.id, 'RelatedRecordsTableParent ' + this.tabPosition);
+                }
+                this.tabContainer = new TabContainer({
+                    tabPosition: this.tabPosition,
+                    style: 'height:100%;width:100%;',
+                    doLayout: false
+                }, this.containerNode);
+                this._init();
             }
-
-            this.tabContainer = new TabContainer({
-                tabPosition: this.tabPosition,
-                style: 'height:100%;width:100%;',
-                doLayout: false
-            }, this.containerNode);
-            var self = this;
+        },
+        _init: function () {
+            if (!this.tabContainer) {
+                this.tabContainer = registry.byId(this.tabContainerId);
+                //allow user to reference a widget with a tab container by id
+                if(this.tabContainer.hasOwnProperty('tabContainer')){
+                    this.tabContainer = this.tabContainer.tabContainer;
+                }
+            }
+            if(!this.tabContainer){
+                return;
+            }
             if (this.layerInfos.length > 0) {
                 Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
                     if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
@@ -70,7 +90,7 @@ define([
                                 relationship.store = new Memory({
                                     id: relationshipLayer.layer.objectIdField
                                 });
-                                relationship.grid = new customGrid({
+                                relationship.grid = new CustomGrid({
                                     title: relationship.title,
                                     store: relationship.store,
                                     noDataMessage: 'Click a feature from the map to find related records'
@@ -87,16 +107,6 @@ define([
                     }
                 }));
             }
-            //this._initMapClick();
-        },
-        onShow: function () {
-            this.inherited(arguments);
-            this.tabContainer.resize();
-        },
-        startup: function () {
-            this.inherited(arguments);
-            this.tabContainer.startup();
-            this.tabContainer.resize();
         },
         _onLayerClick: function (layer, clickEvent) {
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
