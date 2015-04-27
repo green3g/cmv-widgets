@@ -25,6 +25,7 @@ layerInfos | boolean | `null` | set layerControlLayerInfos to true, a layerInfos
 formatters | {object} | `{}` |  key, value pairs of column formatter functions. Key is either a field name or esri field type.
 columnInfos | {object} | `{}` | An object describing each relationship
 tabPosition | string |  `'left-h'` | dijit tabContainer.tabPosition property: `'top'`, `'left-h'`, Not working due to layout issues: `'bottom'`, `'right-h'` 
+tabContainerId | string | `null` | An optional id of a widget that is a tabContainer or contains a tabContainer property. If specified, this widgets tables will be added to an existing tabContainer like the one developed by tmcgee [here](https://github.com/tmcgee/cmv-widgets/blob/master/widgets/AttributesTable/README.md) instead of creating a new one.
 
 ###formatters properties
 Usage: 
