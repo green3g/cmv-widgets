@@ -22,6 +22,8 @@ application and shared
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/Widget_screenshot.PNG)
 
 ##Usage 
+Copy the AppSettings.js and AppSettings folder into your js/gis/dijit/ directory.
+
 In viewer.js (see below for descriptions of parameters): 
 ```javascript      
 settings: {
