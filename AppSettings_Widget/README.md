@@ -1,7 +1,7 @@
 AppSettings
 ===============
 
-CMV Version: 1.3.1
+CMV Version: 1.3.3
 
 A widget designed for use in CMV that allows the user to save the current 
 state of the map extent and visible layers. It also provides functionality to share the 
@@ -9,10 +9,13 @@ current state of the application via a url.
 Additional functionality using Topic.subscribe and Topic.publish 
 allows widget developers to save additional settings.
 
-##Description:
-Allows the user to save the current state of the map extent and visible layers
+##Features:
+- Allow the user to save the current state of the map extent and visible layers
 using html5 localStorage. 
-Also allows the user to 'share' a current snapshot of the map state with others via email client.
+- Allow the user to 'share' a current snapshot of the map state with others via email client.
+- Integrate with other widgets to allow additional properties to be saved in the
+application and shared
+
  
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/URL_Screenshot.PNG)
  
@@ -71,7 +74,9 @@ checkbox | boolean | - | whether the user should have a checkbox displayed for t
 label | string | - | the checkbox label
 
 ##Developing
-Storing a custom value in the appSettings widget can be used to set and retrieve values in localStorage and via url when the user clicks 'Share Map'.
+Storing a custom value in the appSettings widget can be used to set and retrieve 
+values in localStorage and via url when the user clicks 'Share Map'. If the url becomes
+too long, a web server url should be provided, such as the attached php script.
 
 - First, see http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html to find out how dojo.topic works.
 - Add key to appSettings option parameter array
@@ -103,10 +108,24 @@ Topic.subscribe('AppSettings/onSettingsLoad', Lang.hitch(this, function (appSett
 ```
 Note: the `appSettings` object is a clone of the internal data structure
 
-License: MIT
+###Avoiding long urls when sharing the map
+A php script has been included in the php folder that allows for retrieving and setting
+values via POST or GET requests. AppSettings widget can now accept a `server: 'http://pathtoscript/index.php'`
+option which will be used to generate a shorter url and allow for more information
+to be saved when the user clicks "Share Map". 
+
+IMPORTANT: This php script has not been tested for security purposes and it is 
+not recommended to place this in any public facing server. Use at your own risk!
 
 ##Changes
+
+4/27/2015:
+* When sharing via url, the length of the url may become extremely long. This widget
+is now configured to handle sharing and retrieval via POST using a web server. A 
+sample php script is packaged in the php folder
 
 12/19/2014: 
 * Settings will now load after other widgets are ready. IE 9 was throwing errors when the settings were loaded before.
 * Continuous url saving has been removed to allow for compatibility with the navigation hash widget, and other widgets using the hash. To share via url, the share map button can be used.
+
+License: MIT
