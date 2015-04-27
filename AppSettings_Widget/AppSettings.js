@@ -5,24 +5,23 @@ define([
     'dijit/_WidgetsInTemplateMixin',
     'dojo/dom-construct',
     'dojo/topic',
-    'dojo/on',
-    'dojo/_base/array',
     'dojo/json',
     'dojo/_base/lang',
-    'esri/geometry/Point',
-    'esri/SpatialReference',
-    'dojo/sniff',
     'dojo/ready',
     'dijit/Menu',
     'dijit/MenuItem',
     'dijit/form/CheckBox',
-    'dijit/Dialog',
+    'esri/request',
+    './AppSettings/_loadExtentMixin',
+    './AppSettings/_loadLayerMixin',
+    './AppSettings/_shareMixin',
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, topic, on, Array, Json, lang, Point, SpatialReference, has, ready,
-        Menu, MenuItem, Checkbox, Dialog, appSettingsTemplate) {
-    return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
+        DomConstruct, topic, Json, lang, ready, Menu, MenuItem, Checkbox, request,
+        _loadExtentMixin, _loadLayerMixin, _shareMixin, appSettingsTemplate) {
+    return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
+        _loadExtentMixin, _loadLayerMixin, _shareMixin], {
         /* params */
         /**
          * each app setting may have the following properties:
@@ -34,14 +33,6 @@ define([
          */
         appSettings: {},
         parameterName: 'cmvSettings',
-        //email settings
-        shareNode: null,
-        shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
-        /* settings to share via email */
-        emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
-        address: '',
-        subject: 'Share Map',
-        body: '',
         /* private */
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
@@ -62,24 +53,24 @@ define([
             }
         },
         _appSettings: null,
-        layerHandles: [],
         baseClass: 'appSettings',
         postCreate: function () {
             this.inherited(arguments);
             //mix in additional default settings
             lang.mixin(this._defaultAppSettings, this.appSettings);
             if (!this.map || !this.layerInfos) {
-                this._error('AppSettings requires map and layerInfos objects');
+                topic.publish('viewer/handleError', {
+                    source: 'AppSettings',
+                    error: 'map and layerInfos are required'
+                });
                 return;
             } else {
-                this._init();
+                this._loadAppSettings();
             }
         },
         _init: function () {
-            this._loadAppSettings();
-            this._handleShare();
             this._setCheckboxHandles();
-
+            this._handleShare();
             if (this._appSettings.saveMapExtent.save ||
                     this._appSettings.saveMapExtent.urlLoad) {
                 //once the saved map has finished zooming, set the handle
@@ -109,6 +100,7 @@ define([
         /**
          * loads the settings from localStorage and overrides the loaded settings
          * with values in the url parameters
+         * @param {function} callback - the function to call when settings are loaded
          */
         _loadAppSettings: function () {
             //start with default
@@ -140,7 +132,14 @@ define([
             //url parameters override 
             var settings = this._getQueryStringParameter(this.parameterName);
             if (settings) {
-                this._loadSettingsFromParameter(settings);
+                if (this.server) {
+                    this._requestSettingsFromServer(settings);
+                } else {
+                    this._loadSettingsFromParameter(decodeURIComponent(settings));
+                    this._init();
+                }
+            } else {
+                this._init();
             }
         },
         /**
@@ -171,9 +170,12 @@ define([
          */
         _loadSettingsFromParameter: function (parameters) {
             try {
-                var settings = Json.parse(decodeURIComponent(parameters));
+                var settings = Json.parse(parameters);
                 for (var s in settings) {
-                    if (settings.hasOwnProperty(s) && this._appSettings.hasOwnProperty(s)) {
+                    if (!this._appSettings.hasOwnProperty(s)) {
+                        this._appSettings[s] = {};
+                    }
+                    if (settings.hasOwnProperty(s)) {
                         this._appSettings[s].value = settings[s];
                         //set urlLoad flag override
                         //this tells the widget that the settings were loaded via 
@@ -290,136 +292,6 @@ define([
             return Json.stringify(settings);
         },
         /**
-         * recovers the saved extent from the _appSettings object
-         * if the settings's save or urlLoad property is true
-         */
-        _loadSavedExtent: function () {
-            //load map extent
-            var center = this._appSettings.saveMapExtent.value.center;
-            var point = new Point(center.x, center.y, new SpatialReference({
-                wkid: center.spatialReference.wkid
-            }));
-            if (has('ie')) {
-                //work around an ie bug
-                setTimeout(lang.hitch(this, function () {
-                    this.map.centerAndZoom(point,
-                            this._appSettings.saveMapExtent.value.zoom);
-                }), 800);
-            } else {
-                this.map.centerAndZoom(point,
-                        this._appSettings.saveMapExtent.value.zoom);
-            }
-            //reset url flag
-            this._appSettings.saveMapExtent.urlLoad = false;
-        },
-        /**
-         * sets the visibility of the loaded layers if save or urlLoad is true
-         */
-        _loadSavedLayers: function () {
-            var layers = this._appSettings.saveLayerVisibility.value;
-            //load visible layers
-            Array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
-                if (layers.hasOwnProperty(layer.layer.id)) {
-                    if (layers[layer.layer.id].visibleLayers) {
-                        layer.layer.setVisibleLayers(layers[layer.layer.id].visibleLayers);
-                        topic.publish('layerControl/setVisibleLayers', {
-                            id: layer.layer.id,
-                            visibleLayers: layers[layer.layer.id]
-                                    .visibleLayers
-                        });
-                    }
-                    if (layers[layer.layer.id].visible !== null) {
-                        layer.layer.setVisibility(layers[layer.layer.id].visible);
-                    }
-                }
-            }));
-            //reset url flag
-            this._appSettings.saveLayerVisibility.urlLoad = false;
-        },
-        _setExtentHandles: function () {
-            this._appSettings.saveMapExtent.value = {};
-            this.own(this.map.on('extent-change', lang.hitch(this, function () {
-                this._appSettings.saveMapExtent.value.center = this.map.extent.getCenter();
-                this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
-                this._saveAppSettings();
-            })));
-        },
-        _setLayerVisibilityHandles: function () {
-            var setting = this._appSettings.saveLayerVisibility;
-            setting.value = {};
-            //since the javascript api visibleLayers property starts
-            //with a different set of layers than what is actually turned
-            //on, we need to iterate through, find the parent layers, 
-            Array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
-                var id = layer.layer.id;
-                var visibleLayers;
-                if (layer.layer.hasOwnProperty('visibleLayers')) {
-                    visibleLayers = [];
-                    Array.forEach(layer.layer.visibleLayers, function (subLayerId) {
-                        if (subLayerId !== -1 &&
-                                layer.layer.hasOwnProperty('layerInfos') &&
-                                layer.layer.layerInfos[subLayerId].subLayerIds === null) {
-                            visibleLayers.push(subLayerId);
-                        }
-                    });
-                    if (visibleLayers.length === 0) {
-                        visibleLayers.push(-1);
-                    }
-                }
-                setting.value[id] = {
-                    visible: layer.layer.visible,
-                    visibleLayers: visibleLayers
-                };
-            }));
-            this.own(topic.subscribe('layerControl/setVisibleLayers', lang.hitch(this, function (layer) {
-                setting.value[layer.id].visibleLayers = layer.visibleLayers;
-                this._saveAppSettings();
-            })));
-            this.own(topic.subscribe('layerControl/layerToggle', lang.hitch(this, function (layer) {
-                setting.value[layer.id].visible = layer.visible;
-                this._saveAppSettings();
-            })));
-        },
-        /**
-         * creates a share url form the settings
-         * @param {object} settings - the settings to generate a url from
-         * @returns {string} url
-         */
-        _settingsToURL: function (settings) {
-            var queryString;
-            var json = encodeURIComponent(Json.stringify(settings));
-            if (window.location.search !== '') {
-                if (window.location.search.indexOf(this.parameterName) !== -1) {
-
-                    queryString = this._updateUrlParameter(
-                            window.location.search,
-                            this.parameterName,
-                            json
-                            );
-                }
-                else {
-                    queryString = [window.location.search,
-                        '&',
-                        this.parameterName,
-                        '=',
-                        json].join('');
-
-                }
-            } else {
-                queryString = ['?', this.parameterName, '=', json].join('');
-
-            }
-            //build url using window.location
-            return [window.location.protocol + '//',
-                window.location.host,
-                window.location.pathname,
-                queryString].join('');
-        },
-        _updateUrlParameter: function (url, param, value) {
-            var regex = new RegExp('([?|&]' + param + '=)[^\&]+');
-            return url.replace(regex, '$1' + value);
-        },
-        /**
          * in case something goes wrong, the settings are reset.
          * the user has the option to reset without manually clearing their cache
          */
@@ -427,59 +299,6 @@ define([
             this._appSettings = lang.clone(this._defaultAppSettings);
             this._saveAppSettings();
             this._refreshView();
-        },
-        /**
-         * handles the opening of a new email and displays a temporary dialog
-         * in case the email fails to open
-         */
-        _emailLink: function () {
-
-            var settings = {};
-            Array.forEach(this.emailSettings, lang.hitch(this, function (setting) {
-                if (this._appSettings.hasOwnProperty(setting)) {
-                    settings[setting] = this._appSettings[setting].value;
-                }
-            }));
-            var link = this._settingsToURL(settings);
-            try {
-                window.open('mailto:' + this.address + '?subject=' + this.subject +
-                        '&body=' + this.body + ' ' + link, '_self');
-            } catch (e) {
-                this._error('_emailLink: ' + e);
-            }
-            var shareContent = ['<p>Right click the link below',
-                'and choose Copy Link or Copy Shortcut:</p>',
-                '<p><a href="', link, '">Share this map</a></p>'].join('');
-            if (!this.shareDialog) {
-                this.shareDialog = new Dialog({
-                    title: 'Share Map',
-                    content: shareContent,
-                    style: 'width: 300px; overflow:hidden;'
-                });
-            } else {
-                this.shareDialog.setContent(shareContent);
-            }
-            this.shareDialog.show();
-            //optional google analytics event
-            topic.publish('googleAnalytics/events', {
-                category: 'AppSettings',
-                action: 'map-share'
-            });
-        },
-        /**
-         * creates the domnode for the share button
-         */
-        _handleShare: function () {
-            //place share button/link
-            if (this.shareNode !== null) {
-                var share = DomConstruct.place(this.shareTemplate, this.shareNode);
-                this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
-            }
-
-            this.own(on(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink')));
-            if (this.mapRightClickMenu) {
-                this._addRightClickMenu();
-            }
         },
         /**
          * in case something changes programatically, this can be called to update
