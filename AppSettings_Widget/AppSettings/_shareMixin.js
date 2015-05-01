@@ -26,9 +26,16 @@ define([
          */
         _handleShare: function () {
             //place share button/link
-            if (this.shareNode !== null) {
-                var share = domConstruct.place(this.shareTemplate, this.shareNode);
-                this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
+            if (this.shareNode) {
+                try {
+                    var share = domConstruct.place(this.shareTemplate, this.shareNode);
+                    this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
+                } catch (e) {
+                    topic.publish('viewer/handleError', {
+                        source: 'AppSettings',
+                        error: 'Unable to place share link: ' + e
+                    });
+                }
             }
 
             this.own(on(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink')));
@@ -167,6 +174,6 @@ define([
         _updateUrlParameter: function (url, param, value) {
             var regex = new RegExp('([?|&]' + param + '=)[^\&]+');
             return url.replace(regex, '$1' + value);
-        },
+        }
     });
 });
