@@ -20,7 +20,7 @@ define([
         subject: 'Share Map',
         body: '',
         //a url to use as a server for sharing urls
-        server: '',
+        server: null,
         /**
          * creates the domnode for the share button
          */
