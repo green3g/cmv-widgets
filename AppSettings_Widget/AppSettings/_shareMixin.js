@@ -146,7 +146,6 @@ define([
             var queryString;
             if (window.location.search !== '') {
                 if (window.location.search.indexOf(this.parameterName) !== -1) {
-
                     queryString = this._updateUrlParameter(
                             window.location.search,
                             this.parameterName,
@@ -163,13 +162,12 @@ define([
                 }
             } else {
                 queryString = ['?', this.parameterName, '=', value].join('');
-
             }
             //build url using window.location
             return [window.location.protocol + '//',
                 window.location.host,
                 window.location.pathname,
-                queryString].join('');
+                encodeURIComponent(queryString)].join('');
         },
         _updateUrlParameter: function (url, param, value) {
             var regex = new RegExp('([?|&]' + param + '=)[^\&]+');
