@@ -38,16 +38,17 @@ settings: {
      map: true,
      layerControlLayerInfos: true,
 
-     //optional: 
+     //optional (defaults shown): 
      appSettings: {},
      parametername: 'cmvSettings',
      mapRightClickMenu: true,
      address: 'email@email.com',
      subject: 'Share Map',
-     body: 'Check out this map! <br /> '
+     body: 'Check out this map! <br /> ',
      emailSettings: ['saveMapExtent', 'savelayerVisibility'],
-     shareNode: ''
-     //shareTemplate: ''
+     shareNode: null,
+     shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
+     server: null
     }
 }
 ```
