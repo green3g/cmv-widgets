@@ -65,6 +65,6 @@ define([
                 setting.value[layer.id].visible = layer.visible;
                 this._saveAppSettings();
             })));
-        },
+        }
     });
 });

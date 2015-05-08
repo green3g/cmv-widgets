@@ -11,14 +11,13 @@ define([
     'dijit/Menu',
     'dijit/MenuItem',
     'dijit/form/CheckBox',
-    'esri/request',
     './AppSettings/_loadExtentMixin',
     './AppSettings/_loadLayerMixin',
     './AppSettings/_shareMixin',
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, topic, Json, lang, ready, Menu, MenuItem, Checkbox, request,
+        DomConstruct, topic, Json, lang, ready, Menu, MenuItem, Checkbox,
         _loadExtentMixin, _loadLayerMixin, _shareMixin, appSettingsTemplate) {
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
         _loadExtentMixin, _loadLayerMixin, _shareMixin], {

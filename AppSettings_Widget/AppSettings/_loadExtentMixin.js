@@ -37,6 +37,6 @@ define([
                 this._appSettings.saveMapExtent.value.zoom = this.map.getZoom();
                 this._saveAppSettings();
             })));
-        },
+        }
     });
 });
