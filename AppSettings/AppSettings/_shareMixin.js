@@ -7,35 +7,29 @@ define([
     'dijit/Dialog',
     'dojo/on',
     'dojo/_base/array',
-    'esri/request',
-    'dojo/json'
-], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request, json) {
+    'esri/request'
+], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request) {
     return declare(null, {
         //email settings
         shareNode: null,
         shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
+        shareDialogTemplate: '<p>Right click the link below and choose Copy Link or Copy Shortcut:</p><p><a href="{0}">Share this map</a></p>',
+        loadingDialogTemplate: '<div class="loading-spinner"></div><p>Loading...</p>',
         /* settings to share via email */
         emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
         address: '',
         subject: 'Share Map',
         body: '',
         //a url to use as a server for sharing urls
-        server: null,
+        server: '',
         /**
          * creates the domnode for the share button
          */
         _handleShare: function () {
             //place share button/link
-            if (this.shareNode) {
-                try {
-                    var share = domConstruct.place(this.shareTemplate, this.shareNode);
-                    this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
-                } catch (e) {
-                    topic.publish('viewer/handleError', {
-                        source: 'AppSettings',
-                        error: 'Unable to place share link: ' + e
-                    });
-                }
+            if (this.shareNode !== null) {
+                var share = domConstruct.place(this.shareTemplate, this.shareNode);
+                this.own(on(share, 'click', lang.hitch(this, '_emailLink')));
             }
 
             this.own(on(this.defaultShareButton, 'click', lang.hitch(this, '_emailLink')));
@@ -48,7 +42,7 @@ define([
          * in case the email fails to open
          */
         _emailLink: function () {
-            this._showLoadingDialog();
+            this._showDialog(this.loadingDialogTemplate);
             var settings = {};
             array.forEach(this.emailSettings, lang.hitch(this, function (setting) {
                 if (this._appSettings.hasOwnProperty(setting)) {
@@ -58,7 +52,7 @@ define([
             if (this.server) {
                 this._saveSettingsOnServer(settings);
             } else {
-                this._showDialog(this._settingsToURL(settings));
+                this._showDialog(lang.replace(this.shareDialogTemplate, [this._settingsToURL(settings)]));
             }
         },
         _saveSettingsOnServer: function (settings) {
@@ -72,7 +66,20 @@ define([
                 usePost: true
             }).then(lang.hitch(this, function (data) {
                 if (data.ID) {
-                    this._showDialog(this._buildLink(data.ID));
+                    var link = this._buildLink(data.ID);
+                    try {
+                        window.open('mailto:' + this.address + '?subject=' + this.subject +
+                                '&body=' + this.body + ' ' + link, '_self');
+                    } catch (e) {
+                        this._error('_emailLink: ' + e);
+                    }
+                    this._showDialog(lang.replace(this.shareDialogTemplate, [link]));
+
+                    //optional google analytics event
+                    topic.publish('googleAnalytics/events', {
+                        category: 'AppSettings',
+                        action: 'map-share'
+                    });
                 } else {
                     this._error('an error occurred fetching the id');
                 }
@@ -94,44 +101,17 @@ define([
                 this._init();
             }));
         },
-        _showLoadingDialog: function () {
-            var shareContent = '<div class="loading-spinner"></div><p>Loading...</p>';
+        _showDialog: function (content) {
             if (!this.shareDialog) {
                 this.shareDialog = new Dialog({
                     title: 'Share Map',
-                    content: shareContent,
+                    content: content,
                     style: 'width: 300px; overflow:hidden;'
                 });
             } else {
-                this.shareDialog.setContent(shareContent);
+                this.shareDialog.set('content', content);
             }
             this.shareDialog.show();
-        },
-        _showDialog: function (link) {
-            try {
-                window.open('mailto:' + this.address + '?subject=' + this.subject +
-                        '&body=' + this.body + ' ' + link, '_self');
-            } catch (e) {
-                this._error('_emailLink: ' + e);
-            }
-            var shareContent = ['<p>Right click the link below',
-                'and choose Copy Link or Copy Shortcut:</p>',
-                '<p><a href="', link, '">Share this map</a></p>'].join('');
-            if (!this.shareDialog) {
-                this.shareDialog = new Dialog({
-                    title: 'Share Map',
-                    content: shareContent,
-                    style: 'width: 300px; overflow:hidden;'
-                });
-            } else {
-                this.shareDialog.setContent(shareContent);
-            }
-            this.shareDialog.show();
-            //optional google analytics event
-            topic.publish('googleAnalytics/events', {
-                category: 'AppSettings',
-                action: 'map-share'
-            });
         },
         /**
          * creates a share url form the settings
@@ -146,6 +126,7 @@ define([
             var queryString;
             if (window.location.search !== '') {
                 if (window.location.search.indexOf(this.parameterName) !== -1) {
+
                     queryString = this._updateUrlParameter(
                             window.location.search,
                             this.parameterName,
@@ -162,12 +143,13 @@ define([
                 }
             } else {
                 queryString = ['?', this.parameterName, '=', value].join('');
+
             }
             //build url using window.location
             return [window.location.protocol + '//',
                 window.location.host,
                 window.location.pathname,
-                encodeURIComponent(queryString)].join('');
+                queryString].join('');
         },
         _updateUrlParameter: function (url, param, value) {
             var regex = new RegExp('([?|&]' + param + '=)[^\&]+');

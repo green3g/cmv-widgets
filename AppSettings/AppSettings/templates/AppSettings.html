@@ -1,0 +1,14 @@
+<div class="${baseClass}">  
+    <p><strong>Application Settings:</strong></p>
+    <ul data-dojo-attach-point="settingsList"
+        style="list-style: none;padding:0;"></ul>
+    <hr />
+    <p><button data-dojo-attach-point="defaultShareButton" 
+                       data-dojo-props="iconClass:'fa fa-fw fa-envelope'"
+                       data-dojo-type="dijit/form/Button">Share Map</button>
+        <button data-dojo-attach-point="clearCacheButton" 
+                data-dojo-props="iconClass:'fa fa-fw fa-undo'"
+                data-dojo-type="dijit/form/Button"
+                data-dojo-attach-event="onClick:_clearCache">Reset Settings</button></p>
+    <div data-dojo-attach-point="containerNode" class="${baseClass}Container"></div>
+</div>
