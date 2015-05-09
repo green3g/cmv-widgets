@@ -2,7 +2,7 @@ Related Record Table
 ====================
 
 A tabbed widget for displaying and interacting with tables related to feature layers.
-Intended for use in [CMV v1.3.0](https://github.com/cmv/cmv-app/releases/tag/v1.2.0) 
+Intended for use in [CMV v1.3.0](https://github.com/cmv/cmv-app/) 
 
 ![Screenshot!](https://github.com/roemhildtg/CMV_Widgets/blob/master/RelatedRecordTable_Widget/Widget.PNG)
 
@@ -16,6 +16,21 @@ Usage
 3. Click on a feature layer to see related records.
 4. Bonus: Set up columnInfos to format relationship table.
 
+```JavaScript
+//sample config
+relatedRecords: {
+    include: true,
+    id: 'relatedRecords',
+    position: 0,
+    canFloat: true,
+    open: true,
+    type: 'contentPane',
+    placeAt: 'bottom',
+    path: 'gis/dijit/RelatedRecordTable',
+    title: 'Related Records',
+    options: {layerControlLayerInfos: true}
+},
+```
 Options:
 ========
 

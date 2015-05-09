@@ -21,10 +21,10 @@ define([
         RegistryMixin, registry, ready, TabContainer) {
     var CustomGrid = declare('customGrid', [OnDemandGrid, ColumnHider, RegistryMixin]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _FloatingWidgetMixin], {
-        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
+        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-type="ContentPane" data-dojo-attach-point="contentPane"></div></div>',
         relationshipLayers: null,
         formatters: null,
-        tabPosition: 'left-h',
+        tabPosition: 'top',
         columnInfos: {},
         baseClass: 'relatedRecordTableWidget',
         //this id can be the dijit id of a tabcontainer or
@@ -47,7 +47,8 @@ define([
                     tabPosition: this.tabPosition,
                     style: 'height:100%;width:100%;',
                     doLayout: false
-                }, this.containerNode);
+                }, this.contentPane);
+		this.tabContainer.startup();
                 this._init();
             }
         },
@@ -97,6 +98,7 @@ define([
                                 });
                                 relationshipLayer.relationships.push(relationship);
                                 this.tabContainer.addChild(relationship.grid);
+				this.tabContainer.resize();
                             }
 
                         }));
@@ -108,6 +110,14 @@ define([
                 }));
             }
         },
+	resize: function() {
+	  this.inherited(arguments);
+	  this.tabContainer.resize();
+	},
+	startup: function() {
+	  this.inherited(arguments);
+	  this.tabContainer.resize();
+	},
         _onLayerClick: function (layer, clickEvent) {
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
                 if (relationship.include) {
