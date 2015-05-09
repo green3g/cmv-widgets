@@ -16,11 +16,6 @@ using html5 localStorage.
 - Integrate with other widgets to allow additional properties to be saved in the
 application and shared
 
- 
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/URL_Screenshot.PNG)
- 
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/AppSettings_Widget/Widget_screenshot.PNG)
-
 ##Usage 
 Copy the AppSettings.js and AppSettings folder into your js/gis/dijit/ directory.
 
@@ -34,12 +29,21 @@ settings: {
     path: 'gis/dijit/AppSettings',
     title: 'Save/Share Current Map',
     options: {
-    //required:
+    
+    //these options are required:
      map: true,
      layerControlLayerInfos: true,
 
-     //optional (defaults shown): 
-     appSettings: {},
+     //not required unless you want to add additional settings to save
+     appSettings: {
+      yourSetting: {
+	  label: 'Your Other Setting to save',
+	  checkbox: true,
+	  save: true
+	}
+     },
+     
+     //these options are not required (defaults are shown): 
      parametername: 'cmvSettings',
      mapRightClickMenu: true,
      address: 'email@email.com',
@@ -81,7 +85,7 @@ Storing a custom value in the appSettings widget can be used to set and retrieve
 values in localStorage and via url when the user clicks 'Share Map'. If the url becomes
 too long, a web server url should be provided, such as the attached php script.
 
-- First, see http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html to find out how dojo.topic works.
+- First, see http://dojotoolkit.org/reference-guide/1.10/dojo/topic.html to find out how dojo/topic works.
 - Add key to appSettings option parameter array
 - In your widget, use topic.subscribe (example below) in the postCreate or startup function to load the values that were saved.
 - In your widget, use topic.publish (example below) to save your value any time it changes.

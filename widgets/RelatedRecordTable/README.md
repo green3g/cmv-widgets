@@ -28,7 +28,12 @@ relatedRecords: {
     placeAt: 'bottom',
     path: 'gis/dijit/RelatedRecordTable',
     title: 'Related Records',
-    options: {layerControlLayerInfos: true}
+    options: {
+      //required option
+      layerControlLayerInfos: true
+      
+      //see options below for additional configuration
+    }
 },
 ```
 Options:
