@@ -45,7 +45,7 @@ settings: {
      address: 'email@email.com',
      subject: 'Share Map',
      body: 'Check out this map! <br /> ',
-     emailSettings: ['saveMapExtent', 'savelayerVisibility'],
+     emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
      shareNode: null,
      shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
      server: null
