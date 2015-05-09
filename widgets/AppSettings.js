@@ -69,7 +69,6 @@ define([
         },
         _init: function () {
             this._setCheckboxHandles();
-            this._handleShare();
             if (this._appSettings.saveMapExtent.save ||
                     this._appSettings.saveMapExtent.urlLoad) {
                 //once the saved map has finished zooming, set the handle
@@ -95,6 +94,9 @@ define([
             //needs to wait for other widgets to load
             //so they can subscribe to topic
             ready(5, this, '_handletopics');
+	    
+	    //_shareMixin
+            this._handleShare();
         },
         /**
          * loads the settings from localStorage and overrides the loaded settings
@@ -295,7 +297,11 @@ define([
          * the user has the option to reset without manually clearing their cache
          */
         _clearCache: function () {
-            this._appSettings = lang.clone(this._defaultAppSettings);
+	    for(var setting in this._defaultAppSettings) {
+	      if(this._defaultAppSettings.hasOwnProperty(setting) {
+		lang.mixin(this._appSettings[setting], this._defaultAppSettings[setting]);
+	      }
+	    }
             this._saveAppSettings();
             this._refreshView();
         },
