@@ -4,13 +4,11 @@ Related Record Table
 A tabbed widget for displaying and interacting with tables related to feature layers.
 Intended for use in [CMV v1.3.0](https://github.com/cmv/cmv-app/) 
 
-![Screenshot!](https://github.com/roemhildtg/CMV_Widgets/blob/master/RelatedRecordTable_Widget/Widget.PNG)
-
 Usage
 ======
 
-1. Add feature layers that have a relationship. Note: the layers must be type: 'feature', this widget will not display related records in dynamic layers. Also, mode should be set to ON_DEMAND or SNAPSHOT. SELECTION will not work currently.
-2. Ensure a proxy is configured and working
+1. Add feature layers that have a relationship. Note: the layers must be type: 'feature', this widget will not display related records in dynamic layers. Also, mode should be set to `ON_DEMAND` or `SNAPSHOT`. `SELECTION` will not work currently.
+2. Ensure [a proxy](https://github.com/Esri/resource-proxy) is configured and working
 2. Set the widget config to include a layerInfos
 3. Set the widget to be 'open' or visible by default ( this is important for the tab container to render correctly )
 3. Click on a feature layer to see related records.
