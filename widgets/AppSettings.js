@@ -211,11 +211,15 @@ define([
          * the user has the option to reset without manually clearing their cache
          */
         _clearCache: function () {
-            for (var setting in this._defaultAppSettings) {
+            for (var setting in this._appSettings) {
                 if (this._defaultAppSettings.hasOwnProperty(setting)) {
                     lang.mixin(this._appSettings[setting], this._defaultAppSettings[setting]);
+                } else {
+                    delete this._appSettings[setting];
                 }
             }
+            this._saveAppSettings();
+            this._refreshView();
         },
         /**
          * in case something changes programatically, this can be called to update
