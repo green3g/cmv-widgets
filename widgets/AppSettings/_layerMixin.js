@@ -4,8 +4,20 @@ define([
     'dojo/_base/array',
     'dojo/topic',
     'dojo/ready'
-], function (declare, lang, array, topic) {
+], function (declare, lang, array, topic, ready) {
     return declare(null, {
+        init: function () {
+            this.inherited(arguments);
+            if (this._appSettings.saveLayerVisibility.save ||
+                    this._appSettings.saveLayerVisibility.urlLoad) {
+                //needs to be ready so other widgets can update layers
+                //accordingly
+                ready(3, this, '_loadSavedLayers');
+            }
+            //needs to come after the loadSavedLayers function
+            //so also needs to be ready
+            ready(4, this, '_setLayerVisibilityHandles');
+        },
         /**
          * sets the visibility of the loaded layers if save or urlLoad is true
          */

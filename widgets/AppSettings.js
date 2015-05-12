@@ -11,16 +11,18 @@ define([
     'dijit/Menu',
     'dijit/MenuItem',
     'dijit/form/CheckBox',
-    './AppSettings/_loadExtentMixin',
-    './AppSettings/_loadLayerMixin',
+    './AppSettings/_extentMixin',
+    './AppSettings/_layerMixin',
     './AppSettings/_shareMixin',
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, topic, Json, lang, ready, Menu, MenuItem, Checkbox,
-        _loadExtentMixin, _loadLayerMixin, _shareMixin, appSettingsTemplate) {
+        DomConstruct, topic, json, lang, ready, Menu, MenuItem, Checkbox,
+        _extentMixin, _layerMixin, _shareMixin, appSettingsTemplate) {
+    //this widget uses several mixins to add additional functionality
+    //additional mixins may be added
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        _loadExtentMixin, _loadLayerMixin, _shareMixin], {
+        _extentMixin, _layerMixin, _shareMixin], {
         /* params */
         /**
          * each app setting may have the following properties:
@@ -64,54 +66,41 @@ define([
                 });
                 return;
             } else {
-                this._loadAppSettings();
+                this.loadAppSettings();
             }
         },
-        _init: function () {
+        /**
+         * this method is called after settings are loaded
+         * mixins may use this method to apply loaded settings
+         * mixins init method must call this.inherited(arguments) to ensure
+         * other mixins load properly
+         */
+        init: function () {
+            this._initialized = true;
             this._setCheckboxHandles();
-            if (this._appSettings.saveMapExtent.save ||
-                    this._appSettings.saveMapExtent.urlLoad) {
-                //once the saved map has finished zooming, set the handle
-                var handle = this.map.on('zoom-end', lang.hitch(this, function () {
-                    handle.remove();
-                    this._setExtentHandles();
-                }));
-                //other widgets need to be ready to listen to extent
-                //changes in the map
-                ready(2, this, '_loadSavedExtent');
-            } else {
-                this._setExtentHandles();
-            }
-            if (this._appSettings.saveLayerVisibility.save ||
-                    this._appSettings.saveLayerVisibility.urlLoad) {
-                //needs to be ready so other widgets can update layers
-                //accordingly
-                ready(3, this, '_loadSavedLayers');
-            }
-            //needs to come after the loadSavedLayers function
-            //so also needs to be ready
-            ready(4, this, '_setLayerVisibilityHandles');
+            //call mixins init method
+            this.inherited(arguments);
+            //let mixins know the settings are loaded
             //needs to wait for other widgets to load
             //so they can subscribe to topic
-            ready(5, this, '_handletopics');
-	    
-	    //_shareMixin
-            this._handleShare();
+            ready(10, this, '_handletopics');
         },
         /**
          * loads the settings from localStorage and overrides the loaded settings
          * with values in the url parameters
+         * Up to one additional mixin may use this method
+         * This method is responsible for calling the init method
          * @param {function} callback - the function to call when settings are loaded
          */
-        _loadAppSettings: function () {
+        loadAppSettings: function () {
             //start with default
             this._appSettings = lang.clone(this._defaultAppSettings);
             //mixin local storage
             if (localStorage[this.parameterName]) {
-                //this may fail if Json is invalid
+                //this may fail if json is invalid
                 try {
                     //parse the settings
-                    var loadedSettings = Json.parse(localStorage.getItem(this.parameterName));
+                    var loadedSettings = json.parse(localStorage.getItem(this.parameterName));
                     //store each setting that was loaded
                     //override the default
                     for (var setting in loadedSettings) {
@@ -130,63 +119,14 @@ define([
                     this._error('_loadLocalStorage: ' + error);
                 }
             }
-            //url parameters override 
-            var settings = this._getQueryStringParameter(this.parameterName);
-            if (settings) {
-                if (this.server) {
-                    this._requestSettingsFromServer(settings);
-                } else {
-                    this._loadSettingsFromParameter(decodeURIComponent(settings));
-                    this._init();
+            //if a parent class has a loadAppSettings method, call it
+            //wait for a max of 8 seconds
+            this.inherited(arguments);
+            setTimeout(lang.hitch(this, function () {
+                if (!this._initialized) {
+                    this.init();
                 }
-            } else {
-                this._init();
-            }
-        },
-        /**
-         * 
-         * @param {type} parameter
-         * @returns {Boolean}
-         */
-        _getQueryStringParameter: function (parameter) {
-            var search = decodeURI(window.location.search), parameters;
-            if (search.indexOf(parameter) !== -1) {
-                if (search.indexOf('&') !== -1) {
-                    parameters = search.split('&');
-                } else {
-                    parameters = [search];
-                }
-                for (var i in parameters) {
-                    if (parameters[i].indexOf(parameter) !== -1) {
-                        return parameters[i].split('=')[1];
-                    }
-                }
-            }
-            return false;
-        },
-        /**
-         * 
-         * @param {type} parameters
-         * @returns {undefined}
-         */
-        _loadSettingsFromParameter: function (parameters) {
-            try {
-                var settings = Json.parse(parameters);
-                for (var s in settings) {
-                    if (!this._appSettings.hasOwnProperty(s)) {
-                        this._appSettings[s] = {};
-                    }
-                    if (settings.hasOwnProperty(s)) {
-                        this._appSettings[s].value = settings[s];
-                        //set urlLoad flag override
-                        //this tells the widget that the settings were loaded via 
-                        //url and should be loaded regardless of the user's checkbox
-                        this._appSettings[s].urlLoad = true;
-                    }
-                }
-            } catch (error) {
-                this._error('_loadURLParameters' + error);
-            }
+            }), 8000);
         },
         /**
          * if the checkbox property is set to true, calls the _addCheckbox function
@@ -290,20 +230,18 @@ define([
                     };
                 }
             }
-            return Json.stringify(settings);
+            return json.stringify(settings);
         },
         /**
          * in case something goes wrong, the settings are reset.
          * the user has the option to reset without manually clearing their cache
          */
         _clearCache: function () {
-	    for(var setting in this._defaultAppSettings) {
-	      if(this._defaultAppSettings.hasOwnProperty(setting) {
-		lang.mixin(this._appSettings[setting], this._defaultAppSettings[setting]);
-	      }
-	    }
-            this._saveAppSettings();
-            this._refreshView();
+            for (var setting in this._defaultAppSettings) {
+                if (this._defaultAppSettings.hasOwnProperty(setting)) {
+                    lang.mixin(this._appSettings[setting], this._defaultAppSettings[setting]);
+                }
+            }
         },
         /**
          * in case something changes programatically, this can be called to update

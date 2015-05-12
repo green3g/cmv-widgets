@@ -7,6 +7,22 @@ define([
     'esri/geometry/Point'
 ], function (declare, lang, ready, has, SpatialReference, Point) {
     return declare(null, {
+        init: function () {
+            this.inherited(arguments);
+            if (this._appSettings.saveMapExtent.save ||
+                    this._appSettings.saveMapExtent.urlLoad) {
+                //once the saved map has finished zooming, set the handle
+                var handle = this.map.on('zoom-end', lang.hitch(this, function () {
+                    handle.remove();
+                    this._setExtentHandles();
+                }));
+                //other widgets need to be ready to listen to extent
+                //changes in the map
+                ready(2, this, '_loadSavedExtent');
+            } else {
+                this._setExtentHandles();
+            }
+        },
         /**
          * recovers the saved extent from the _appSettings object
          * if the settings's save or urlLoad property is true
