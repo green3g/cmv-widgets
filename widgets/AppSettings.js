@@ -8,21 +8,20 @@ define([
     'dojo/json',
     'dojo/_base/lang',
     'dojo/ready',
-    'dijit/Menu',
-    'dijit/MenuItem',
     'dijit/form/CheckBox',
+    './AppSettings/_baseMixin',
     './AppSettings/_extentMixin',
     './AppSettings/_layerMixin',
     './AppSettings/_shareMixin',
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, topic, json, lang, ready, Menu, MenuItem, Checkbox,
-        _extentMixin, _layerMixin, _shareMixin, appSettingsTemplate) {
+        DomConstruct, topic, json, lang, ready,Checkbox,
+        _baseMixin, _extentMixin, _layerMixin, _shareMixin, appSettingsTemplate) {
     //this widget uses several mixins to add additional functionality
     //additional mixins may be added
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        _extentMixin, _layerMixin, _shareMixin], {
+        _baseMixin, _extentMixin, _layerMixin, _shareMixin], {
         /* params */
         /**
          * each app setting may have the following properties:
@@ -37,22 +36,7 @@ define([
         /* private */
         widgetsInTemplate: true,
         templateString: appSettingsTemplate,
-        _defaultAppSettings: {
-            saveMapExtent: {
-                save: false,
-                value: {},
-                checkbox: true,
-                label: 'Save Map Extent',
-                urlLoad: false
-            },
-            saveLayerVisibility: {
-                save: false,
-                value: {},
-                checkbox: true,
-                label: 'Save Layer Visibility',
-                urlLoad: false
-            }
-        },
+        _defaultAppSettings: {},
         _appSettings: null,
         baseClass: 'appSettings',
         postCreate: function () {
@@ -120,8 +104,8 @@ define([
                 }
             }
             //if a parent class has a loadAppSettings method, call it
-            //wait for a max of 8 seconds
             this.inherited(arguments);
+            //failsafe
             setTimeout(lang.hitch(this, function () {
                 if (!this._initialized) {
                     this.init();
@@ -180,16 +164,6 @@ define([
             } catch (e) {
                 this._error({location: 'AppSettings:_handletopics:onSettingsLoad', error: e});
             }
-        },
-        /**
-         * creates the right click map menu
-         */
-        _addRightClickMenu: function () {
-            this.menu = new Menu();
-            this.mapRightClickMenu.addChild(new MenuItem({
-                label: 'Share Map',
-                onClick: lang.hitch(this, '_emailLink')
-            }));
         },
         /*
          * used to modify settings programatically (without checkboxes)

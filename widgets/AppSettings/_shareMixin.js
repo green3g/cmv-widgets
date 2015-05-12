@@ -7,8 +7,11 @@ define([
     'dijit/Dialog',
     'dojo/on',
     'dojo/_base/array',
-    'esri/request'
-], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request) {
+    'esri/request',
+    'dijit/Menu',
+    'dijit/MenuItem',
+], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request,
+        Menu, MenuItem) {
     return declare(null, {
         //email settings
         shareNode: null,
@@ -16,7 +19,7 @@ define([
         shareDialogTemplate: '<p>Right click the link below and choose Copy Link or Copy Shortcut:</p><p><a href="{0}">Share this map</a></p>',
         loadingDialogTemplate: '<div class="loading-spinner"></div><p>Loading...</p>',
         /* settings to share via email */
-        emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
+        emailSettings: ['mapExtent', 'layerVisibility'],
         address: '',
         subject: 'Share Map',
         body: '',
@@ -39,6 +42,16 @@ define([
             if (this.mapRightClickMenu) {
                 this._addRightClickMenu();
             }
+        },
+        /**
+         * creates the right click map menu
+         */
+        _addRightClickMenu: function () {
+            this.menu = new Menu();
+            this.mapRightClickMenu.addChild(new MenuItem({
+                label: 'Share Map',
+                onClick: lang.hitch(this, '_emailLink')
+            }));
         },
         /**
          * handles the opening of a new email and displays a temporary dialog
