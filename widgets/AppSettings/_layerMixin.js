@@ -6,8 +6,15 @@ define([
     'dojo/ready'
 ], function (declare, lang, array, topic, ready) {
     return declare(null, {
-        postCreate: function() {
+        postCreate: function () {
             this.inherited(arguments);
+            if (!this.layerInfos) {
+                topic.publish('viewer/handleError', {
+                    source: 'AppSettings',
+                    error: 'layerInfos are required'
+                });
+                return;
+            }
             this._defaultAppSettings.layerVisibility = {
                 save: false,
                 value: {},
@@ -17,7 +24,10 @@ define([
             };
         },
         init: function () {
-            this.inherited(arguments);
+            this.inherited(arguments);            
+            if(!this._appSettings.layerVisibility){
+                return;
+            }
             if (this._appSettings.layerVisibility.save ||
                     this._appSettings.layerVisibility.urlLoad) {
                 //needs to be ready so other widgets can update layers

@@ -4,11 +4,19 @@ define([
     'dojo/ready',
     'dojo/sniff',
     'esri/SpatialReference',
-    'esri/geometry/Point'
-], function (declare, lang, ready, has, SpatialReference, Point) {
+    'esri/geometry/Point',
+    'dojo/topic'
+], function (declare, lang, ready, has, SpatialReference, Point, topic) {
     return declare(null, {
-        postCreate: function() {
+        postCreate: function () {
             this.inherited(arguments);
+            if (!this.map) {
+                topic.publish('viewer/handleError', {
+                    source: 'AppSettings',
+                    error: 'layerInfos are required'
+                });
+                return;
+            }
             this._defaultAppSettings.mapExtent = {
                 save: false,
                 value: {},
@@ -19,6 +27,9 @@ define([
         },
         init: function () {
             this.inherited(arguments);
+            if(!this._appSettings.mapExtent){
+                return;
+            }
             if (this._appSettings.mapExtent.save ||
                     this._appSettings.mapExtent.urlLoad) {
                 //once the saved map has finished zooming, set the handle

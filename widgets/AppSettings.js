@@ -16,7 +16,7 @@ define([
     'dojo/text!./AppSettings/templates/AppSettings.html',
     'dijit/form/Button'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
-        DomConstruct, topic, json, lang, ready,Checkbox,
+        DomConstruct, topic, json, lang, ready, Checkbox,
         _baseMixin, _extentMixin, _layerMixin, _shareMixin, appSettingsTemplate) {
     //this widget uses several mixins to add additional functionality
     //additional mixins may be added
@@ -41,17 +41,8 @@ define([
         baseClass: 'appSettings',
         postCreate: function () {
             this.inherited(arguments);
-            //mix in additional default settings
             lang.mixin(this._defaultAppSettings, this.appSettings);
-            if (!this.map || !this.layerInfos) {
-                topic.publish('viewer/handleError', {
-                    source: 'AppSettings',
-                    error: 'map and layerInfos are required'
-                });
-                return;
-            } else {
-                this.loadAppSettings();
-            }
+            this.loadAppSettings();
         },
         /**
          * this method is called after settings are loaded
@@ -61,9 +52,9 @@ define([
          */
         init: function () {
             this._initialized = true;
-            this._setCheckboxHandles();
-            //call mixins init method
             this.inherited(arguments);
+            //call mixins init method
+            this._setCheckboxHandles();
             //let mixins know the settings are loaded
             //needs to wait for other widgets to load
             //so they can subscribe to topic
@@ -74,7 +65,6 @@ define([
          * with values in the url parameters
          * Up to one additional mixin may use this method
          * This method is responsible for calling the init method
-         * @param {function} callback - the function to call when settings are loaded
          */
         loadAppSettings: function () {
             //start with default
@@ -90,11 +80,8 @@ define([
                     for (var setting in loadedSettings) {
                         if (loadedSettings.hasOwnProperty(setting) &&
                                 loadedSettings[setting].save) {
-                            if (!this._appSettings.hasOwnProperty(setting)) {
-                                //if the property is not in the default settings, create it
-                                this._appSettings[setting] = loadedSettings[setting];
-                            } else {
-                                //otherwise mixin the setting
+                            if (this._appSettings.hasOwnProperty(setting)) {
+                                //mixin the setting
                                 lang.mixin(this._appSettings[setting], loadedSettings[setting]);
                             }
                         }
@@ -103,9 +90,10 @@ define([
                     this._error('_loadLocalStorage: ' + error);
                 }
             }
-            //if a parent class has a loadAppSettings method, call it
+            //if a parent class has a loadAppSettings method, call it to override
+            //localStorage settings
             this.inherited(arguments);
-            //failsafe
+            //failsafe timeout
             setTimeout(lang.hitch(this, function () {
                 if (!this._initialized) {
                     this.init();
