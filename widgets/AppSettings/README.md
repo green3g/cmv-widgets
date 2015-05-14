@@ -17,7 +17,7 @@ using html5 localStorage.
 application and shared
 
 ##Usage 
-Copy the AppSettings.js and AppSettings folder into your js/gis/dijit/ directory.
+Copy the AppSettings.js and AppSettings folder into your relevent widgets directory.
 
 In viewer.js (see below for descriptions of parameters): 
 ```javascript      
@@ -26,7 +26,7 @@ settings: {
     id: 'settings',
     position: 10,
     type: 'titlePane',
-    path: 'gis/dijit/AppSettings',
+    path: 'path/AppSettings',
     title: 'Save/Share Current Map',
     options: {
     
@@ -56,6 +56,34 @@ settings: {
     }
 }
 ```
+
+Outside of CMV, configure `dojoConfig` and create the widget using a constructor: 
+```JavaScript
+require(["esri/map", "esri/layers/ArcGISDynamicMapServiceLayer", 'widgets/AppSettings', "dojo/domReady!"], function (Map, Dynamic, Settings) {
+    var map = new Map("map", {
+        basemap: "topo", //For full list of pre-defined basemaps, navigate to http://arcg.is/1JVo6Wd
+        center: [-94.75290067627297, 39.034671990514816], // long, lat
+        zoom: 12,
+    });
+    var demographicsLayerURL = "http://sampleserver6.arcgisonline.com/arcgis/rest/services/Census/MapServer";
+    var demographicsLayerOptions = {
+        "id": "demographicsLayer",
+        "opacity": 0.8,
+        "showAttribution": false
+    };
+
+    var demographicsLayer = new Dynamic(demographicsLayerURL, demographicsLayerOptions);
+    map.addLayer(demographicsLayer);
+    var settings = new Settings({
+        layerInfos: [{
+            layer: demographicsLayer
+        }],
+        map: map
+        //other options
+    }, 'settings');
+});
+```
+
 
 ##Options Parameters:
 Key | Type | Default | Description
