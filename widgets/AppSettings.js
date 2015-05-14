@@ -298,7 +298,7 @@ define([
          */
         _clearCache: function () {
 	    for(var setting in this._defaultAppSettings) {
-	      if(this._defaultAppSettings.hasOwnProperty(setting) {
+	      if(this._defaultAppSettings.hasOwnProperty(setting)) {
 		lang.mixin(this._appSettings[setting], this._defaultAppSettings[setting]);
 	      }
 	    }
