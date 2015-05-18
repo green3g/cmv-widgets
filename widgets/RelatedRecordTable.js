@@ -2,7 +2,6 @@ define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
-    'gis/dijit/_FloatingWidgetMixin',
     'dojo/dom-class',
     'dojo/_base/array',
     'dojo/_base/lang',
@@ -14,17 +13,18 @@ define([
     'dijit/registry',
     'dojo/ready',
     'dijit/layout/TabContainer',
+    'dojo/topic',
     'xstyle/css!./RelatedRecordTable/css/styles.css',
     'dojo/domReady!'
-], function (declare, _WidgetBase, _TemplatedMixin, _FloatingWidgetMixin, DomClass,
+], function (declare, _WidgetBase, _TemplatedMixin, DomClass,
         Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
-        RegistryMixin, registry, ready, TabContainer) {
+        RegistryMixin, registry, ready, TabContainer, topic) {
     var CustomGrid = declare('customGrid', [OnDemandGrid, ColumnHider, RegistryMixin]);
-    return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin, _FloatingWidgetMixin], {
-        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-type="ContentPane" data-dojo-attach-point="contentPane"></div></div>',
+    return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin], {
+        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
         relationshipLayers: null,
         formatters: null,
-        tabPosition: 'top',
+        tabPosition: 'left-h',
         columnInfos: {},
         baseClass: 'relatedRecordTableWidget',
         //this id can be the dijit id of a tabcontainer or
@@ -47,8 +47,7 @@ define([
                     tabPosition: this.tabPosition,
                     style: 'height:100%;width:100%;',
                     doLayout: false
-                }, this.contentPane);
-		this.tabContainer.startup();
+                }, this.containerNode);
                 this._init();
             }
         },
@@ -61,6 +60,10 @@ define([
                 }
             }
             if(!this.tabContainer){
+                topic.publish('viewer/handleError', {
+                    source: 'RelatedRecordTable',
+                    error: 'tab container could not be found'
+                });
                 return;
             }
             if (this.layerInfos.length > 0) {
@@ -83,13 +86,12 @@ define([
                             };
                             if (this.columnInfos.hasOwnProperty(layerInfo.layer.id) &&
                                     this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
-                                declare.safeMixin(
-                                        relationship,
+                                declare.safeMixin(relationship,
                                         this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
                             }
                             if (relationship.include) {
                                 relationship.store = new Memory({
-                                    id: relationshipLayer.layer.objectIdField
+                                    idProperty: relationshipLayer.layer.objectIdField
                                 });
                                 relationship.grid = new CustomGrid({
                                     title: relationship.title,
@@ -98,7 +100,6 @@ define([
                                 });
                                 relationshipLayer.relationships.push(relationship);
                                 this.tabContainer.addChild(relationship.grid);
-				this.tabContainer.resize();
                             }
 
                         }));
@@ -110,14 +111,6 @@ define([
                 }));
             }
         },
-	resize: function() {
-	  this.inherited(arguments);
-	  this.tabContainer.resize();
-	},
-	startup: function() {
-	  this.inherited(arguments);
-	  this.tabContainer.resize();
-	},
         _onLayerClick: function (layer, clickEvent) {
             Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
                 if (relationship.include) {
