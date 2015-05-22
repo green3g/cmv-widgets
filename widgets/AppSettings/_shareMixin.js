@@ -7,8 +7,11 @@ define([
     'dijit/Dialog',
     'dojo/on',
     'dojo/_base/array',
-    'esri/request'
-], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request) {
+    'esri/request',
+    'dijit/Menu',
+    'dijit/MenuItem',
+], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request,
+        Menu, MenuItem) {
     return declare(null, {
         //email settings
         shareNode: null,
@@ -16,16 +19,19 @@ define([
         shareDialogTemplate: '<p>Right click the link below and choose Copy Link or Copy Shortcut:</p><p><a href="{0}">Share this map</a></p>',
         loadingDialogTemplate: '<div class="loading-spinner"></div><p>Loading...</p>',
         /* settings to share via email */
-        emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
+        emailSettings: ['mapExtent', 'layerVisibility'],
         address: '',
         subject: 'Share Map',
         body: '',
         //a url to use as a server for sharing urls
         server: '',
+        _shareProperty: null,
         /**
          * creates the domnode for the share button
          */
-        _handleShare: function () {
+        postCreate: function () {
+            this.inherited(arguments);
+            this._shareProperty = this.parameterName;
             //place share button/link
             if (this.shareNode !== null) {
                 var share = domConstruct.place(this.shareTemplate, this.shareNode);
@@ -36,6 +42,16 @@ define([
             if (this.mapRightClickMenu) {
                 this._addRightClickMenu();
             }
+        },
+        /**
+         * creates the right click map menu
+         */
+        _addRightClickMenu: function () {
+            this.menu = new Menu();
+            this.mapRightClickMenu.addChild(new MenuItem({
+                label: 'Share Map',
+                onClick: lang.hitch(this, '_emailLink')
+            }));
         },
         /**
          * handles the opening of a new email and displays a temporary dialog
@@ -85,8 +101,30 @@ define([
                 }
             }));
         },
+        loadAppSettings: function () {
+            //url parameters override 
+            var settings = this._getQueryStringParameter(this.parameterName);
+            if (settings) {
+                if (this.server) {
+                    this._requestSettingsFromServer(settings).then(lang.hitch(this, function (data) {
+                        if (data.Value) {
+                            this._loadSettingsFromParameter(data.Value);
+                        }
+                        this.init();
+                    }));
+                } else {
+                    this._loadSettingsFromParameter(decodeURIComponent(settings));
+                    this.init();
+                }
+                //don't override the user's settings and instead use a temp location
+                //in local storage
+                this.parameterName += '_urlLoad';
+            } else {
+                this.init();
+            }
+        },
         _requestSettingsFromServer: function (settings) {
-            new request({
+            return new request({
                 url: this.server,
                 content: {
                     action: 'get',
@@ -94,12 +132,31 @@ define([
                 },
                 handleAs: 'json',
                 usePost: true
-            }).then(lang.hitch(this, function (data) {
-                if (data.Value) {
-                    this._loadSettingsFromParameter(data.Value);
+            });
+        },
+        /**
+         * 
+         * @param {type} parameters
+         * @returns {undefined}
+         */
+        _loadSettingsFromParameter: function (parameters) {
+            try {
+                var settings = json.parse(parameters);
+                for (var s in settings) {
+                    if (!this._appSettings.hasOwnProperty(s)) {
+                        this._appSettings[s] = {};
+                    }
+                    if (settings.hasOwnProperty(s)) {
+                        this._appSettings[s].value = settings[s];
+                        //set urlLoad flag override
+                        //this tells the widget that the settings were loaded via 
+                        //url and should be loaded regardless of the user's checkbox
+                        this._appSettings[s].urlLoad = true;
+                    }
                 }
-                this._init();
-            }));
+            } catch (error) {
+                this._error('_loadURLParameters' + error);
+            }
         },
         _showDialog: function (content) {
             if (!this.shareDialog) {
@@ -125,24 +182,24 @@ define([
         _buildLink: function (value) {
             var queryString;
             if (window.location.search !== '') {
-                if (window.location.search.indexOf(this.parameterName) !== -1) {
+                if (window.location.search.indexOf(this._shareProperty) !== -1) {
 
                     queryString = this._updateUrlParameter(
                             window.location.search,
-                            this.parameterName,
+                            this._shareProperty,
                             value
                             );
                 }
                 else {
                     queryString = [window.location.search,
                         '&',
-                        this.parameterName,
+                        this._shareProperty,
                         '=',
                         value].join('');
 
                 }
             } else {
-                queryString = ['?', this.parameterName, '=', value].join('');
+                queryString = ['?', this._shareProperty, '=', value].join('');
 
             }
             //build url using window.location
@@ -154,6 +211,27 @@ define([
         _updateUrlParameter: function (url, param, value) {
             var regex = new RegExp('([?|&]' + param + '=)[^\&]+');
             return url.replace(regex, '$1' + value);
+        },
+        /**
+         * 
+         * @param {type} parameter
+         * @returns {Boolean}
+         */
+        _getQueryStringParameter: function (parameter) {
+            var search = decodeURI(window.location.search), parameters;
+            if (search.indexOf(parameter) !== -1) {
+                if (search.indexOf('&') !== -1) {
+                    parameters = search.split('&');
+                } else {
+                    parameters = [search];
+                }
+                for (var i in parameters) {
+                    if (parameters[i].indexOf(parameter) !== -1) {
+                        return parameters[i].split('=')[1];
+                    }
+                }
+            }
+            return false;
         }
     });
 });
