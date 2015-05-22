@@ -4,13 +4,45 @@ define([
     'dojo/_base/array',
     'dojo/topic',
     'dojo/ready'
-], function (declare, lang, array, topic) {
+], function (declare, lang, array, topic, ready) {
     return declare(null, {
+        postCreate: function () {
+            this.inherited(arguments);
+            if (!this.layerInfos) {
+                topic.publish('viewer/handleError', {
+                    source: 'AppSettings',
+                    error: 'layerInfos are required'
+                });
+                return;
+            }
+            this._defaultAppSettings.layerVisibility = {
+                save: false,
+                value: {},
+                checkbox: true,
+                label: 'Save Layer Visibility',
+                urlLoad: false
+            };
+        },
+        init: function () {
+            this.inherited(arguments);            
+            if(!this._appSettings.layerVisibility){
+                return;
+            }
+            if (this._appSettings.layerVisibility.save ||
+                    this._appSettings.layerVisibility.urlLoad) {
+                //needs to be ready so other widgets can update layers
+                //accordingly
+                ready(3, this, '_loadSavedLayers');
+            }
+            //needs to come after the loadSavedLayers function
+            //so also needs to be ready
+            ready(4, this, '_setLayerVisibilityHandles');
+        },
         /**
          * sets the visibility of the loaded layers if save or urlLoad is true
          */
         _loadSavedLayers: function () {
-            var layers = this._appSettings.saveLayerVisibility.value;
+            var layers = this._appSettings.layerVisibility.value;
             //load visible layers
             array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
                 if (layers.hasOwnProperty(layer.layer.id)) {
@@ -28,10 +60,10 @@ define([
                 }
             }));
             //reset url flag
-            this._appSettings.saveLayerVisibility.urlLoad = false;
+            this._appSettings.layerVisibility.urlLoad = false;
         },
         _setLayerVisibilityHandles: function () {
-            var setting = this._appSettings.saveLayerVisibility;
+            var setting = this._appSettings.layerVisibility;
             setting.value = {};
             //since the javascript api visibleLayers property starts
             //with a different set of layers than what is actually turned
