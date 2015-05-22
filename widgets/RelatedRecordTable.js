@@ -14,8 +14,7 @@ define([
     'dojo/ready',
     'dijit/layout/TabContainer',
     'dojo/topic',
-    'xstyle/css!./RelatedRecordTable/css/styles.css',
-    'dojo/domReady!'
+    'xstyle/css!./RelatedRecordTable/css/styles.css'
 ], function (declare, _WidgetBase, _TemplatedMixin, DomClass,
         Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
         RegistryMixin, registry, ready, TabContainer, topic) {
