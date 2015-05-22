@@ -21,7 +21,6 @@ define([
         tabContainerId: null,
         postCreate: function () {
             this.inherited(arguments);
-            console.log(this);
             this.store = new Memory({
                 idProperty: this.objectIdField
             });
@@ -43,7 +42,6 @@ define([
             return deferred;
         },
         _handleRecords: function (results) {
-            console.log(results);
             //if we don't have columns set yet
             if (!this.get('columns').length) {
                 this.set('columns', array.map(results.fields, lang.hitch(this, function (field) {
@@ -89,7 +87,7 @@ define([
                     deferred.resolve(result);
                 },
                 error: function (error) {
-                    console.log(error);
+                    //console.log(error);
                 }
             });
             return deferred;
