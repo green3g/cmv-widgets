@@ -47,6 +47,7 @@ define([
                     style: 'height:100%;width:100%;',
                     doLayout: false
                 }, this.containerNode);
+                this.tabContainer.startup();
                 this._init();
             }
         },
