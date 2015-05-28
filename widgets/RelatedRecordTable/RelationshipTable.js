@@ -56,7 +56,7 @@ define([
             }
             this.refresh();
         },
-        _addRecord: function(record){
+        _addRecord: function (record) {
             this.store.put(record.attributes);
         },
         /*
@@ -91,6 +91,9 @@ define([
                 }
             });
             return deferred;
+        },
+        resize: function () {
+            this.inherited(arguments);
         }
     });
 });

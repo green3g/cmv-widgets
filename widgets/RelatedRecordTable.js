@@ -14,10 +14,11 @@ define([
     'dojo/ready',
     'dijit/layout/TabContainer',
     'dojo/topic',
+    './RelatedRecordTable/RelationshipTable',
     'xstyle/css!./RelatedRecordTable/css/styles.css'
 ], function (declare, _WidgetBase, _TemplatedMixin, DomClass,
-        Array, Lang, Request, Memory, OnDemandGrid, ColumnHider,
-        RegistryMixin, registry, ready, TabContainer, topic) {
+        Array, lang, Request, Memory, OnDemandGrid, ColumnHider,
+        RegistryMixin, registry, ready, TabContainer, topic, RelationshipTable) {
     var CustomGrid = declare('customGrid', [OnDemandGrid, ColumnHider, RegistryMixin]);
     return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin], {
         templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
@@ -54,11 +55,11 @@ define([
             if (!this.tabContainer) {
                 this.tabContainer = registry.byId(this.tabContainerId);
                 //allow user to reference a widget with a tab container by id
-                if(this.tabContainer.hasOwnProperty('tabContainer')){
+                if (this.tabContainer.hasOwnProperty('tabContainer')) {
                     this.tabContainer = this.tabContainer.tabContainer;
                 }
             }
-            if(!this.tabContainer){
+            if (!this.tabContainer) {
                 topic.publish('viewer/handleError', {
                     source: 'RelatedRecordTable',
                     error: 'tab container could not be found'
@@ -66,127 +67,26 @@ define([
                 return;
             }
             if (this.layerInfos.length > 0) {
-                Array.forEach(this.layerInfos, Lang.hitch(this, function (layerInfo) {
-                    if (layerInfo.layer.relationships && layerInfo.layer.relationships.length > 0) {
-                        var relationshipLayer = {
-                            layer: layerInfo.layer,
-                            relationships: []
-                        };
-                        Array.forEach(layerInfo.layer.relationships, Lang.hitch(this, function (relationshipInfo) {
-                            var relationship = {
-                                relationship: relationshipInfo,
-                                title: layerInfo.layer.name + '-' + relationshipInfo.name,
-                                formatters: {},
-                                hiddenColumns: [],
-                                unhideableColumns: [],
-                                include: true,
-                                grid: null,
-                                store: null
-                            };
-                            if (this.columnInfos.hasOwnProperty(layerInfo.layer.id) &&
-                                    this.columnInfos[layerInfo.layer.id].hasOwnProperty(relationshipInfo.id)) {
-                                declare.safeMixin(relationship,
-                                        this.columnInfos[layerInfo.layer.id][relationshipInfo.id]);
-                            }
-                            if (relationship.include) {
-                                relationship.store = new Memory({
-                                    idProperty: relationshipLayer.layer.objectIdField
-                                });
-                                relationship.grid = new CustomGrid({
-                                    title: relationship.title,
-                                    store: relationship.store,
-                                    noDataMessage: 'Click a feature from the map to find related records'
-                                });
-                                relationshipLayer.relationships.push(relationship);
-                                this.tabContainer.addChild(relationship.grid);
-                            }
-
-                        }));
-                        relationshipLayer.layer.on('click', Lang.hitch(this, function (clickEvent) {
-                            this._onLayerClick(relationshipLayer, clickEvent);
-                        }));
-                        this.relationshipLayers.push(relationshipLayer);
-                    }
-                }));
-            }
-        },
-        _onLayerClick: function (layer, clickEvent) {
-            Array.forEach(layer.relationships, Lang.hitch(this, function (relationship) {
-                if (relationship.include) {
-                    relationship.store.setData([]);
-                    var attributes = clickEvent.graphic.attributes;
-                    var objectID = attributes[layer.layer.objectIdField];
-                    var query = {
-                        url: layer.layer.url,
-                        objectIds: [objectID],
-                        outFields: ['*'],
-                        relationshipId: relationship.relationship.id
-                    };
-                    this._queryRelatedRecords(query, Lang.hitch(this, function (fields, recordGroups) {
-                        if (!relationship.grid.get('columns').length) {
-                            relationship.grid.set('columns', Array.map(fields, Lang.hitch(this, function (field) {
-                                var formatter = relationship.formatters[field.name] ||
-                                        relationship.formatters[field.type] ||
-                                        this.formatters[field.name] ||
-                                        this.formatters[field.type] || null;
-                                return {
-                                    label: field.alias,
-                                    field: field.name,
-                                    formatter: formatter,
-                                    hidden: relationship.hiddenColumns.indexOf(field.name) !== -1,
-                                    unhidable: relationship.unhideableColumns.indexOf(field.name) !== -1
-                                };
-                            })));
-                        }
-                        if (recordGroups.length > 0) {
-                            Array.forEach(recordGroups[0].relatedRecords, function (record) {
-                                relationship.store.put(record.attributes);
-                            });
-                        }
-                        relationship.grid.refresh();
-                    }));
-                }
-            }
-            ));
-        },
-        /*
-         * custom queryRelatedRecords function
-         * layer.queryRelatedRecords doesn't return the field 
-         * properties such as alias.    
-         * @param {object} query - object with the query properties
-         * @param function callback - function(responseFields, relatedRecordGroups)
-         * query properties:
-         *  - url: the url of the featureLayer
-         *  - objectIds: [object IDs]
-         *  - outFields: ['*'],
-         *  - relationshipId: integer
-         */
-        _queryRelatedRecords: function (query, callback) {
-            new Request({
-                url: query.url + '/queryRelatedRecords',
-                content: {
-                    returnGeometry: false,
-                    objectIDs: query.objectIds,
-                    outFields: query.outFields,
-                    relationshipId: query.relationshipId,
-                    f: 'json'
-                },
-                handleAs: 'json'
-            }).then(function (response) {
-                callback(response.fields, response.relatedRecordGroups);
-            });
-        },
-        _initMapClick: function () {
-            this.layerInfos[0].layer.getMap().on('click', Lang.hitch(this, function () {
-                Array.forEach(this.relationshipLayers, Lang.hitch(this, function (relationshipLayer) {
-                    Array.forEach(relationshipLayer.relationships, Lang.hitch(this, function (relationship) {
-                        if (relationship.include) {
-                            relationship.store.setData([]);
-                            relationship.grid.refresh();
+                Array.forEach(this.layerInfos, lang.hitch(this, function (l) {
+                    Array.forEach(l.layer.relationships, lang.hitch(this, function (r) {
+                        if (l.layer.relationships &&
+                                l.layer.relationships.length > 0 &&
+                                this.relationships[l.layer.id] &&
+                                this.relationships[l.layer.id].include) {
+                            var table = new RelationshipTable(lang.mixin({
+                                title: l.layer.title + ' - ' + r.name,
+                                url: l.layer.url,
+                                relationshipId: r.id,
+                                objectIdField: l.objectIdField
+                            }, this.columnInfos[l.layer.id][r.id]));
+                            this.tabContainer.addChild(table);
+                            l.layer.on('click', lang.hitch(this, function (e) {
+                                table.getRelatedRecords(e.graphic.attributes);
+                            }));
                         }
                     }));
                 }));
-            }));
+            }
         }
     });
 });
