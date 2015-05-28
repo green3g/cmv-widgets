@@ -2,61 +2,54 @@ define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
-    'dojo/dom-class',
     'dojo/_base/array',
     'dojo/_base/lang',
-    'esri/request',
-    'dojo/store/Memory',
-    'dgrid/OnDemandGrid',
-    'dgrid/extensions/ColumnHider',
-    'dgrid/extensions/DijitRegistry',
-    'dijit/registry',
     'dojo/ready',
+    'dijit/registry',
+    'dijit/_Container',
     'dijit/layout/TabContainer',
     'dojo/topic',
     './RelatedRecordTable/RelationshipTable',
     'xstyle/css!./RelatedRecordTable/css/styles.css'
-], function (declare, _WidgetBase, _TemplatedMixin, DomClass,
-        Array, lang, Request, Memory, OnDemandGrid, ColumnHider,
-        RegistryMixin, registry, ready, TabContainer, topic, RelationshipTable) {
-    var CustomGrid = declare('customGrid', [OnDemandGrid, ColumnHider, RegistryMixin]);
-    return declare('RelatedRecordTable', [_WidgetBase, _TemplatedMixin], {
+], function (declare, _WidgetBase, _TemplatedMixin,
+        array, lang, ready, registry, _Container, TabContainer, topic, RelationshipTable) {
+    return declare('RelatedRecordTable', [_WidgetBase, _Container], {
         templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
-        relationshipLayers: null,
-        formatters: null,
         tabPosition: 'left-h',
-        columnInfos: {},
+        relationships: {},
         baseClass: 'relatedRecordTableWidget',
         //this id can be the dijit id of a tabcontainer or
         //a widget that has a tabContainer property, like tmgee's attribute
         //table widget
         tabContainerId: null,
-        constructor: function () {
-            this.relationshipLayers = [];
-            this.formatters = {};
-        },
         postCreate: function () {
             this.inherited(arguments);
             if (this.tabContainerId) {
                 ready(10, this, '_init');
             } else {
-                if (this.hasOwnProperty('parentWidget')) {
-                    DomClass.add(this.parentWidget.id, 'RelatedRecordsTableParent ' + this.tabPosition);
-                }
                 this.tabContainer = new TabContainer({
                     tabPosition: this.tabPosition,
-                    style: 'height:100%;width:100%;',
-                    doLayout: false
-                }, this.containerNode);
-                this.tabContainer.startup();
+                    style: 'height:100%;width:100%;'
+                });
+                this.addChild(this.tabContainer);
                 this._init();
             }
+        },
+        startup: function () {
+            this.inherited(arguments);
+            if (!this.tabContainer._started) {
+                this.tabContainer.startup();
+            }
+        },
+        resize: function() {
+            this.inherited(arguments);
+            this.tabContainer.resize();
         },
         _init: function () {
             if (!this.tabContainer) {
                 this.tabContainer = registry.byId(this.tabContainerId);
                 //allow user to reference a widget with a tab container by id
-                if (this.tabContainer.hasOwnProperty('tabContainer')) {
+                if (this.tabContainer && this.tabContainer.hasOwnProperty('tabContainer')) {
                     this.tabContainer = this.tabContainer.tabContainer;
                 }
             }
@@ -68,19 +61,20 @@ define([
                 return;
             }
             if (this.layerInfos.length > 0) {
-                Array.forEach(this.layerInfos, lang.hitch(this, function (l) {
-                    Array.forEach(l.layer.relationships, lang.hitch(this, function (r) {
+                array.forEach(this.layerInfos, lang.hitch(this, function (l) {
+                    array.forEach(l.layer.relationships, lang.hitch(this, function (r) {
                         if (l.layer.relationships &&
                                 l.layer.relationships.length > 0 &&
                                 this.relationships[l.layer.id] &&
-                                this.relationships[l.layer.id].include) {
+                                this.relationships[l.layer.id][r.id]) {
                             var table = new RelationshipTable(lang.mixin({
                                 title: l.layer.title + ' - ' + r.name,
                                 url: l.layer.url,
                                 relationshipId: r.id,
-                                objectIdField: l.objectIdField
-                            }, this.columnInfos[l.layer.id][r.id]));
+                                objectIdField: l.layer.objectIdField
+                            }, this.relationships[l.layer.id][r.id]));
                             this.tabContainer.addChild(table);
+                            this.tabContainer.resize();
                             l.layer.on('click', lang.hitch(this, function (e) {
                                 table.getRelatedRecords(e.graphic.attributes);
                             }));

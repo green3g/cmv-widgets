@@ -8,11 +8,12 @@ define([
     'dojo/store/Memory',
     'dgrid/OnDemandGrid',
     'dgrid/extensions/ColumnHider',
+    'dgrid/extensions/DijitRegistry',
     'dojo/topic',
     'dojo/Deferred'
 ], function (declare, _WidgetBase, DomClass,
-        array, lang, request, Memory, OnDemandGrid, ColumnHider, topic, Deferred) {
-    return declare('RelatedRecordTable', [_WidgetBase, OnDemandGrid, ColumnHider], {
+        array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic, Deferred) {
+    return declare('RelatedRecordTable', [_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
         formatters: null,
         columnInfos: {},
         //this id can be the dijit id of a tabcontainer or
