@@ -9,30 +9,56 @@ Usage
 
 1. Add feature layers that have a relationship. Note: the layers must be type: 'feature', this widget will not display related records in dynamic layers. Also, mode should be set to `ON_DEMAND` or `SNAPSHOT`. `SELECTION` will not work currently.
 2. Ensure [a proxy](https://github.com/Esri/resource-proxy) is configured and working
-2. Set the widget config to include a layerInfos
-3. Set the widget to be 'open' or visible by default ( this is important for the tab container to render correctly )
+2. Set the widget config to include a layerInfos (`layerControlLayerInfos:true` usually works in cmv)
 3. Click on a feature layer to see related records.
-4. Bonus: Set up columnInfos to format relationship table.
+4. Bonus: Set up `relationships` property to format relationship table.
 
 ```JavaScript
-//sample config
+//sample below uses the cmv bottom pane
+panes: {
+    left: {
+        splitter: true
+    }
+    bottom: {
+        id: 'sidebarBottom',
+        placeAt: 'outer',
+        splitter: true,
+        collapsible: true,
+        region: 'bottom',
+        style: 'height:300px;display:none;',
+        content: '<div id="relatedRecords" style="height:100%;"></div>'
+    }
+}
+
+
+//sample widget config
 relatedRecords: {
     include: true,
     id: 'relatedRecords',
-    position: 0,
-    canFloat: true,
-    open: true,
-    type: 'contentPane',
-    placeAt: 'bottom',
-    path: 'gis/dijit/RelatedRecordTable',
+    type: 'domNode',
+    srcNodeRef: 'relatedRecords',
+    path: 'gis/CMV_Widgets/widgets/RelatedRecordTable',
     title: 'Related Records',
     options: {
-      //required option
-      layerControlLayerInfos: true
-      
-      //see options below for additional configuration
+        //required option
+        layerControlLayerInfos: true,
+
+        //optional relationships property
+        relationships: {
+            layerID: { //referrs to the featurelayer id
+                relationshipID { //integer, referrs to the relationship id on the rest services page
+                    //relationship tab title
+                    title: 'Inspections',
+
+                    //set exclude to true to skip this relationship
+                    exclude: false,
+                    
+                    //other dgrid options like columns may be included
+                }
+            }
+        }
     }
-},
+}
 ```
 Options:
 ========
@@ -40,41 +66,15 @@ Options:
 Key        |      Type      | Default |  Description
 ---|-----|-------|----
 layerInfos | boolean | `null` | set layerControlLayerInfos to true, a layerInfos object is required
-formatters | {object} | `{}` |  key, value pairs of column formatter functions. Key is either a field name or esri field type.
-columnInfos | {object} | `{}` | An object describing each relationship
-tabPosition | string |  `'left-h'` | dijit tabContainer.tabPosition property: `'top'`, `'left-h'`, Not working due to layout issues: `'bottom'`, `'right-h'` 
+relationships | {object} | `{}` | An object describing each relationship. Details below
+tabPosition | string |  `'top'` | dijit tabContainer.tabPosition property: `'top'`, `'left-h'`, Not working due to layout issues: `'bottom'`, `'right-h'` 
 tabContainerId | string | `null` | An optional id of a widget that is a tabContainer or contains a tabContainer property. If specified, this widgets tables will be added to an existing tabContainer like the one developed by tmcgee [here](https://github.com/tmcgee/cmv-widgets/blob/master/widgets/AttributesTable/README.md) instead of creating a new one.
 
-###formatters properties
-Usage: 
-```JavaScript
-formatters: {
- key: function(value) { return newValue },
- ...
-}
-```
-Key can either be an esriFieldType Example: `esriFieldTypeDate` or a name of a field. Formatters specified in this formatters object will be applied to all columns that meet the field type or name specified.
+####relationships property
+Each relationship object may have the following properties as well as [properties 
+used by dgrid](https://github.com/SitePen/dgrid/blob/master/doc/components/core-components/OnDemandList-and-OnDemandGrid.md)
 
-###columnInfos Properties
-Usage:
-```JavaScript
-columnInfos: {
- layerID: { //referrs to the featurelayer id
-  relationshipID { //integer, referrs to the relationship id on the rest services page
-   //columnInfos definition (below)
-  }
- }
-}
-```
 Key | Type | Default | Description
----|---|---|---
-title | string | Layer.name - Relationship.name |The title of the tab
-include | boolean | `true` | set to false to exclude this relationship from the widget
-hiddenColumns | [field_names] | `[]` | Array of field names to hide from this relationship table
-unhideableColumns | [field_names] | `[]` | Array of field names that can't be hidden by the user
-formatters | {object} | `{}` | a key-value object consisting of column formatter functions specific to this relationship table
-
-Additional Notes:
-============
-
-- Widget must be set to a visible state by default, example `open: true` should be set for a titlePane type widget.
+----|------|---------|----
+title | string | layer.name - relationship.name | the title for the relationship tab
+exclude | boolean | `null` | by default all relationships are included. set exclude: false to avoid this
