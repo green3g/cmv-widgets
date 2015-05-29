@@ -1,7 +1,6 @@
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
-    'dijit/_TemplatedMixin',
     'dojo/_base/array',
     'dojo/_base/lang',
     'dojo/ready',
@@ -11,16 +10,13 @@ define([
     'dojo/topic',
     './RelatedRecordTable/RelationshipTable',
     'xstyle/css!./RelatedRecordTable/css/styles.css'
-], function (declare, _WidgetBase, _TemplatedMixin,
-        array, lang, ready, registry, _Container, TabContainer, topic, RelationshipTable) {
+], function (declare, _WidgetBase, array, lang, ready, registry, _Container, TabContainer, topic, RelationshipTable) {
     return declare('RelatedRecordTable', [_WidgetBase, _Container], {
-        templateString: '<div class="${baseClass}" style="height:100%;width:100%;"><div data-dojo-attach-point="containerNode"></div></div>',
-        tabPosition: 'left-h',
+        tabPosition: 'top',
         relationships: {},
         baseClass: 'relatedRecordTableWidget',
         //this id can be the dijit id of a tabcontainer or
-        //a widget that has a tabContainer property, like tmgee's attribute
-        //table widget
+        //a widget that has a tabContainer property, like tmgee's attribute table widget
         tabContainerId: null,
         postCreate: function () {
             this.inherited(arguments);
@@ -41,7 +37,7 @@ define([
                 this.tabContainer.startup();
             }
         },
-        resize: function() {
+        resize: function () {
             this.inherited(arguments);
             this.tabContainer.resize();
         },
@@ -64,17 +60,22 @@ define([
                 array.forEach(this.layerInfos, lang.hitch(this, function (l) {
                     array.forEach(l.layer.relationships, lang.hitch(this, function (r) {
                         if (l.layer.relationships &&
-                                l.layer.relationships.length > 0 &&
-                                this.relationships[l.layer.id] &&
-                                this.relationships[l.layer.id][r.id]) {
-                            var table = new RelationshipTable(lang.mixin({
-                                title: l.layer.title + ' - ' + r.name,
+                                l.layer.relationships.length > 0) {
+                            var props = {
+                                title: l.layer.name + ' - ' + r.name,
                                 url: l.layer.url,
-                                relationshipId: r.id,
-                                objectIdField: l.layer.objectIdField
-                            }, this.relationships[l.layer.id][r.id]));
+                                objectIdField: l.layer.objectIdField,
+                                relationshipId: r.id
+                            };
+                            if (this.relationships[l.layer.id] &&
+                                    this.relationships[l.layer.id][r.id]) {
+                                if (this.relationships[l.layer.id][r.id].exclude) {
+                                    return;
+                                }
+                                props = lang.mixin(props, this.relationships[l.layer.id][r.id]);
+                            }
+                            var table = new RelationshipTable(props);
                             this.tabContainer.addChild(table);
-                            this.tabContainer.resize();
                             l.layer.on('click', lang.hitch(this, function (e) {
                                 table.getRelatedRecords(e.graphic.attributes);
                             }));
@@ -82,6 +83,7 @@ define([
                     }));
                 }));
             }
+            this.resize();
         }
     });
 });
