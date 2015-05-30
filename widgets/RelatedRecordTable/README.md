@@ -46,7 +46,7 @@ relatedRecords: {
         //optional relationships property
         relationships: {
             layerID: { //referrs to the featurelayer id
-                relationshipID { //integer, referrs to the relationship id on the rest services page
+                relationshipID: { //integer, referrs to the relationship id on the rest services page
                     //relationship tab title
                     title: 'Inspections',
 
