@@ -13,36 +13,63 @@ define([
     'dojo/Deferred'
 ], function (declare, _WidgetBase, DomClass,
         array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic, Deferred) {
-    return declare('RelatedRecordTable', [_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
-        formatters: null,
-        columnInfos: {},
-        //this id can be the dijit id of a tabcontainer or
-        //a widget that has a tabContainer property, like tmgee's attribute
-        //table widget
-        tabContainerId: null,
+    return declare('RelationshipTable', [_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
+        //object id field for the feature layer (use field alias)
+        objectIdField: null,
+        //field value mappings of attributes from the feature layer to query related records from
+        //should have a field with the same name as objetIdField
+        attributes: null,
+        //the url to the feature service
+        url: '',
+        //the relationship id for the feature service relationship
+        relationshipId: 0,
+        defaultNoDataMessage: 'No results.',
+        loadingMessage: 'Loading...',
+        baseClass: 'RelationshipTable',
         postCreate: function () {
             this.inherited(arguments);
+            if (!this.objectIdField) {
+                topic.publish('viewer/handleError', {
+                    source: 'RelationshipTable',
+                    error: 'This widget requires an objetIdField'
+                });
+                this.destroy();
+            }
             this.store = new Memory({
                 idProperty: this.objectIdField
             });
+            this.noDataMessage = this.defaultNoDataMessage;
             if (this.attributes) {
                 this.getRelatedRecords(this.attributes);
             }
         },
         getRelatedRecords: function (attributes) {
+            if (this.deferred) {
+                this.deferred.cancel();
+            }
             this.store.setData([]);
+            this.noDataMessage = this.loadingMessage;
             var objectID = attributes[this.objectIdField];
+            if (!objectID) {
+                topic.publish('viewer/handleError', {
+                    source: 'RelationshipTable',
+                    error: this.objectIdField + ' ObjectIDField was not found in attributes'
+                });
+                return;
+            }
             var query = {
                 url: this.url,
                 objectIds: [objectID],
                 outFields: ['*'],
                 relationshipId: this.relationshipId
             };
-            var deferred = this._queryRelatedRecords(query);
-            deferred.then(lang.hitch(this, '_handleRecords'));
-            return deferred;
+            this.deferred = this._queryRelatedRecords(query);
+            this.deferred.then(lang.hitch(this, '_handleRecords'));
+            return this.deferred;
         },
         _handleRecords: function (results) {
+            this.deferred = null;
+            this.noDataMessage = this.defaultNoDataMessage;
             //if we don't have columns set yet
             if (!this.get('columns').length) {
                 this.set('columns', array.map(results.fields, lang.hitch(this, function (field) {
@@ -54,8 +81,8 @@ define([
             }
             if (results.relatedRecordGroups.length > 0) {
                 array.forEach(results.relatedRecordGroups[0].relatedRecords, lang.hitch(this, '_addRecord'));
+                this.refresh();
             }
-            this.refresh();
         },
         _addRecord: function (record) {
             this.store.put(record.attributes);
