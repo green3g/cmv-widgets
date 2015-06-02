@@ -49,6 +49,7 @@ define([
             }
             this.store.setData([]);
             this.noDataMessage = this.loadingMessage;
+            this.refresh();
             var objectID = attributes[this.objectIdField];
             if (!objectID) {
                 topic.publish('viewer/handleError', {
@@ -81,8 +82,8 @@ define([
             }
             if (results.relatedRecordGroups.length > 0) {
                 array.forEach(results.relatedRecordGroups[0].relatedRecords, lang.hitch(this, '_addRecord'));
-                this.refresh();
             }
+            this.refresh();
         },
         _addRecord: function (record) {
             this.store.put(record.attributes);
@@ -119,6 +120,13 @@ define([
                 }
             });
             return deferred;
+        },
+        destroy: function () {
+            if (this.deferred) {
+                this.deferred.cancel();
+                this.deferred = null;
+            }
+            this.inherited(arguments);
         },
         resize: function () {
             this.inherited(arguments);
