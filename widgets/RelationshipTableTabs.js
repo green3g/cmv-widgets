@@ -30,14 +30,16 @@ define([
                     style: 'height:100%;width:100%;'
                 });
                 this.addChild(this.tabContainer);
+                this.tabContainer.startup();
                 this._init();
             }
         },
         startup: function () {
             this.inherited(arguments);
-            if (!this.tabContainer._started) {
-                this.tabContainer.startup();
-            }
+            window.something = this;
+//            if (!this.tabContainer._started) {
+//                this.tabContainer.startup();
+//            }
         },
         resize: function () {
             this.inherited(arguments);
