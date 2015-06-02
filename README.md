@@ -15,7 +15,7 @@ Dojo Widgets to extend the functionality of [CMV](https://github.com/cmv/cmv-app
 ###RelatedRecordsTable
 
 * Query and display the layers' related records
-* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/tree/master/widgets/RelatedRecordTable)
+* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/RelationshipTable/README.md)
 
 ![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/relatedRecords.PNG)
 
