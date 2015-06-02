@@ -78,12 +78,10 @@ define([
                     //store each setting that was loaded
                     //override the default
                     for (var setting in loadedSettings) {
-                        if (loadedSettings.hasOwnProperty(setting) &&
-                                loadedSettings[setting].save) {
-                            if (this._appSettings.hasOwnProperty(setting)) {
-                                //mixin the setting
-                                lang.mixin(this._appSettings[setting], loadedSettings[setting]);
-                            }
+                        if (loadedSettings.hasOwnProperty(setting) && 
+                                this._appSettings.hasOwnProperty(setting)) {
+                            //mixin the setting
+                            lang.mixin(this._appSettings[setting], loadedSettings[setting]);
                         }
                     }
                 } catch (error) {
