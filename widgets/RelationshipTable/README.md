@@ -2,7 +2,7 @@ Related Record Table
 ====================
 
 A tabbed widget for displaying and interacting with tables related to feature layers.
-Intended for use in [CMV v1.3.0](https://github.com/cmv/cmv-app/) 
+Intended for use in [CMV v1.3.3](https://github.com/cmv/cmv-app/) 
 
 Usage
 ======
@@ -78,3 +78,16 @@ Key | Type | Default | Description
 ----|------|---------|----
 title | string | layer.name - relationship.name | the title for the relationship tab
 exclude | boolean | `null` | by default all relationships are included. set exclude: false to avoid this
+
+Changes:
+========
+
+5/30/2015: Major widget changes
+* moved majority of relationship querying and display code to a self-contained class RelationshipTable
+* renamed class to RelationshipTableTabs to better describe the widget
+* renamed widget folder to RelationshipTable
+* renamed columnInfos property to relationships 
+
+** RelationshipTable Class **
+* Can be used standalone (like in identify popup) or with the RelatedRecordTabs
+* Inherits all properties, methods and events from `OnDemandGrid`, `ColumnHider`, and `DijitRegistry`

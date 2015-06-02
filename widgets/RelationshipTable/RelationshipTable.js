@@ -23,7 +23,9 @@ define([
         url: '',
         //the relationship id for the feature service relationship
         relationshipId: 0,
+        //default message to display when no results are returned
         defaultNoDataMessage: 'No results.',
+        //default message when the query is being executed
         loadingMessage: 'Loading...',
         baseClass: 'RelationshipTable',
         postCreate: function () {
@@ -47,9 +49,11 @@ define([
             if (this.deferred) {
                 this.deferred.cancel();
             }
+            //reset the grid's data
             this.store.setData([]);
             this.noDataMessage = this.loadingMessage;
             this.refresh();
+            //get the objectID
             var objectID = attributes[this.objectIdField];
             if (!objectID) {
                 topic.publish('viewer/handleError', {
@@ -58,6 +62,7 @@ define([
                 });
                 return;
             }
+            //build a query
             var query = {
                 url: this.url,
                 objectIds: [objectID],
