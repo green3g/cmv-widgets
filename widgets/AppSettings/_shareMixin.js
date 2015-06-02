@@ -25,6 +25,8 @@ define([
         body: '',
         //a url to use as a server for sharing urls
         server: '',
+        //whether to show the share dialog
+        showShareDialog: true,
         _shareProperty: null,
         /**
          * creates the domnode for the share button
@@ -67,7 +69,7 @@ define([
             }));
             if (this.server) {
                 this._saveSettingsOnServer(settings);
-            } else {
+            } else if(this.showShareDialog){
                 this._showDialog(lang.replace(this.shareDialogTemplate, [this._settingsToURL(settings)]));
             }
         },
@@ -89,8 +91,9 @@ define([
                     } catch (e) {
                         this._error('_emailLink: ' + e);
                     }
-                    this._showDialog(lang.replace(this.shareDialogTemplate, [link]));
-
+                    if (this.showShareDialog) {
+                        this._showDialog(lang.replace(this.shareDialogTemplate, [link]));
+                    }
                     //optional google analytics event
                     topic.publish('googleAnalytics/events', {
                         category: 'AppSettings',
