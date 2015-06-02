@@ -8,7 +8,7 @@ define([
     'dijit/_Container',
     'dijit/layout/TabContainer',
     'dojo/topic',
-    './RelatedRecordTable/RelationshipTable'
+    './RelationshipTable/RelationshipTable'
 ], function (declare, _WidgetBase, array, lang, ready, registry, _Container, TabContainer, topic, RelationshipTable) {
     return declare('RelationshipTableTabs', [_WidgetBase, _Container], {
         //tab position for the TabContainer
