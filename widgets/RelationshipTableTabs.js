@@ -34,13 +34,6 @@ define([
                 this._init();
             }
         },
-        startup: function () {
-            this.inherited(arguments);
-            window.something = this;
-//            if (!this.tabContainer._started) {
-//                this.tabContainer.startup();
-//            }
-        },
         resize: function () {
             this.inherited(arguments);
             this.tabContainer.resize();
