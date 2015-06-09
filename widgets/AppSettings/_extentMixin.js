@@ -13,7 +13,7 @@ define([
             if (!this.map) {
                 topic.publish('viewer/handleError', {
                     source: 'AppSettings',
-                    error: 'layerInfos are required'
+                    error: 'map is required'
                 });
                 return;
             }
