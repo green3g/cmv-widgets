@@ -91,3 +91,59 @@ Changes:
 ** RelationshipTable Class **
 * Can be used standalone (like in identify popup) or with the RelatedRecordTabs
 * Inherits all properties, methods and events from `OnDemandGrid`, `ColumnHider`, and `DijitRegistry`
+
+Include in identify popup:
+==========================
+
+Requires cmv develop version with: [#419](https://github.com/cmv/cmv-app/pull/419).
+In identify config, create the function that will return the domNode
+```JavaScript
+define([
+    'dojo/dom-construct',
+    'dijit/layout/TabContainer',
+    'dijit/layout/ContentPane',
+    'widgets/roemhildtg/widgets/RelationshipTable/RelationshipTable'//path is relevent to wherever you placed the file
+], function (domConstruct, TabContainer, ContentPane, RelationshipTable) {
+    var formatters = {
+        relationship: function (relationship) {
+           return function (data) {
+               var container = new TabContainer({
+                   style: 'width:100%;height:300px;'
+               }, domConstruct.create('div'));
+               container.startup();
+               //delay then resize
+               setTimeout(function () {
+                   container.resize();
+               }, 200);
+               container.addChild(new RelationshipTable(lang.mixin({
+                   attributes: data.attributes,
+                   title: 'Related Records',
+                   style: 'width:100%;'
+               }, relationship)));
+               return container.domNode;
+           };
+        }
+    //other formatter functions
+    };
+```
+
+Identify infos:
+```JavaScript
+91: {
+    title: 'Bridge Inventory',
+    content: formatters.relationship({
+        title: 'Bridge Links',
+        objectIdField: 'OBJECTID',
+        relationshipId: 0,
+        url: '/arcgis/rest/services/Apps/RelatedRecords/MapServer/0',
+        columns: [{
+                label: 'Link',
+                field: 'Link_URL',
+                formatter: formatters.url
+            }, {
+                label: 'Category',
+                field: 'Category'
+            }]
+    })
+}
+```
