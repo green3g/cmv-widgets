@@ -1,7 +1,6 @@
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
-    'dojo/dom-class',
     'dojo/_base/array',
     'dojo/_base/lang',
     'esri/request',
@@ -11,8 +10,7 @@ define([
     'dgrid/extensions/DijitRegistry',
     'dojo/topic',
     'dojo/Deferred'
-], function (declare, _WidgetBase, DomClass,
-        array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic, Deferred) {
+], function (declare, _WidgetBase, array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic, Deferred) {
     return declare('RelationshipTable', [_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
         //object id field for the feature layer (use field alias)
         objectIdField: null,

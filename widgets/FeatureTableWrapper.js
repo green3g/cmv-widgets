@@ -27,9 +27,9 @@ define([
                 map: this.map,
                 featureLayer: this.fl,
                 allowSelectAll: true,
-                "dateOptions": {
-                    "timeEnabled": false,
-                    "datePattern": "YYYY-MM-DD"
+                dateOptions: {
+                    timeEnabled: false,
+                    datePattern: 'YYYY-MM-DD'
                 }
             }, this.tableOptions);
         },

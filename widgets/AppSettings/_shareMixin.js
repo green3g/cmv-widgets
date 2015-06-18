@@ -9,7 +9,7 @@ define([
     'dojo/_base/array',
     'esri/request',
     'dijit/Menu',
-    'dijit/MenuItem',
+    'dijit/MenuItem'
 ], function (declare, lang, topic, json, domConstruct, Dialog, on, array, request,
         Menu, MenuItem) {
     return declare(null, {
