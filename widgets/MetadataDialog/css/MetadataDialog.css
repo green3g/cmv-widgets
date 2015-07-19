@@ -1,0 +1,28 @@
+.metadataDescription {
+    width:100%;
+    height:400px;
+    overflow-y: auto;
+}
+
+.metadataDescription h1 {
+    font-size:14px;
+}
+
+.metadataDescription p {
+    font-size:12px;
+    font-weight:bold;
+}
+
+.metadataDescription div {
+    font-size: 12px;
+}
+
+.metadataDescription ul, ol {
+    margin: 0;
+    padding:0 15px;
+}
+.metadataDescription li {
+    margin:10px 0;
+    padding:0 5px 0 0
+}
+
