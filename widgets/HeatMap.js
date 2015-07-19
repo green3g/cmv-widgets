@@ -1,3 +1,11 @@
+/**
+  * simple heatmap widget
+  * credits to 
+  * @bmadden and @ERS-Long
+  * https://github.com/ERS-Long/HeatMap
+  * 
+  */
+
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
@@ -45,6 +53,7 @@ define([
                 //toggle visibility
                 this._heatMapLayers[layerId].setVisibility(!this._heatMapLayers[layerId].visible);
             }
+            //modify the iconNode to show that a heatmap is enabled on this layer
             if (r.iconNode) {
                 if (domClass.contains(r.iconNode, 'fa-fire')) {
                     domClass.remove(r.iconNode, this.cssClasses);
