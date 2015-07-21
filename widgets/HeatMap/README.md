@@ -38,7 +38,7 @@ heatmap: {
 
 Widget developers can use this widget by publishing the following topic: `LayerControl/heatMap` and passing the correct parameters.
 
-```JavaScript:
+```JavaScript
 topic.publish('LayerControl/heatMap', {
 	layer: dynamicMapServiceLayer,
 	subLayer: dynamicMapServiceSubLayer,
