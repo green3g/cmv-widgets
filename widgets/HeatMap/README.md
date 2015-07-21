@@ -1,7 +1,7 @@
 HeatMap
 =======
 
-Dynamically renders heatmaps on point layers. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/).
+Dynamically renders heatmaps on point layers. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/). Credit to [@ERS-Long](https://github.com/ERS-Long/HeatMap)
 
 ##Requirements:
 
