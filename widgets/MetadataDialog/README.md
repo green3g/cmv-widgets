@@ -1,12 +1,7 @@
 MetadataDialog
 ==============
 
-Queries the rest endpoint of a sublayer and displays its service description. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/).
-
-##Requirements:
-
-* Layer must be type point
-* Layer must have a field of type `esriFieldTypeGeometry`
+Queries the rest endpoint of a sublayer and displays its service description. In some cases, public access to the rest endpoint of the server is not accessible to read the metadata, so this widget works around that issue. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/).
 
 ##Configuration:
 
