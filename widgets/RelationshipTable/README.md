@@ -4,17 +4,16 @@ Relationship Table
 A tabbed widget for displaying and interacting with tables related to feature layers.
 Intended for use in [CMV v1.3.3](https://github.com/cmv/cmv-app/) 
 
-Usage
-======
+##Requirements
 
-1. Add feature layers that have a relationship. Note: the layers must be type: 'feature', this widget will not display related records in dynamic layers. Also, mode should be set to `ON_DEMAND` or `SNAPSHOT`. `SELECTION` will not work currently.
-2. Ensure [a proxy](https://github.com/Esri/resource-proxy) is configured and working
-2. Set the widget config to include a layerInfos (`layerControlLayerInfos:true` usually works in cmv)
-3. Click on a feature layer to see related records.
-4. Bonus: Set up `relationships` property to format relationship table.
+* Layer mode should be set to `ON_DEMAND` or `SNAPSHOT`. `SELECTION` will not work currently.
+* Ensure [a proxy](https://github.com/Esri/resource-proxy) is configured and working
+
+##Config
+
+###CMV pane and widget config 
 
 ```JavaScript
-//sample below uses the cmv bottom pane
 panes: {
     left: {
         splitter: true
@@ -29,15 +28,15 @@ panes: {
         content: '<div id="relatedRecords" style="height:100%;"></div>'
     }
 }
+```
 
-
-//sample widget config
+```JavaScript
 relatedRecords: {
     include: true,
     id: 'relatedRecords',
     type: 'domNode',
     srcNodeRef: 'relatedRecords',
-    path: 'gis/CMV_Widgets/widgets/RelatedRecordTable',
+    path: 'gis/CMV_Widgets/widgets/RelationshipTableTabs',
     title: 'Related Records',
     options: {
         //required option
@@ -60,8 +59,38 @@ relatedRecords: {
     }
 }
 ```
-Options:
-========
+
+###Outside of cmv usage
+```JavaScript
+new RelationshipTableTabs({
+  layerInfos: [{
+      layer: demographicsLayer
+  }]
+  //other options
+}, 'domNodeId');
+```
+
+###Or simply use the child class directly:
+```JavaScript
+new RelationshipTable({
+  attributes: data.attributes,
+  style: 'width:100%;',
+  title: 'Bridge Links',
+  objectIdField: 'OBJECTID',
+  relationshipId: 0,
+  url: '/arcgis/rest/services/Apps/RelatedRecords/MapServer/0',
+  columns: [{
+    label: 'Link',
+    field: 'Link_URL',
+    formatter: formatters.url
+  }, {
+    label: 'Category',
+    field: 'Category'
+  }]
+ }, relationship))
+```
+
+##Options Details:
 
 Key        |      Type      | Default |  Description
 ---|-----|-------|----
@@ -79,8 +108,7 @@ Key | Type | Default | Description
 title | string | layer.name - relationship.name | the title for the relationship tab
 exclude | boolean | `null` | by default all relationships are included. set exclude: false to avoid this
 
-Changes:
-========
+##Changes:
 
 5/30/2015: Major widget changes
 * moved majority of relationship querying and display code to a self-contained class RelationshipTable
@@ -92,11 +120,11 @@ Changes:
 * Can be used standalone (like in identify popup) or with the RelatedRecordTabs
 * Inherits all properties, methods and events from `OnDemandGrid`, `ColumnHider`, and `DijitRegistry`
 
-Include in identify popup:
-==========================
+##Include in identify popup:
 
-Requires cmv develop version with: [#419](https://github.com/cmv/cmv-app/pull/419).
+This widget can be embedded in the identify popup. This feature requires cmv develop version with: [#419](https://github.com/cmv/cmv-app/pull/419).
 In identify config, create the function that will return the domNode
+
 ```JavaScript
 define([
     'dojo/dom-construct',

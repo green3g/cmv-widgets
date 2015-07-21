@@ -1,13 +1,9 @@
 AppSettings
 ===============
 
-CMV Version: 1.3.3
-
-A widget designed for use in CMV that allows the user to save the current 
-state of the map extent and visible layers. It also provides functionality to share the 
+A widget designed for use in dojo applications like CMV (v1.3.3) which allows the user to save the current 
+state of the application including map extent and visible layers. It also provides functionality to share the 
 current state of the application via a url. 
-Additional functionality using Topic.subscribe and Topic.publish 
-allows widget developers to save additional settings.
 
 ##Features:
 - Allow the user to save the current state of the map extent and visible layers
@@ -15,6 +11,7 @@ using html5 localStorage.
 - Allow the user to 'share' a current snapshot of the map state with others via email client.
 - Integrate with other widgets to allow additional properties to be saved in the
 application and shared
+- Includes a simple PHP script which shortens urls
 
 ##Usage 
 Copy the AppSettings.js and AppSettings folder into your relevent widgets directory.

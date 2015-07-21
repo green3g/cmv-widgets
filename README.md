@@ -7,15 +7,29 @@ Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](ht
 
 ###AppSettings
 
-* Store and email map and application state.
-* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/tree/master/widgets/AppSettings): 
+* Store and share map and application state.
+* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/tree/master/widgets/AppSettings/): 
 
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/appSettings.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/AppSettings/appSettings.png)
 
 ###RelatedRecordsTable
 
 * Query and display the layers' related records
-* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/RelationshipTable/README.md)
+* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/RelationshipTable/)
 
-![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/relatedRecords.PNG)
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/RelationshipTable/relatedRecords.png)
+
+###MetadataDialog
+
+* Query the layer's rest page and display it's description
+* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/MetadataDialog/)
+
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/MetadataDialog/metadatadialog.png)
+
+###HeatMap
+
+* Toggle a dynamic heatmap renderer on point layers
+* [View the Documentation](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/HeatMap/)
+
+![URL Field](https://github.com/roemhildtg/CMV_Widgets/blob/master/widgets/HeatMap/heatmap.png)
 
