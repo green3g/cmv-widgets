@@ -87,7 +87,7 @@ new RelationshipTable({
     label: 'Category',
     field: 'Category'
   }]
- }, relationship))
+ }, 'domNodeId');
 ```
 
 ##Options Details:
