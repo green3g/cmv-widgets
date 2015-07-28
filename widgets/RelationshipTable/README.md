@@ -128,10 +128,11 @@ In identify config, create the function that will return the domNode
 ```JavaScript
 define([
     'dojo/dom-construct',
+    'dojo/_base/lang',
     'dijit/layout/TabContainer',
     'dijit/layout/ContentPane',
     'widgets/roemhildtg/widgets/RelationshipTable/RelationshipTable'//path is relevent to wherever you placed the file
-], function (domConstruct, TabContainer, ContentPane, RelationshipTable) {
+], function (domConstruct, lang, TabContainer, ContentPane, RelationshipTable) {
     var formatters = {
         relationship: function (relationship) {
            return function (data) {
