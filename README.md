@@ -33,3 +33,9 @@ Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](ht
 
 ![URL Field](widgets/HeatMap/heatmap.png)
 
+###TimeSlider
+
+* Control the current display of all time enabled layers ont he map
+* [View the Documentation](widgets/TimeSlider)
+
+![URL Field](widgets/TimeSlider/timeSlider.png)
