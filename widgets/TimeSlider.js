@@ -13,21 +13,28 @@ define([
 		endTime: new Date('12/31/2016'),
 		timeSlider: null,
 		timeExtent: null,
+		timeInterval: 2,
+		timeIntervalUnits: 'esriTimeUnitsYears',
+		timeSliderProperties: {},
 		postCreate: function() {
 			this.inherited(arguments);
 			if(!this.map){
 				return false;
 			}
-			this.timeSlider = new TimeSlider({
+			this.timeSlider = new TimeSlider(lang.mixin({
 				style: 'width:100%;'
-			});
+			}, this.timeSliderProperties));
 			this.map.setTimeSlider(this.timeSlider);
 			this.timeExtent = lang.mixin(new TimeExtent(), {
 				startTime: this.startTime,
 				endTime: this.endTime
 			});
 			this.timeSlider.setThumbCount(2);
-			this.timeSlider.createTimeStopsByTimeInterval(this.timeExtent, 2, "esriTimeUnitsYears");
+			this.timeSlider.createTimeStopsByTimeInterval(
+				this.timeExtent, 
+				this.timeInterval, 
+				this.timeIntervalUnits
+			);
 			this.timeSlider.setThumbIndexes([0,1]);
 			this.timeSlider.setThumbMovingRate(2000);
 			this.addChild(this.timeSlider);
