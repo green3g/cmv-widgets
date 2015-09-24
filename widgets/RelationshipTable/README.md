@@ -31,6 +31,8 @@ panes: {
 ```
 
 ```JavaScript
+widgets: {
+//....
 relatedRecords: {
     include: true,
     id: 'relatedRecords',
@@ -44,8 +46,8 @@ relatedRecords: {
 
         //optional relationships property
         relationships: {
-            layerID: { //referrs to the featurelayer id
-                relationshipID: { //integer, referrs to the relationship id on the rest services page
+            <layerID)>: { //layerID (integer) key refers to featurelayer id on the rest services page
+                <relationshipID>: { //relationshipID (integer) key referrs to the relationship id on the rest services page
                     //relationship tab title
                     title: 'Inspections',
 
@@ -57,6 +59,8 @@ relatedRecords: {
             }
         }
     }
+}
+//.....
 }
 ```
 
