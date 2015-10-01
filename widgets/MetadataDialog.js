@@ -22,7 +22,9 @@ define([
                 content: {
                     f: 'json'
                 }
-            }).then(lang.hitch(this, '_showMetadata'));
+            })
+            .then(lang.hitch(this, '_showMetadata'))
+            .otherwise(lang.hitch(this, '_handleError'));
         },
         _showMetadata: function (data) {
             if (!this.dialog) {
@@ -32,6 +34,13 @@ define([
             }
             this.dialog.show();
             DialogUnderlay.hide();
+        },
+        _handleError: function(e){
+          this._showMetadata({
+            id: e,
+            name: 'Error',
+            description: 'The query could not execute. Is a proxy configured?'
+          });
         },
         _createDialog: function (content) {
             this.dialog = new Dialog({
