@@ -5,7 +5,7 @@ CMV_Widgets
 
 Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](https://github.com/cmv/cmv-app). Documentation on how to use these widgets can be found in their respective folder. While designed to work specifically for CMV, they should function just as well outside of CMV in a different Dojo or Esri API app.
 
-Check out the [demo branch](https://github.com/roemhildtg/cmv-widgets/tree/demo-widgets)
+Check out the [demo branch](https://github.com/roemhildtg/cmv-widgets/tree/demo-widgets) and the [Live Demo](http://cmv-widgets-demo-roemhildtg.c9.io/cmv-app/)
 
 ###AppSettings
 
