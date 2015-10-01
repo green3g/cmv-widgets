@@ -33,7 +33,7 @@ define([
                 this.dialog.set('content', lang.replace(this.dialogTemplate, data));
             }
             this.dialog.show();
-            DialogUnderlay.hide();
+            //DialogUnderlay.hide();
         },
         _handleError: function(e){
           this._showMetadata({
