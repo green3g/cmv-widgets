@@ -2,3 +2,5 @@
 .project
 .xml
 .sqlite3
+.sqlite
+.directory
