@@ -1,6 +1,6 @@
 /nbproject/private/
-.project
-.xml
-.sqlite3
-.sqlite
-.directory
+*.project
+*.xml
+*.sqlite3
+*.sqlite
+*.directory
