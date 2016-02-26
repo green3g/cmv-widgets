@@ -10,7 +10,6 @@ define([
   return declare(null, {
     postCreate: function() {
       this.inherited(arguments);
-      console.log(this)
       if (!this.map) {
         topic.publish('viewer/handleError', {
           source: 'AppSettings',
