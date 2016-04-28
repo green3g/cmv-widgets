@@ -1,0 +1,56 @@
+
+ 
+04-28-16 22:34:03 | GET detected
+04-28-16 22:34:03 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:34:04 | Ok to proxy
+04-28-16 22:34:04 | Proxy complete
+ 
+04-28-16 22:34:30 | GET detected
+04-28-16 22:34:30 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:34:30 | Ok to proxy
+04-28-16 22:34:30 | Proxy complete
+ 
+04-28-16 22:34:31 | GET detected
+04-28-16 22:34:31 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:34:31 | Ok to proxy
+04-28-16 22:34:31 | Proxy complete
+ 
+04-28-16 22:36:49 | GET detected
+04-28-16 22:36:49 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:36:49 | Ok to proxy
+04-28-16 22:36:49 | Proxy complete
+ 
+04-28-16 22:36:50 | GET detected
+04-28-16 22:36:50 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:36:50 | Ok to proxy
+04-28-16 22:36:50 | Proxy complete
+ 
+04-28-16 22:36:51 | GET detected
+04-28-16 22:36:51 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:36:51 | Ok to proxy
+04-28-16 22:36:51 | Proxy complete
+ 
+04-28-16 22:37:45 | GET detected
+04-28-16 22:37:45 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:37:46 | Ok to proxy
+04-28-16 22:37:46 | Proxy complete
+ 
+04-28-16 22:38:00 | GET detected
+04-28-16 22:38:00 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:38:00 | Ok to proxy
+04-28-16 22:38:00 | Proxy complete
+ 
+04-28-16 22:38:01 | GET detected
+04-28-16 22:38:01 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:38:02 | Ok to proxy
+04-28-16 22:38:02 | Proxy complete
+ 
+04-28-16 22:38:12 | GET detected
+04-28-16 22:38:12 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:38:13 | Ok to proxy
+04-28-16 22:38:13 | Proxy complete
+ 
+04-28-16 22:38:14 | GET detected
+04-28-16 22:38:14 | Can not determine if OAuth or ArcGIS Server means of authentication.  Check config for errors.
+04-28-16 22:38:14 | Ok to proxy
+04-28-16 22:38:14 | Proxy complete
