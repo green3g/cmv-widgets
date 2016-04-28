@@ -1,11 +1,12 @@
-CMV_Widgets
+CMV_Widgets Demo Branch
 ===========
+
+Download this branch for a fully functional demo. Note: The demo uses the PHP proxy from esri, and the app settings version that shortens the url using a php script.
+If you do not want to install php, configure a different proxy, and modify the `viewer.js` to not use the php script.
 
 [![Join the chat at https://gitter.im/roemhildtg/CMV_Widgets](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/roemhildtg/CMV_Widgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](https://github.com/cmv/cmv-app). Documentation on how to use these widgets can be found in their respective folder. While designed to work specifically for CMV, they should function just as well outside of CMV in a different Dojo or Esri API app.
-
-Check out the [demo branch](https://github.com/roemhildtg/cmv-widgets/tree/demo-widgets) and the [Live Demo](http://roemhildtg.comxa.com/)
 
 ###AppSettings
 
