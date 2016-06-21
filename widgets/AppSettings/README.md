@@ -14,7 +14,7 @@ application and shared
 - Includes a simple PHP script which shortens urls
 
 ##Usage 
-Copy the AppSettings.js and AppSettings folder into your relevent widgets directory.
+Copy the AppSettings.js and AppSettings folder into your relevent directory. (In CMV, this is `gis/dijit/..`)
 
 In viewer.js (see below for descriptions of parameters): 
 ```javascript      
@@ -54,7 +54,7 @@ settings: {
 }
 ```
 
-Outside of CMV, configure `dojoConfig` and create the widget using a constructor: 
+If you're not using the CMV App, configure `dojoConfig` variable and create the widget using a constructor: 
 ```JavaScript
 require(["esri/map", "esri/layers/ArcGISDynamicMapServiceLayer", 'widgets/AppSettings', "dojo/domReady!"], function (Map, Dynamic, Settings) {
     var map = new Map("map", {
@@ -71,6 +71,9 @@ require(["esri/map", "esri/layers/ArcGISDynamicMapServiceLayer", 'widgets/AppSet
 
     var demographicsLayer = new Dynamic(demographicsLayerURL, demographicsLayerOptions);
     map.addLayer(demographicsLayer);
+    
+    //here we create a Settings widget in the domNode '#settings' 
+    //by passing the layerInfos and the map object
     var settings = new Settings({
         layerInfos: [{
             layer: demographicsLayer
