@@ -54,7 +54,7 @@ settings: {
 }
 ```
 
-Outside of CMV, configure `dojoConfig` and create the widget using a constructor: 
+If you're not using CMV, configure `dojoConfig` and create the widget using a constructor: 
 ```JavaScript
 require(["esri/map", "esri/layers/ArcGISDynamicMapServiceLayer", 'widgets/AppSettings', "dojo/domReady!"], function (Map, Dynamic, Settings) {
     var map = new Map("map", {
