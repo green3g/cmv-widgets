@@ -3,35 +3,76 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'dijit/_WidgetsInTemplateMixin',
+
     'dojo/_base/lang',
+    'dojo/_base/array',
+    'dojo/topic',
+    'dojox/lang/functional',
+
     'dijit/DropDownMenu',
     'dijit/MenuItem',
-    'dojo/_base/array',
-    'dojox/lang/functional',
-    'dojo/text!./Basemaps/templates/Basemaps.html',
+
+    'esri/basemaps',
     'esri/dijit/BasemapGallery',
+
+    'dojo/text!./Basemaps/templates/Basemaps.html',
     'dojo/i18n!./Basemaps/nls/resource',
 
     'dijit/form/DropDownButton',
     'xstyle/css!./Basemaps/css/Basemaps.css'
-], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, lang, DropDownMenu, MenuItem, array, functional, template, BasemapGallery, i18n) {
+], function (
+    declare,
+    _WidgetBase,
+    _TemplatedMixin,
+    _WidgetsInTemplateMixin,
 
-    // main basemap widget
+    lang,
+    array,
+    topic,
+    functional,
+
+    DropDownMenu,
+    MenuItem,
+
+    esriBasemaps,
+    BasemapGallery,
+
+    template,
+    i18n
+) {
+
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         templateString: template,
         widgetsInTemplate: true,
         i18n: i18n,
-        mode: 'agol',
         title: i18n.title,
-        //baseClass: 'gis_Basemaps_Dijit',
-        //buttonClass: 'gis_Basemaps_Button',
-        //menuClass: 'gis_Basemaps_Menu',
-        mapStartBasemap: 'streets',
-        basemapsToShow: ['streets', 'satellite', 'hybrid', 'topo', 'gray', 'oceans', 'national-geographic', 'osm'],
-        validBasemaps: [],
+        mode: 'agol',
+
+        basemaps: {},
+        currentBasemap: null,
+        mapStartBasemap: null,
+        basemapsToShow: null,
+
         postCreate: function () {
             this.inherited(arguments);
-            this.currentBasemap = this.mapStartBasemap || null;
+
+            // if the basemaps to show is not explicitly set,
+            // get them from the basemap object
+            if (!this.basemapsToShow) {
+                this.basemapsToShow = Object.keys(this.basemaps);
+            }
+
+            // if the starting basemap is not explicitly set,
+            // get it from the map
+            if (!this.mapStartBasemap) {
+                this.mapStartBasemap = this.map.getBasemap();
+            }
+
+            // check to make sure the starting basemap
+            // is found in the basemaps object
+            if (!this.basemaps.hasOwnProperty(this.mapStartBasemap)) {
+                this.mapStartBasemap = this.basemapsToShow[0];
+            }
 
             if (this.mode === 'custom') {
                 this.gallery = new BasemapGallery({
@@ -41,59 +82,67 @@ define([
                         return map.basemap;
                     })
                 });
-                // if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the title of custom basemaps in viewer.js config
-                //     this.gallery.select(this.mapStartBasemap);
-                // }
                 this.gallery.startup();
             }
-
             this.menu = new DropDownMenu({
-                style: 'display: none;' //,
-                //baseClass: this.menuClass
+                style: 'display: none;'
             });
 
             array.forEach(this.basemapsToShow, function (basemap) {
                 if (this.basemaps.hasOwnProperty(basemap)) {
+                    if (this.mode !== 'custom') {
+                        // add any custom to the esri basemaps
+                        var basemapObj = this.basemaps[basemap];
+                        if (basemapObj.basemap) {
+                            if (!esriBasemaps[basemap]) {
+                                if (!basemapObj.basemap.title) {
+                                    basemapObj.basemap.title = basemapObj.title || basemap;
+                                }
+                                esriBasemaps[basemap] = basemapObj.basemap;
+                            }
+                        }
+                    }
                     var menuItem = new MenuItem({
                         id: basemap,
                         label: this.basemaps[basemap].title,
-                        iconClass: (basemap == this.mapStartBasemap) ? 'selectedIcon' : 'emptyIcon',
-                        onClick: lang.hitch(this, function () {
-                            if (basemap !== this.currentBasemap) {
-                                this.currentBasemap = basemap;
-                                if (this.mode === 'custom') {
-                                    this.gallery.select(basemap);
-                                } else {
-                                    this.map.setBasemap(basemap);
-                                }
-                                var ch = this.menu.getChildren();
-                                array.forEach(ch, function (c) {
-                                    if (c.id == basemap) {
-                                        c.set('iconClass', 'selectedIcon');
-                                    } else {
-                                        c.set('iconClass', 'emptyIcon');
-                                    }
-                                });
-                            }
-                        })
+                        iconClass: (basemap === this.mapStartBasemap) ? 'selectedIcon' : 'emptyIcon',
+                        onClick: lang.hitch(this, 'updateBasemap', basemap)
                     });
                     this.menu.addChild(menuItem);
                 }
             }, this);
-
+            topic.subscribe('basemaps/updateBasemap', lang.hitch(this, 'updateBasemap'));
             this.dropDownButton.set('dropDown', this.menu);
         },
+
+        updateBasemap: function (basemap) {
+            if (basemap !== this.currentBasemap && (array.indexOf(this.basemapsToShow, basemap) !== -1)) {
+                if (!this.basemaps.hasOwnProperty(basemap)) {
+                    return;
+                }
+                this.currentBasemap = basemap;
+                if (this.mode === 'custom') {
+                    this.gallery.select(basemap);
+                } else {
+                    this.map.setBasemap(basemap);
+                }
+
+                var ch = this.menu.getChildren();
+                array.forEach(ch, function (c) {
+                    if (c.id === basemap) {
+                        c.set('iconClass', 'selectedIcon');
+                    } else {
+                        c.set('iconClass', 'emptyIcon');
+                    }
+                });
+            }
+        },
+
         startup: function () {
             this.inherited(arguments);
-            if (this.mode === 'custom') {
-                if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the title of custom basemaps in viewer.js config
-                    this.gallery.select(this.mapStartBasemap);
-                }
-            } else {
-                if (this.mapStartBasemap) {
-                    if (this.map.getBasemap() !== this.mapStartBasemap) { //based off the agol basemap name
-                        this.map.setBasemap(this.mapStartBasemap);
-                    }
+            if (this.mapStartBasemap) {
+                if (this.map.getBasemap() !== this.mapStartBasemap) {
+                    this.updateBasemap(this.mapStartBasemap);
                 }
             }
         }

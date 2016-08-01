@@ -3,7 +3,8 @@ define([
     'dijit/_WidgetBase',
     'dijit/_TemplatedMixin',
     'dijit/_Contained',
-    './_Control' // layer control base class
+    './_Control', // layer control base class
+    './../plugins/legendUtil'
 ], function (
     declare,
     _WidgetBase,
@@ -12,13 +13,12 @@ define([
     _Control
 ) {
 
-    var RasterControl = declare([_WidgetBase, _TemplatedMixin, _Contained, _Control], {
-        _layerType: 'overlay', // constant
-        _esriLayerType: 'raster', // constant
-        // create and legend
+    var WFSControl = declare([_WidgetBase, _TemplatedMixin, _Contained, _Control], {
+        _layerType: 'vector', // constant
+        _esriLayerType: 'wfs', // constant
         _layerTypeInit: function () {
             this._expandRemove();
         }
     });
-    return RasterControl;
+    return WFSControl;
 });

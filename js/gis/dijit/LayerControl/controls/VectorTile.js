@@ -12,13 +12,12 @@ define([
     _Control
 ) {
 
-    var RasterControl = declare([_WidgetBase, _TemplatedMixin, _Contained, _Control], {
+    var VectorTileControl = declare([_WidgetBase, _TemplatedMixin, _Contained, _Control], {
         _layerType: 'overlay', // constant
-        _esriLayerType: 'raster', // constant
-        // create and legend
+        _esriLayerType: 'vectortile', // constant
         _layerTypeInit: function () {
             this._expandRemove();
         }
     });
-    return RasterControl;
+    return VectorTileControl;
 });

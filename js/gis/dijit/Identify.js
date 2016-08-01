@@ -23,6 +23,7 @@ define([
     'dijit/form/FilteringSelect',
     'xstyle/css!./Identify/css/Identify.css'
 ], function (declare, _WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, MenuItem, lang, array, all, topic, query, domStyle, domClass, Moveable, Memory, IdentifyTask, IdentifyParameters, PopupTemplate, IdentifyTemplate, i18n) {
+
     return declare([_WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         widgetsInTemplate: true,
         templateString: IdentifyTemplate,
@@ -37,6 +38,12 @@ define([
         draggable: false,
         layerSeparator: '||',
         allLayersId: '***',
+        excludedFields: [
+            'objectid', 'esri_oid', 'shape',
+            'shape.len', 'shape_length',
+            'shape_len', 'shape.stlength()',
+            'shape.area', 'shape_area', 'shape.starea()'
+        ],
 
         postCreate: function () {
             this.inherited(arguments);
@@ -57,7 +64,7 @@ define([
                         // Identify (Feature Service), create an
                         // infoTemplate for the graphic features. Create
                         // it only if one does not already exist.
-                        if (layer.capabilities && layer.capabilities.toLowerCase().indexOf('data') < 0) {
+                        if (layer.capabilities && array.indexOf(layer.capabilities.toLowerCase(), 'data') < 0) {
                             if (!layer.infoTemplate) {
                                 var infoTemplate = this.getInfoTemplate(layer, layer.layerId);
                                 if (infoTemplate) {
@@ -129,7 +136,7 @@ define([
         setupDraggable: function () {
             var popups, handles, pointers, movable;
             // the popup, handle (title) and pointers (arrows)
-            popups  = query('div.esriPopup');
+            popups = query('div.esriPopup');
             handles = query('div.esriPopup div.titlePane div.title');
             pointers = query('div.esriPopup div.outerPointer, div.esriPopup div.pointer');
 
@@ -180,7 +187,7 @@ define([
             }));
 
             if (identifies.length > 0) {
-                this.map.infoWindow.setTitle( this.i18n.mapInfoWindow.identifyingTitle );
+                this.map.infoWindow.setTitle(this.i18n.mapInfoWindow.identifyingTitle);
                 this.map.infoWindow.setContent('<div class="loading"></div>');
                 this.map.infoWindow.show(mapPoint);
                 all(identifies).then(lang.hitch(this, 'identifyCallback', identifiedlayers), lang.hitch(this, 'identifyError'));
@@ -192,7 +199,7 @@ define([
                 // handle feature layers that come from a feature service
                 // and may already have an info template
                 var layer = evt.graphic._layer;
-                if (layer.infoTemplate || (layer.capabilities && layer.capabilities.toLowerCase().indexOf('data') < 0)) {
+                if (layer.infoTemplate || (layer.capabilities && array.indexOf(layer.capabilities.toLowerCase(), 'data') < 0)) {
                     return false;
                 }
 
@@ -254,7 +261,7 @@ define([
                     } else if ((ref.declaredClass === 'esri.layers.FeatureLayer') && !isNaN(ref.layerId)) { // feature layer
                         // do not allow feature layer that does not support
                         // Identify (Feature Service)
-                        if (ref.capabilities && ref.capabilities.toLowerCase().indexOf('data') > 0) {
+                        if (ref.capabilities && array.indexOf(ref.capabilities.toLowerCase(), 'data') >= 0) {
                             layerIds = [ref.layerId];
                         }
                     } else if (ref.layerInfos) {
@@ -308,7 +315,7 @@ define([
         },
 
         getInfoTemplate: function (layer, layerId, result) {
-            var popup = null, 
+            var popup = null,
                 content = null;
             if (result) {
                 layerId = result.layerId;
@@ -337,13 +344,13 @@ define([
 
             // if no Popup config found, create one with all attributes or layer fields
             if (!popup) {
-                popup = this.createInfoTemplate(layer, layerId, result);
+                popup = this.createDefaultInfoTemplate(layer, layerId, result);
             }
 
             return popup;
         },
 
-        createInfoTemplate: function (layer, layerId, result) {
+        createDefaultInfoTemplate: function (layer, layerId, result) {
             var popup = null, fieldInfos = [];
 
             var layerName = this.getLayerName(layer);
@@ -357,8 +364,9 @@ define([
                 if (attributes) {
                     for (var prop in attributes) {
                         if (attributes.hasOwnProperty(prop)) {
-                            fieldInfos.push({
+                            this.addDefaultFieldInfo(fieldInfos, {
                                 fieldName: prop,
+                                label: prop.replace(/_/g, ' '),
                                 visible: true
                             });
                         }
@@ -369,29 +377,29 @@ define([
             } else if (layer._outFields && (layer._outFields.length) && (layer._outFields[0] !== '*')) {
 
                 var fields = layer.fields;
-                array.forEach(layer._outFields, function (fieldName) {
+                array.forEach(layer._outFields, lang.hitch(this, function (fieldName) {
                     var foundField = array.filter(fields, function (field) {
                         return (field.name === fieldName);
                     });
                     if (foundField.length > 0) {
-                        fieldInfos.push({
+                        this.addDefaultFieldInfo(fieldInfos, {
                             fieldName: foundField[0].name,
                             label: foundField[0].alias,
                             visible: true
                         });
                     }
-                });
+                }));
 
             // from the fields layer
             } else if (layer.fields) {
 
-                array.forEach(layer.fields, function (field) {
-                    fieldInfos.push({
+                array.forEach(layer.fields, lang.hitch(this, function (field) {
+                    this.addDefaultFieldInfo(fieldInfos, {
                         fieldName: field.name,
                         label: field.alias,
                         visible: true
                     });
-                });
+                }));
             }
 
             if (fieldInfos.length > 0) {
@@ -407,6 +415,13 @@ define([
             }
 
             return popup;
+        },
+
+        addDefaultFieldInfo: function (fieldInfos, field) {
+            var nameLC = field.fieldName.toLowerCase();
+            if (array.indexOf(this.excludedFields, nameLC) < 0) {
+                fieldInfos.push(field);
+            }
         },
 
         createIdentifyLayerList: function () {
@@ -544,11 +559,9 @@ define([
                         }
                     // remove any infoTemplates that might
                     // interfere with clicking on a feature
-                    } else {
-                        if (layer.infoTemplate) {
-                            this.infoTemplates[layer.id] = lang.clone(layer.infoTemplate);
-                            layer.infoTemplate = null;
-                        }
+                    } else if (layer.infoTemplate) {
+                        this.infoTemplates[layer.id] = lang.clone(layer.infoTemplate);
+                        layer.infoTemplate = null;
                     }
                 }
             }, this);

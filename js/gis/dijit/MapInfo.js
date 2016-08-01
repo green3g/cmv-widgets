@@ -10,7 +10,7 @@ define([
     'dojo/dom-style',
     'dojo/number',
     'dojo/topic',
-    '//cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.3/proj4.js',
+    '//cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.12/proj4.js',
     'xstyle/css!./MapInfo/css/MapInfo.css'
 ], function (
     declare,
@@ -23,7 +23,7 @@ define([
     topic,
     proj4
 ) {
-    'use strict';
+
     return declare([WidgetBase, TemplatedMixin], {
         map: null,
         mode: 'map',
@@ -168,6 +168,8 @@ define([
                 if (this._projectionLoaded) {
                     this._project(pnt);
                 }
+                break;
+            default:
                 break;
             }
         },

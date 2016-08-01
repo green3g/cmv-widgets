@@ -194,10 +194,13 @@ define([
                 exclude: false,
 
                 //other dgrid options like columns may be included
-                columns:[
-    	            { field: 'FIELD_KID', label: 'Field KID' },
-    	            { field: 'WELL_NAME', label: 'Name' }
-	            ]
+                columns: [{
+                  field: 'FIELD_KID',
+                  label: 'Field KID'
+                }, {
+                  field: 'WELL_NAME',
+                  label: 'Name'
+                }]
               }
             }
           }
@@ -227,15 +230,15 @@ define([
           },
 
           //these options are NOT required (defaults are shown):
-          parametername: 'cmvSettings',
-          mapRightClickMenu: true,
-          address: 'email@email.com',
-          subject: 'Share Map',
-          body: 'Check out this map! <br /> ',
-          emailSettings: ['mapExtent', 'layerVisibility'],
-          shareNode: null,
-          shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
-          server: baseURL + 'widgets/AppSettings/php/'
+          // parametername: 'cmvSettings',
+          // mapRightClickMenu: true,
+          // address: 'email@email.com',
+          // subject: 'Share Map',
+          // body: 'Check out this map! <br /> ',
+          // emailSettings: ['mapExtent', 'layerVisibility'],
+          // shareNode: null,
+          // shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
+          // server: baseURL + 'widgets/AppSettings/php/'
         }
       },
       //widget config
