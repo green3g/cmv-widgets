@@ -24,7 +24,7 @@ define([
             };
         },
         init: function () {
-            this.inherited(arguments);            
+            this.inherited(arguments);
             if(!this._appSettings.layerVisibility){
                 return;
             }
@@ -46,7 +46,8 @@ define([
             //load visible layers
             array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
                 if (layers.hasOwnProperty(layer.layer.id)) {
-                    if (layers[layer.layer.id].visibleLayers) {
+                    if (layers[layer.layer.id].visibleLayers &&
+                      layers[layer.layer.id].setVisibleLayers) {
                         layer.layer.setVisibleLayers(layers[layer.layer.id].visibleLayers);
                         topic.publish('layerControl/setVisibleLayers', {
                             id: layer.layer.id,
@@ -67,7 +68,7 @@ define([
             setting.value = {};
             //since the javascript api visibleLayers property starts
             //with a different set of layers than what is actually turned
-            //on, we need to iterate through, find the parent layers, 
+            //on, we need to iterate through, find the parent layers,
             array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
                 var id = layer.layer.id;
                 var visibleLayers;
