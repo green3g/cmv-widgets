@@ -5,7 +5,9 @@ define([
   'esri/tasks/GeometryService',
   'esri/layers/ImageParameters'
 ], function(units, Extent, esriConfig, GeometryService, ImageParameters) {
-  var baseURL = '/';
+
+  // the root
+  var baseURL = './';
 
   // url to your proxy page, must be on same machine hosting you app. See proxy folder for readme.
   esriConfig.defaults.io.proxyUrl = baseURL + 'PHP/proxy.php';
