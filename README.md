@@ -1,4 +1,4 @@
-CMV_Widgets
+CMV Widgets
 ===========
 
 [![Join the chat at https://gitter.im/roemhildtg/CMV_Widgets](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/roemhildtg/CMV_Widgets?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -7,37 +7,42 @@ Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](ht
 
 Check out the [demo branch](https://github.com/roemhildtg/cmv-widgets/tree/demo) for a fully functional demo.
 
-###AppSettings
+### AppSettings
 
 * Store and share map and application state.
 * [View the Documentation](widgets/AppSettings/):
 
 ![URL Field](widgets/AppSettings/appSettings.png)
 
-###RelatedRecordsTable
+### RelatedRecordsTable
 
 * Query and display the layers' related records
 * [View the Documentation](widgets/RelationshipTable/)
 
 ![URL Field](widgets/RelationshipTable/relatedRecords.png)
 
-###MetadataDialog
+### MetadataDialog
 
 * Query the layer's rest page and display it's description
 * [View the Documentation](widgets/MetadataDialog/)
 
 ![URL Field](widgets/MetadataDialog/metadatadialog.png)
 
-###HeatMap
+### HeatMap
 
 * Toggle a dynamic heatmap renderer on point layers
 * [View the Documentation](widgets/HeatMap/)
 
 ![URL Field](widgets/HeatMap/heatmap.png)
 
-###TimeSlider
+### TimeSlider
 
 * Control the current display of all time enabled layers ont he map
 * [View the Documentation](widgets/TimeSlider)
 
 ![URL Field](widgets/TimeSlider/timeSlider.png)
+
+### LoginCookie
+
+* Cache logins in a cookie or local storage and reload them when the app starts
+* [View the Documentation](widgets/LoginCookie)
