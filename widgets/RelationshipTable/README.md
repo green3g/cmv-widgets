@@ -43,7 +43,7 @@ relatedRecords: {
 
         //optional relationships property
         relationships: {
-            <layerID)>: { //layerID (integer) key refers to featurelayer id on the rest services page
+            <layerID)>: { //layerID (string) key refers to featurelayer id in the operationalLayers array
                 <relationshipID>: { //relationshipID (integer) key referrs to the relationship id on the rest services page
                     //relationship tab title
                     title: 'Inspections',
@@ -82,6 +82,7 @@ You may also use this widget in a programatic matter:
 ```JavaScript
 new RelationshipTableTabs({
   layerInfos: [{
+      id: 'demographics',
       layer: demographicsLayer
   }]
   //other options
