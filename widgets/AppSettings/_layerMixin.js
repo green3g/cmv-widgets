@@ -47,7 +47,7 @@ define([
             array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
                 if (layers.hasOwnProperty(layer.layer.id)) {
                     if (layers[layer.layer.id].visibleLayers &&
-                      layers[layer.layer.id].setVisibleLayers) {
+                      layer.layer.setVisibleLayers) {
                         layer.layer.setVisibleLayers(layers[layer.layer.id].visibleLayers);
                         topic.publish('layerControl/setVisibleLayers', {
                             id: layer.layer.id,
