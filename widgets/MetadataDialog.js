@@ -12,9 +12,10 @@ define([
     return declare([_WidgetBase], {
         dialog: null,
         dialogTemplate: dialogContent,
+        topic: 'layerControl/showMetadata'
         postCreate: function () {
             this.inherited(arguments);
-            topic.subscribe('LayerControl/showMetadata', lang.hitch(this, '_fetchMetadata'));
+            topic.subscribe(this.topic, lang.hitch(this, '_fetchMetadata'));
         },
         _fetchMetadata: function (event) {
             new request({
