@@ -18,6 +18,7 @@ define([
     return declare([_WidgetBase], {
         map: null,
         cssClasses: ['fa', 'fa-fire'],
+        topic: 'layerControl/heatMap',
         colors: [
             'rgba(0,0,0,0.1)',
             'rgba(0,0,255,0.7)',
@@ -29,7 +30,7 @@ define([
         _heatMapLayers: {},
         postCreate: function () {
             this.inherited(arguments);
-            topic.subscribe('LayerControl/heatMap', lang.hitch(this, 'initHeatMap'));
+            topic.subscribe(this.topic, lang.hitch(this, 'initHeatMap'));
         },
         initHeatMap: function (r) {
             var layerId = r.layer.id + r.subLayer.id;
