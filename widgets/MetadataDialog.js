@@ -25,6 +25,17 @@ define([
             node: 'descriptionNode',
             type: 'innerHTML'
         },
+        details: '',
+        detailsTemplate: ['<ul style="padding:0 20px;"><li>ID: {id}</li>',
+            '<li>Parent Layer: {parentLayer.name} ({parentLayer.id})</li>',
+            '<li>Capabilities: {capabilities}</li>',
+            '<li><a href="{url}" target="_blank">Metadata page</a></li>',
+            '</ul>'
+        ].join(''),
+        _setDetailsAttr: {
+            node: 'detailsNode',
+            type: 'innerHTML'
+        },
         fields: [],
         open: false,
         metadata: {
@@ -61,24 +72,27 @@ define([
          * @return {[type]}       [description]
          */
         _fetchMetadata: function(event) {
+          var url  = event.layer.url + '/' + event.subLayer.id;
             new request({
-                    url: event.layer.url + '/' + event.subLayer.id,
+                    url: url,
                     content: {
                         f: 'json'
                     }
                 })
-                .then(lang.hitch(this, '_showMetadata'))
+                .then(lang.hitch(this, '_showMetadata', url))
                 .otherwise(lang.hitch(this, '_handleError'));
         },
         /**
          * Displays a given metadata using fields, name, and description
          * @param  {object} data The raw json object from a rest page
          */
-        _showMetadata: function(data) {
+        _showMetadata: function(url, data) {
+          data.url = url;
             this.set({
                 'title': data.name,
                 description: data.description,
-                fields: data.fields
+                fields: data.fields,
+                details: lang.replace(this.detailsTemplate, data)
             });
             this.dgrid.renderArray(this.fields);
             this.show();
