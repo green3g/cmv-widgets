@@ -1,5 +1,24 @@
-<div class="metadataDescription">
-    <h1>{name} ({id})</h1>
-    <p>Description:</p>
-    <div>{description}</div>
+<div class="dijitDialog" role="dialog" aria-labelledby="${id}_title">
+    <div data-dojo-attach-point="titleBar" class="dijitDialogTitleBar">
+        <span data-dojo-attach-point="titleNode" class="dijitDialogTitle" id="${id}_title" role="heading" level="1"></span>
+        <span data-dojo-attach-point="closeButtonNode" class="dijitDialogCloseIcon" data-dojo-attach-event="ondijitclick: onCancel" title="${buttonCancel}" role="button" tabindex="-1">
+			<span data-dojo-attach-point="closeText" class="closeText" title="${buttonCancel}">x</span>
+        </span>
+    </div>
+    <div data-dojo-attach-point="containerNode" class="dijitDialogPaneContent">
+
+    </div>
+    <div class="metadata-tabs" data-dojo-type="dijit/layout/TabContainer"
+      data-dojo-attach-point="tabContainer" style="height:100%;width:100%;">
+        <div class="metadata-pane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="title: 'Description'">
+            <div data-dojo-attach-point="descriptionNode"></div>
+        </div>
+        <div class="metadata-pane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="title: 'Fields'">
+            <div data-dojo-attach-point="fieldsNode"></div>
+        </div>
+        <div class="metadata-pane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="title: 'Details'">
+            <div data-dojo-attach-point="detailsNode"></div>
+        </div>
+    </div>
+    ${!actionBarTemplate}
 </div>

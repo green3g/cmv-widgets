@@ -19,9 +19,7 @@ define(['dojo/_base/declare',
         constructor: function(params, domNode) {
             this.inherited(arguments);
             lang.mixin(this, params);
-            if(domNode){
 
-            }
             //remember credentials once they're created
             esriId.on('credential-create', lang.hitch(this, 'storeCredentials'));
 
@@ -56,6 +54,11 @@ define(['dojo/_base/declare',
          * initialize the esri identity manager with credentials if they were stored
          */
         loadCredentials: function() {
+            if (this.credentials) {
+                esriId.initialize(this.credentials);
+                // console.log('provided credentials were initialized');
+                return;
+            }
             var idJson, idObject;
 
             if (this.supportsLocalStorage()) {
@@ -72,10 +75,10 @@ define(['dojo/_base/declare',
                     esriId.initialize(idObject);
                 } catch (e) {
                     //TODO: growl
-                    console.log(e);
+                    // console.log(e);
                 }
             } else {
-                //console.log("didn't find anything to load :(");
+                // console.log("didn't find anything to load :(");
             }
         },
         /**
@@ -94,12 +97,12 @@ define(['dojo/_base/declare',
          * like a logout function, except it doesn't remove credentials from memory
          * in the identity manager
          */
-        clearCredentials: function(){
-          if(this.supportsLocalStorage()){
-            global.localStorage.removeItem(this.key);
-          } else {
-            cookie(this.key, '', {});
-          }
+        clearCredentials: function() {
+            if (this.supportsLocalStorage()) {
+                global.localStorage.removeItem(this.key);
+            } else {
+                cookie(this.key, '', {});
+            }
         }
 
     });

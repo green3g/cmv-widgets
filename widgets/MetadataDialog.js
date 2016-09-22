@@ -4,50 +4,111 @@ define([
     'dijit/_WidgetBase',
     'dijit/Dialog',
     'dijit/DialogUnderlay',
+    'dijit/_WidgetsInTemplateMixin',
+    'dgrid/Grid',
     'dojo/topic',
     'esri/request',
     'dojo/text!./MetadataDialog/templates/dialogContent.html',
-    'xstyle/css!./MetadataDialog/css/MetadataDialog.css'
-], function (declare, lang, _WidgetBase, Dialog, DialogUnderlay, topic, request, dialogContent) {
-    return declare([_WidgetBase], {
-        dialog: null,
-        dialogTemplate: dialogContent,
-        postCreate: function () {
+    'xstyle/css!./MetadataDialog/css/MetadataDialog.css',
+    'dijit/layout/TabContainer',
+    'dijit/layout/ContentPane'
+], function(declare, lang, _WidgetBase, Dialog, DialogUnderlay, _WidgetsInTemplateMixin,
+    Grid, topic, request, dialogContent) {
+    return declare([_WidgetBase, Dialog, _WidgetsInTemplateMixin], {
+        topic: 'layerControl/showMetadata',
+        templateString: dialogContent,
+        style: 'width:500px;height:450px;',
+        widgetsInTemplate: true,
+        title: '',
+        description: '',
+        _setDescriptionAttr: {
+            node: 'descriptionNode',
+            type: 'innerHTML'
+        },
+        details: '',
+        detailsTemplate: ['<ul style="padding:0 20px;"><li>ID: {id}</li>',
+            '<li>Parent Layer: {parentLayer.name} ({parentLayer.id})</li>',
+            '<li>Capabilities: {capabilities}</li>',
+            '<li><a href="{url}" target="_blank">Metadata page</a></li>',
+            '</ul>'
+        ].join(''),
+        _setDetailsAttr: {
+            node: 'detailsNode',
+            type: 'innerHTML'
+        },
+        fields: [],
+        open: false,
+        metadata: {
+            name: ''
+        },
+        /**
+         * initializes the widget's field grid and subscribes to the topic
+         * `layerControl/showMetadata`
+         */
+        postCreate: function() {
             this.inherited(arguments);
-            topic.subscribe('LayerControl/showMetadata', lang.hitch(this, '_fetchMetadata'));
-        },
-        _fetchMetadata: function (event) {
-            new request({
-                url: event.layer.url + '/' + event.subLayer.id,
-                content: {
-                    f: 'json'
+            this.dgrid = new Grid({
+                columns: {
+                    name: 'Field',
+                    alias: 'Name',
+                    type: 'Type'
                 }
-            })
-            .then(lang.hitch(this, '_showMetadata'))
-            .otherwise(lang.hitch(this, '_handleError'));
+            }, this.fieldsNode);
+            topic.subscribe('layerControl/showMetadata', lang.hitch(this, '_fetchMetadata'));
         },
-        _showMetadata: function (data) {
-            if (!this.dialog) {
-                this._createDialog(lang.replace(this.dialogTemplate, data));
-            } else {
-                this.dialog.set('content', lang.replace(this.dialogTemplate, data));
-            }
-            this.dialog.show();
-            //DialogUnderlay.hide();
+        /**
+         * resize the tabcontainer when the dialog is resized
+         */
+        resize: function() {
+            this.inherited(arguments);
+            this.tabContainer.resize();
         },
-        _handleError: function(e){
-          this._showMetadata({
-            id: e,
-            name: 'Error',
-            description: 'The query could not execute. Is a proxy configured?'
-          });
+        /**
+         * fetches metadata from a published topic event where the topic
+         * must have the following properties:
+         *  - layer.url - the url to the layer's rest page `'.../Mapserver'`
+         *  - subLayer.id - The sublayer id number
+         * @param  {[type]} event [description]
+         * @return {[type]}       [description]
+         */
+        _fetchMetadata: function(event) {
+          var url  = event.layer.url + '/' + event.subLayer.id;
+            new request({
+                    url: url,
+                    content: {
+                        f: 'json'
+                    }
+                })
+                .then(lang.hitch(this, '_showMetadata', url))
+                .otherwise(lang.hitch(this, '_handleError'));
         },
-        _createDialog: function (content) {
-            this.dialog = new Dialog({
-                title: 'Layer Metadata',
-                content: content || '',
-                style: 'width:400px;height:450px;',
-                open: false
+        /**
+         * Displays a given metadata using fields, name, and description
+         * @param  {object} data The raw json object from a rest page
+         */
+        _showMetadata: function(url, data) {
+          data.url = url;
+            this.set({
+                'title': data.name,
+                description: data.description,
+                fields: data.fields,
+                details: lang.replace(this.detailsTemplate, data)
+            });
+            this.dgrid.renderArray(this.fields);
+            this.show();
+            //TODO: this causes an error when the dialog actually closes...
+            //need to override this.hide() with a custom method
+            // DialogUnderlay.hide();
+        },
+        /**
+         * handles rest retrieval errors usually caused by not having a proxy or cors set up
+         * @param  {Error} e The error
+         */
+        _handleError: function(e) {
+            this._showMetadata({
+                id: e,
+                name: 'Error',
+                description: 'The query could not execute. Is a proxy configured?'
             });
         }
     });
