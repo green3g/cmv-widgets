@@ -15,6 +15,7 @@ define([
 ], function(declare, lang, _WidgetBase, Dialog, DialogUnderlay, _WidgetsInTemplateMixin,
     Grid, topic, request, dialogContent) {
     return declare([_WidgetBase, Dialog, _WidgetsInTemplateMixin], {
+        topic: 'layerControl/showMetadata',
         templateString: dialogContent,
         style: 'width:500px;height:450px;',
         widgetsInTemplate: true,
@@ -47,9 +48,9 @@ define([
         /**
          * resize the tabcontainer when the dialog is resized
          */
-        resize: function(){
-          this.inherited(arguments);
-          this.tabContainer.resize();
+        resize: function() {
+            this.inherited(arguments);
+            this.tabContainer.resize();
         },
         /**
          * fetches metadata from a published topic event where the topic
@@ -87,7 +88,7 @@ define([
         },
         /**
          * handles rest retrieval errors usually caused by not having a proxy or cors set up
-         * @param  {Error} e The error 
+         * @param  {Error} e The error
          */
         _handleError: function(e) {
             this._showMetadata({
