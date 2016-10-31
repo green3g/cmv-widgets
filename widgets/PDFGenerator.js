@@ -5,9 +5,10 @@ define([
     'dojo/topic',
     'dojo/_base/lang',
     'dijit/form/Button',
-    'pdfmake/pdfmake'
+    'pdfmake/pdfmake',
+    'dojo/i18n!./PDFGenerator/nls/PDFGenerator'
 
-], function (declare, _WidgetBase, _Templated, topic, lang, Button, pdfmake) {
+], function (declare, _WidgetBase, _Templated, topic, lang, Button, pdfmake, i18n) {
 
     // make sure pdfmake is loaded then import the font vs
     require(['pdfmake/vfs_fonts']);
