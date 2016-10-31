@@ -4,88 +4,94 @@ define([
     'dijit/_Templated',
     'dojo/topic',
     'dojo/_base/lang',
-    'dojo/store/Memory',
-    'dojo/text!./LabelLayer/templates/LabelLayer.html',
-    'dojo/i18n!./LabelLayer/nls/LabelLayer',
     'dijit/form/Button',
     'pdfmake/pdfmake'
 
-], function (declare, _WidgetBase, _Templated, topic, lang, Memory, templateString, i18n, Button, pdfmake) {
+], function (declare, _WidgetBase, _Templated, topic, lang, Button, pdfmake) {
 
     // make sure pdfmake is loaded then import the font vs
     require(['pdfmake/vfs_fonts']);
+
+    var defIndex = 0;
 
     return declare([_WidgetBase], {
         templateString: templateString,
         widgetsInTemplate: true,
         i18n: i18n,
-        topic: 'attributesContainer/tableAdded',
-        pdfDefinitions: {
-
-            // tab title
-            'Parcels': {
-
+        attributesTableTopic: 'attributesContainer/tableAdded',
+        topic: 'pdf/generate',
+        pdfDefinitions: [{
+            id: 'parcel',
+          // optional attributes tab title
+            title: 'Parcels',
                 // the template to place in the pdf for each row
-                rowTemplate: '{DEEDHOLD}\n' +
+            rowTemplate: '{DEEDHOLD}\n' +
                       '{MAILADDR}\n' +
                       '{MAILCITY}, {MAILSTATE} {MAILZIP}\n\n',
 
                 // the button to add to the attributes table toolbar
-                button: {
-                    label: '<i class="fa fa-envelope"></i> Mailing Labels'
-                },
+            button: {
+                label: '<i class="fa fa-envelope"></i> Mailing Labels'
+            },
 
                 //the number of columns in the pdf document
-                columns: 3
+            columns: 3
 
                 // the default pdf options to override, i.e. fontSize
                 // pdfDefaults: {defaultStyle: { fontSize: 8 }}
-            }
+        }],
+        _setPdfDefinitionsAttr: function (defs) {
+            defs.forEach(function (d) {
+                if (!d.id) {
+                    d.id = 'pdf-' + defIndex ++;
+                }
+            });
+            this.pdfDefinitions = defs;
         },
         tabsWithButtons: {},
         postCreate: function () {
             this.inherited(arguments);
+            var _this = this;
             //subscribe a topic to modify the attributes container add tab
-            topic.subscribe(this.topic, lang.hitch(this, function (tab) {
-                if (this.tabsWithButtons[tab.title] || !this.pdfDefinitions.hasOwnProperty(tab.title)) {
+            topic.subscribe(this.attributesTableTopic, function (tab) {
+                if (_this.tabsWithButtons[tab.title]) {
                     return;
                 }
-
-                this.addButton(tab, this.pdfDefinitions[tab.title].button);
-                this.tabsWithButtons[tab.title] = true;
-            }));
-            // topic.subscribe(this.topic, lang.hitch(this, 'handleTopic'));
-        },
-        handleTopic: function (event) {
-            this.set('activeLayer', event);
-            if (this.parentWidget) {
-                if (!this.parentWidget.open && this.parentWidget.toggle) {
-                    this.parentWidget.toggle();
-                } else if (this.parentWidget.show) {
-                    this.parentWidget.show();
-                    this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 211px; top: 190px; z-index: 950;');
-                }
-            }
-            this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
-        },
-        /**
-         * empties a store
-         */
-        emptyStore: function (store) {
-            store.query().forEach(function (item) {
-                store.remove(item.id);
+                _this.pdfDefinitions.forEach(function (def) {
+                    if (def.tab === tab.title) {
+                        _this.addButton(tab, def);
+                    }
+                });
+                _this.tabsWithButtons[tab.title] = true;
             });
+
+            // subscribe to our own topic
+            topic.subscribe(this.topic, lang.hitch(this, 'generatePDF'));
         },
         addButton: function (tab, options) {
-            tab.attributesTableToolbarDijit.addChild(new Button(lang.mixin(options, {
+            tab.attributesTableToolbarDijit.addChild(new Button(lang.mixin(options.button, {
                 tab: tab,
                 generator: this,
                 onClick: function () {
-                    this.generator.generateRows(this.tab.grid.store.data, this.generator.pdfDefinitions[this.tab.title]);
+                    this.generator.generatePDF(tab.grid.store.data, options.id);
                 }
             })));
         },
-        generateRows: function (data, def) {
+        getDefinition: function (id) {
+            var result = this.pdfDefinitions.filter(function (def) {
+                return def.id === id;
+            });
+
+            if (result.length) {
+                return result[0];
+            }
+            return null;
+        },
+        generatePDF: function (data, id) {
+            var def = this.getDefinition(id);
+            if (!def) {
+                throw Error('The specified definition could not be found: ' + id);
+            }
             var dd = lang.mixin({
                 content: {
                     columns: []
