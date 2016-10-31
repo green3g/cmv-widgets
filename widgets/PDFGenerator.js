@@ -15,8 +15,6 @@ define([
     var defIndex = 0;
 
     return declare([_WidgetBase], {
-        templateString: templateString,
-        widgetsInTemplate: true,
         i18n: i18n,
         attributesTableTopic: 'attributesContainer/tableAdded',
         topic: 'pdf/generate',
