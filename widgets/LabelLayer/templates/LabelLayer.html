@@ -1,0 +1,28 @@
+<div class="filter-widget">
+    <label for="layerSelect">${i18n.layerSelect.label}:
+    </label>
+    <br />
+    <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+    store:this.layerStore,
+      searchAttr:'name',
+      fetchProperties: {
+        sort: [{ attribute: 'name', descending: false}]
+      },
+    " data-dojo-attach-point="layerSelect" name="layer" id="layerSelect" />
+    <br />
+
+    <label for="fieldSelect">${i18n.fieldSelect.label}:
+    </label>
+    <br />
+    <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+      store:this.fieldStore,
+      searchAttr:'name',
+      fetchProperties: {
+        sort: [{ attribute: 'name', descending: false}]
+      }
+      " data-dojo-attach-point="fieldSelect" name="layer" id="fieldSelect" />
+      <br />
+
+    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="submitButton" data-dojo-attach-event="click: addLabels">${i18n.submitButton.label}</div>
+
+</div>
