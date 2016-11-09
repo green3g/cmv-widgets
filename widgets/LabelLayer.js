@@ -148,7 +148,9 @@ define([
             this.own(this.colorSelect.on('change', lang.hitch(this, function (val) {
                 color = this.colorSelect.get('item');
                 if (!color) {
-                    color = {id: val.toLowerCase()};
+                    color = {
+                        id: val.toLowerCase()
+                    };
                 }
                 this.set('activeColor', color.id);
             })));
@@ -215,17 +217,17 @@ define([
             //modify the iconNode to show that a label is enabled on this layer
             var iconNode = this._labelLayers[layerId].iconNode;
             if (iconNode) {
-                if (domClass.contains(iconNode, 'fa-font')) {
-                    domClass.remove(iconNode, this.cssClasses);
-                    this._labelLayers[layerId].layer = null;
-                } else {
-                    domClass.add(iconNode, this.cssClasses);
-                }
+                domClass.add(iconNode, this.cssClasses);
             }
         },
         removeLabels: function () {
             //toggle visibility
-            this._labelLayers[this.activeLayer.id].layer.setVisibility(false);
+            var id = this.activeLayer.id;
+            this._labelLayers[id].layer.setVisibility(false);
+            var iconNode = this._labelLayers[id].iconNode;
+            if (iconNode) {
+                domClass.remove(iconNode, this.cssClasses);
+            }
             this.set('hasLabels', false);
         },
         /**
