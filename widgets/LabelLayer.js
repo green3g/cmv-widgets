@@ -130,6 +130,9 @@ define([
         postCreate: function () {
             this.inherited(arguments);
             topic.subscribe(this.topic, lang.hitch(this, 'handleTopic'));
+            this.own(this.parentWidget.on('show', lang.hitch(this, function () {
+                this.tabContainer.resize();
+            })));
 
             this.own(this.layerSelect.on('change', lang.hitch(this, function (id) {
                 var layer = this.layerStore.get(id);
@@ -147,7 +150,6 @@ define([
                 if (!color) {
                     color = {id: val.toLowerCase()};
                 }
-                console.log(color);
                 this.set('activeColor', color.id);
             })));
             this.set('activeColor', this.colors[0].name);
@@ -163,9 +165,6 @@ define([
                 if (!this.parentWidget.open && this.parentWidget.toggle) {
                     this.parentWidget.toggle();
                 } else if (this.parentWidget.show) {
-                    this.own(this.parentWidget.on('show', lang.hitch(this, function () {
-                        this.tabContainer.resize();
-                    })));
                     this.parentWidget.show();
                     this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 211px; top: 190px; z-index: 950;');
                 }

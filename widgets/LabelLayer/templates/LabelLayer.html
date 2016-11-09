@@ -1,5 +1,5 @@
 <div class="filter-widget" style="width: 300px;height:300px;">
-    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:100%;">
+    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:70%;">
         <div data-dojo-type="dijit/layout/ContentPane" title="Layer">
             <label for="layerSelect">${i18n.layerSelect.label}:
             </label>
@@ -23,11 +23,6 @@
         sort: [{ attribute: 'name', descending: false}]
       }
       " data-dojo-attach-point="fieldSelect" name="layer" id="fieldSelect" />
-            <br />
-
-            <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="addButton" data-dojo-attach-event="click: addLabels">${i18n.addButton.label}</div>
-
-            <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-trash', showLabel:true" data-dojo-attach-point="removeButton" data-dojo-attach-event="click: removeLabels">${i18n.removeButton.label}</div>
         </div>
         <div data-dojo-type="dijit/layout/ContentPane" title="Settings">
             <label for="fieldSelect">${i18n.colorSelect.label}:
@@ -40,6 +35,11 @@
       sort: [{ attribute: 'name', descending: false}]
     }
     " data-dojo-attach-point="colorSelect" name="layer" id="colorSelect" />
+
         </div>
     </div>
+
+    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="addButton" data-dojo-attach-event="click: addLabels">${i18n.addButton.label}</div>
+
+    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-trash', showLabel:true" data-dojo-attach-point="removeButton" data-dojo-attach-event="click: removeLabels">${i18n.removeButton.label}</div>
 </div>

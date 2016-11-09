@@ -10,7 +10,7 @@ define({
             label: 'Choose a color'
         },
         addButton: {
-            label: 'Set'
+            label: 'Apply'
         },
         removeButton: {
             label: 'Remove'
