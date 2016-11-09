@@ -1,28 +1,45 @@
-<div class="filter-widget">
-    <label for="layerSelect">${i18n.layerSelect.label}:
-    </label>
-    <br />
-    <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+<div class="filter-widget" style="width: 300px;height:300px;">
+    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:100%;">
+        <div data-dojo-type="dijit/layout/ContentPane" title="Layer">
+            <label for="layerSelect">${i18n.layerSelect.label}:
+            </label>
+            <br />
+            <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
     store:this.layerStore,
       searchAttr:'name',
       fetchProperties: {
         sort: [{ attribute: 'name', descending: false}]
       },
     " data-dojo-attach-point="layerSelect" name="layer" id="layerSelect" />
-    <br />
+            <br />
 
-    <label for="fieldSelect">${i18n.fieldSelect.label}:
-    </label>
-    <br />
-    <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+            <label for="fieldSelect">${i18n.fieldSelect.label}:
+            </label>
+            <br />
+            <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
       store:this.fieldStore,
       searchAttr:'name',
       fetchProperties: {
         sort: [{ attribute: 'name', descending: false}]
       }
       " data-dojo-attach-point="fieldSelect" name="layer" id="fieldSelect" />
-      <br />
+            <br />
 
-    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="submitButton" data-dojo-attach-event="click: addLabels">${i18n.submitButton.label}</div>
+            <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="addButton" data-dojo-attach-event="click: addLabels">${i18n.addButton.label}</div>
 
+            <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-trash', showLabel:true" data-dojo-attach-point="removeButton" data-dojo-attach-event="click: removeLabels">${i18n.removeButton.label}</div>
+        </div>
+        <div data-dojo-type="dijit/layout/ContentPane" title="Settings">
+            <label for="fieldSelect">${i18n.colorSelect.label}:
+            </label>
+            <br />
+            <input data-dojo-type="dijit/form/ComboBox" data-dojo-props="
+    store:this.colorStore,
+    searchAttr:'name',
+    fetchProperties: {
+      sort: [{ attribute: 'name', descending: false}]
+    }
+    " data-dojo-attach-point="colorSelect" name="layer" id="colorSelect" />
+        </div>
+    </div>
 </div>

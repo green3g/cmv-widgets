@@ -1,5 +1,3 @@
-
-
 define([
     'dojo/_base/declare',
     'dijit/_WidgetBase',
@@ -16,10 +14,14 @@ define([
     'esri/Color',
     'dojo/text!./LabelLayer/templates/LabelLayer.html',
     'dojo/i18n!./LabelLayer/nls/LabelLayer',
+    './LabelLayer/const/colors',
     'dijit/form/Button',
-    'dijit/form/FilteringSelect'
+    'dijit/form/FilteringSelect',
+    'dijit/form/ComboBox',
+    'dijit/layout/TabContainer',
+    'dijit/layout/ContentPane'
 ], function (declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
-  domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n) {
+    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors) {
 
 
     var EXCLUDE_TYPES = [
@@ -38,14 +40,8 @@ define([
         map: null,
         cssClasses: ['fa', 'fa-font'],
         topic: 'layerControl/labels',
-        colors: [
-            'rgba(0,0,0,0.1)',
-            'rgba(0,0,255,0.7)',
-            'rgba(0,255,255,0.7)',
-            'rgba(0,255,0,0.7)',
-            'rgba(255,255,0,0.7)',
-            'rgba(255,0,0,0.7)'
-        ],
+        colors: colors.data,
+        activeColor: '',
         /**
          * The layer infos objects array, use the set method to update
          * @type {Array}
@@ -70,12 +66,24 @@ define([
                 });
             });
         },
+        hasLabels: false,
+        _setHasLabelsAttr: function (has) {
+            this.hasLabels = has;
+            this.removeButton.set('disabled', !has);
+        },
         activeLayer: {},
         _setActiveLayerAttr: function (l) {
             this.activeLayer = l;
             if (!l.layer || !l.subLayer) {
                 return;
             }
+
+            this.set('hasLabels', Boolean(this._labelLayers[l.id]));
+
+            //reset the current field
+            this.fieldSelect.set('value', null);
+
+            // get the layer's fields
             var def = request({
                 url: l.layer.url + '/' + l.subLayer.id,
                 content: {
@@ -83,7 +91,7 @@ define([
                 }
             });
             def.then(lang.hitch(this, function (layerProps) {
-              //update the field store
+                //update the field store
                 var store = this.fieldStore;
                 this.emptyStore(store);
 
@@ -91,7 +99,7 @@ define([
                     return;
                 }
 
-              //exclude fields
+                //exclude fields
                 layerProps.fields.filter(function (f) {
                     return EXCLUDE_TYPES.indexOf(f.type) === -1;
                 }).forEach(function (f) {
@@ -114,6 +122,10 @@ define([
             this.layerStore = new Memory({
                 data: []
             });
+
+            this.colorStore = new Memory({
+                data: this.colors
+            });
         },
         postCreate: function () {
             this.inherited(arguments);
@@ -122,10 +134,24 @@ define([
             this.own(this.layerSelect.on('change', lang.hitch(this, function (id) {
                 var layer = this.layerStore.get(id);
                 this.set('activeLayer', {
+                    id: id,
                     layer: layer.layer,
-                    subLayer: {id: layer.sublayer}
+                    subLayer: {
+                        id: layer.sublayer
+                    }
                 });
             })));
+
+            this.own(this.colorSelect.on('change', lang.hitch(this, function (val) {
+                color = this.colorSelect.get('item');
+                if (!color) {
+                    color = {id: val.toLowerCase()};
+                }
+                console.log(color);
+                this.set('activeColor', color.id);
+            })));
+            this.set('activeColor', this.colors[0].name);
+            this.colorSelect.set('value', this.activeColor);
 
             this.own(this.fieldSelect.on('change', lang.hitch(this, function (id) {
                 this.set('activeField', id);
@@ -137,6 +163,9 @@ define([
                 if (!this.parentWidget.open && this.parentWidget.toggle) {
                     this.parentWidget.toggle();
                 } else if (this.parentWidget.show) {
+                    this.own(this.parentWidget.on('show', lang.hitch(this, function () {
+                        this.tabContainer.resize();
+                    })));
                     this.parentWidget.show();
                     this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 211px; top: 190px; z-index: 950;');
                 }
@@ -144,37 +173,46 @@ define([
             this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
         },
         addLabels: function () {
-            var layerId = this.activeLayer.layer.id + this.activeLayer.subLayer.id;
+            var layerId = this.activeLayer.id;
             if (!this._labelLayers[layerId]) {
                 var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.subLayer.id;
                 var layerOptions = {
                     mode: FeatureLayer.MODE_ONDEMAND,
-                    outFields: [this.activeField],
+                    outFields: ['*'],
                     id: layerId,
                     visible: true
                 };
-                var renderer = new SimpleRenderer({
-                    colors: this.colors
-                });
-                var label = new LabelClass({
-                    labelExpressionInfo: {value: '{' + this.activeField + '}'},
-                    useCodedValues: true,
-                    labelPlacement: 'above-center'
-                });
-                var symbol = new TextSymbol();
-                symbol.font.setSize('10pt');
-                symbol.font.setFamily('Corbel');
-                symbol.setColor(new Color('#666'));
-                label.symbol = symbol;
 
-                this._labelLayers[layerId] = {layer: new FeatureLayer(serviceURL, layerOptions), iconNode: this.activeLayer.iconNode};
+                this._labelLayers[layerId] = {
+                    layer: new FeatureLayer(serviceURL, layerOptions),
+                    iconNode: this.activeLayer.iconNode
+                };
                 // this._labelLayers[layerId].layer.setRenderer(renderer);
-                this._labelLayers[layerId].layer.setLabelingInfo([label]);
                 this.map.addLayer(this._labelLayers[layerId].layer);
-            } else {
-                //toggle visibility
-                this.map.removeLayer(this._labelLayers[layerId].layer);
             }
+
+            var renderer = new SimpleRenderer({
+                colors: this.colors
+            });
+            var label = new LabelClass({
+                labelExpressionInfo: {
+                    value: '{' + this.activeField + '}'
+                },
+                useCodedValues: true,
+                labelPlacement: 'above-center'
+            });
+            var symbol = new TextSymbol();
+            symbol.font.setSize('10pt');
+            symbol.font.setFamily('Corbel');
+            symbol.setColor(new Color(this.activeColor));
+            label.symbol = symbol;
+
+            this._labelLayers[layerId].layer.setLabelingInfo([label]);
+            this._labelLayers[layerId].layer.setVisibility(true);
+
+            // update haslabels
+            this.set('hasLabels', true);
+
             //modify the iconNode to show that a label is enabled on this layer
             var iconNode = this._labelLayers[layerId].iconNode;
             if (iconNode) {
@@ -185,6 +223,11 @@ define([
                     domClass.add(iconNode, this.cssClasses);
                 }
             }
+        },
+        removeLabels: function () {
+            //toggle visibility
+            this._labelLayers[this.activeLayer.id].layer.setVisibility(false);
+            this.set('hasLabels', false);
         },
         /**
          * empties a store

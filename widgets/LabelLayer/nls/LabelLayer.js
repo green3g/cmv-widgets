@@ -6,8 +6,14 @@ define({
         fieldSelect: {
             label: 'Choose a field'
         },
-        submitButton: {
-            label: 'Add Labels'
+        colorSelect: {
+            label: 'Choose a color'
+        },
+        addButton: {
+            label: 'Set'
+        },
+        removeButton: {
+            label: 'Remove'
         }
     }
 });
