@@ -178,7 +178,7 @@ define([
             if (!this._labelLayers[layerId]) {
                 var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.subLayer.id;
                 var layerOptions = {
-                    mode: FeatureLayer.MODE_ONDEMAND,
+                    mode: FeatureLayer.MODE_AUTO,
                     outFields: ['*'],
                     id: layerId,
                     visible: true
