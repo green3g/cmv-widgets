@@ -188,12 +188,11 @@ define([
                     layer: new FeatureLayer(serviceURL, layerOptions),
                     iconNode: this.activeLayer.iconNode
                 };
-                // this._labelLayers[layerId].layer.setRenderer(renderer);
                 this.map.addLayer(this._labelLayers[layerId].layer);
             }
 
             var renderer = new SimpleRenderer({
-                colors: this.colors
+                colors: null
             });
             var label = new LabelClass({
                 labelExpressionInfo: {
@@ -208,6 +207,7 @@ define([
             symbol.setColor(new Color(this.activeColor));
             label.symbol = symbol;
 
+            this._labelLayers[layerId].layer.setRenderer(renderer);
             this._labelLayers[layerId].layer.setLabelingInfo([label]);
             this._labelLayers[layerId].layer.setVisibility(true);
 
