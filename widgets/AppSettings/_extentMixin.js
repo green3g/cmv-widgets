@@ -8,7 +8,7 @@ define([
     'dojo/topic'
 ], function (declare, lang, ready, has, SpatialReference, Point, topic) {
     return declare(null, {
-        waitForReady: true,
+        extentWaitForReady: true,
         postCreate: function () {
             this.inherited(arguments);
             if (!this.map) {
@@ -40,7 +40,11 @@ define([
                 }));
                 //other widgets need to be ready to listen to extent
                 //changes in the map
-                ready(2, this, '_loadSavedExtent');
+                if (this.extentWaitForReady) {
+                    ready(2, this, '_loadSavedExtent');
+                } else {
+                    this._loadSavedExtent();
+                }
             } else {
                 this._setExtentHandles();
             }

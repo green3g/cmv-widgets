@@ -47,7 +47,9 @@ settings: {
      emailSettings: ['saveMapExtent', 'saveLayerVisibility'],
      shareNode: null,
      shareTemplate: '<a href="#"><i class="fa fa-fw fa-envelope-o"></i>Share Map</a>',
-     server: null //setting this may require a proxy
+     server: null, //setting this may require a proxy
+     extentWaitForReady: true, // wait for dojo ready before loading the extent
+     layersWaitForReady: true // wait for dojo ready before setting layer visibility
     }
 }
 ```
