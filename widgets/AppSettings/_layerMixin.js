@@ -25,7 +25,7 @@ define([
         },
         init: function () {
             this.inherited(arguments);
-            if(!this._appSettings.layerVisibility){
+            if (!this._appSettings.layerVisibility) {
                 return;
             }
             if (this._appSettings.layerVisibility.save ||
