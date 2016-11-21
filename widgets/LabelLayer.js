@@ -54,7 +54,7 @@ define([
             }
             var store = this.layerStore;
             layerInfos.forEach(function (l) {
-                if (l.layerInfos) {
+                if (l.layer.layerInfos) {
                     l.layer.layerInfos.filter(function (sub) {
                         return sub.subLayerIds === null;
                     }).forEach(function (sub) {
