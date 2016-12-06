@@ -6,6 +6,7 @@ define([
     'dojo/ready'
 ], function (declare, lang, array, topic, ready) {
     return declare(null, {
+        layersWaitForReady: true,
         postCreate: function () {
             this.inherited(arguments);
             if (!this.layerInfos) {
@@ -25,14 +26,19 @@ define([
         },
         init: function () {
             this.inherited(arguments);
-            if(!this._appSettings.layerVisibility){
+            if (!this._appSettings.layerVisibility) {
                 return;
             }
             if (this._appSettings.layerVisibility.save ||
                     this._appSettings.layerVisibility.urlLoad) {
                 //needs to be ready so other widgets can update layers
                 //accordingly
-                ready(3, this, '_loadSavedLayers');
+
+                if (this.layersWaitForReady) {
+                    ready(3, this, '_loadSavedLayers');
+                } else {
+                    this._loadSavedLayers();
+                }
             }
             //needs to come after the loadSavedLayers function
             //so also needs to be ready

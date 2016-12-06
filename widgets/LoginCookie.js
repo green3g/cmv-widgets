@@ -3,8 +3,8 @@ define(['dojo/_base/declare',
     'dojo/_base/window',
     'dojo/_base/lang',
     'dojo/cookie',
-    'esri/IdentityManager',
-], function(declare, window, lang, cookie, esriId) {
+    'esri/IdentityManager'
+], function (declare, window, lang, cookie, esriId) {
     var global = window.global;
     return declare('cmv.LoginCookie', [], {
         /**
@@ -16,7 +16,7 @@ define(['dojo/_base/declare',
          * initializes the event listener to store credentials and
          * loads existing credentials into the identity manager
          */
-        constructor: function(params, domNode) {
+        constructor: function (params, domNode) {
             this.inherited(arguments);
             lang.mixin(this, params);
 
@@ -29,7 +29,7 @@ define(['dojo/_base/declare',
         /**
          * Store the credentials in local storage for next time
          */
-        storeCredentials: function() {
+        storeCredentials: function () {
             // make sure there are some credentials to persist
             if (esriId.credentials.length === 0) {
                 return;
@@ -53,7 +53,7 @@ define(['dojo/_base/declare',
         /**
          * initialize the esri identity manager with credentials if they were stored
          */
-        loadCredentials: function() {
+        loadCredentials: function () {
             if (this.credentials) {
                 esriId.initialize(this.credentials);
                 // console.log('provided credentials were initialized');
@@ -69,7 +69,7 @@ define(['dojo/_base/declare',
                 idJson = cookie(this.key);
             }
 
-            if (idJson && idJson != "null" && idJson.length > 4) {
+            if (idJson && idJson != 'null' && idJson.length > 4) {
                 try {
                     idObject = JSON.parse(idJson);
                     esriId.initialize(idObject);
@@ -85,9 +85,9 @@ define(['dojo/_base/declare',
          * Checks for local storage support
          * @return {Boolean}  whether or not local storage is supported
          */
-        supportsLocalStorage: function() {
+        supportsLocalStorage: function () {
             try {
-                return "localStorage" in global && global.localStorage !== null;
+                return 'localStorage' in global && global.localStorage !== null;
             } catch (e) {
                 return false;
             }
@@ -97,7 +97,7 @@ define(['dojo/_base/declare',
          * like a logout function, except it doesn't remove credentials from memory
          * in the identity manager
          */
-        clearCredentials: function() {
+        clearCredentials: function () {
             if (this.supportsLocalStorage()) {
                 global.localStorage.removeItem(this.key);
             } else {

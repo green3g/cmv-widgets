@@ -29,12 +29,19 @@ Dojo Widgets to extend the functionality of the Esri Javascript API and [CMV](ht
 
 ![URL Field](widgets/MetadataDialog/metadatadialog.png)
 
-### HeatMap
+### HeatMap Layer
 
 * Toggle a dynamic heatmap renderer on point layers
 * [View the Documentation](widgets/HeatMap/)
 
 ![URL Field](widgets/HeatMap/heatmap.png)
+
+### Label Layer Creator
+
+* Add labels to dynamic map layers
+* [View the Documentation](widgets/LabelLayer/)
+
+![URL Field](widgets/LabelLayer/docs/label.png)
 
 ### TimeSlider
 
