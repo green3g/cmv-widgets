@@ -15,13 +15,14 @@ define([
     'dojo/text!./LabelLayer/templates/LabelLayer.html',
     'dojo/i18n!./LabelLayer/nls/LabelLayer',
     './LabelLayer/const/colors',
+    'dojo/topic',
     'dijit/form/Button',
     'dijit/form/FilteringSelect',
     'dijit/form/ComboBox',
     'dijit/layout/TabContainer',
     'dijit/layout/ContentPane'
-], function (declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
-    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors) {
+], function(declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
+    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors, topic) {
 
 
     var EXCLUDE_TYPES = [
@@ -47,17 +48,17 @@ define([
          * @type {Array}
          */
         layerInfos: [],
-        _setLayerInfosAttr: function (layerInfos) {
+        _setLayerInfosAttr: function(layerInfos) {
             this.layerInfos = layerInfos;
             if (!layerInfos.length) {
                 return;
             }
             var store = this.layerStore;
-            layerInfos.forEach(function (l) {
+            layerInfos.forEach(function(l) {
                 if (l.layer.layerInfos) {
-                    l.layer.layerInfos.filter(function (sub) {
+                    l.layer.layerInfos.filter(function(sub) {
                         return sub.subLayerIds === null;
-                    }).forEach(function (sub) {
+                    }).forEach(function(sub) {
                         store.put({
                             id: l.layer.id + '_' + sub.id,
                             name: sub.name,
@@ -69,12 +70,12 @@ define([
             });
         },
         hasLabels: false,
-        _setHasLabelsAttr: function (has) {
+        _setHasLabelsAttr: function(has) {
             this.hasLabels = has;
             this.removeButton.set('disabled', !has);
         },
         activeLayer: {},
-        _setActiveLayerAttr: function (l) {
+        _setActiveLayerAttr: function(l) {
             this.activeLayer = l;
             if (!l.layer || !l.subLayer) {
                 return;
@@ -92,7 +93,7 @@ define([
                     'f': 'json'
                 }
             });
-            def.then(lang.hitch(this, function (layerProps) {
+            def.then(lang.hitch(this, function(layerProps) {
                 //update the field store
                 var store = this.fieldStore;
                 this.emptyStore(store);
@@ -102,9 +103,9 @@ define([
                 }
 
                 //exclude fields
-                layerProps.fields.filter(function (f) {
+                layerProps.fields.filter(function(f) {
                     return EXCLUDE_TYPES.indexOf(f.type) === -1;
-                }).forEach(function (f) {
+                }).forEach(function(f) {
                     store.put({
                         id: f.name,
                         name: f.alias
@@ -114,7 +115,7 @@ define([
         },
         activeField: null,
         _labelLayers: {},
-        constructor: function () {
+        constructor: function() {
             this.inherited(arguments);
 
             this.fieldStore = new Memory({
@@ -129,14 +130,14 @@ define([
                 data: this.colors
             });
         },
-        postCreate: function () {
+        postCreate: function() {
             this.inherited(arguments);
             topic.subscribe(this.topic, lang.hitch(this, 'handleTopic'));
-            this.own(this.parentWidget.on('show', lang.hitch(this, function () {
+            this.own(this.parentWidget.on('show', lang.hitch(this, function() {
                 this.tabContainer.resize();
             })));
 
-            this.own(this.layerSelect.on('change', lang.hitch(this, function (id) {
+            this.own(this.layerSelect.on('change', lang.hitch(this, function(id) {
                 var layer = this.layerStore.get(id);
                 this.set('activeLayer', {
                     id: id,
@@ -147,7 +148,7 @@ define([
                 });
             })));
 
-            this.own(this.colorSelect.on('change', lang.hitch(this, function (val) {
+            this.own(this.colorSelect.on('change', lang.hitch(this, function(val) {
                 color = this.colorSelect.get('item');
                 if (!color) {
                     color = {
@@ -159,11 +160,11 @@ define([
             this.set('activeColor', this.colors[0].name);
             this.colorSelect.set('value', this.activeColor);
 
-            this.own(this.fieldSelect.on('change', lang.hitch(this, function (id) {
+            this.own(this.fieldSelect.on('change', lang.hitch(this, function(id) {
                 this.set('activeField', id);
             })));
         },
-        handleTopic: function (event) {
+        handleTopic: function(event) {
             this.set('activeLayer', event);
             if (this.parentWidget) {
                 if (!this.parentWidget.open && this.parentWidget.toggle) {
@@ -175,27 +176,45 @@ define([
             }
             this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
         },
-        addLabels: function () {
+        addLabels: function() {
             var layerId = this.activeLayer.id;
+            var layer;
             if (!this._labelLayers[layerId]) {
+
+                var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function(l) {
+                    return l.id === this.activeLayer.subLayer.id;
+                }));
+                title = title.length ? title[0].name + ' Labels' : 'Labels';
+
                 var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.subLayer.id;
                 var layerOptions = {
                     mode: FeatureLayer.MODE_AUTO,
                     outFields: ['*'],
                     id: layerId,
-                    visible: true
+                    visible: true,
+                    title: title
                 };
-
+                layer = new FeatureLayer(serviceURL, layerOptions);
                 this._labelLayers[layerId] = {
-                    layer: new FeatureLayer(serviceURL, layerOptions),
+                    layer: layer,
                     iconNode: this.activeLayer.iconNode
                 };
-                this.map.addLayer(this._labelLayers[layerId].layer);
+                this.map.addLayer(layer);
+
+                // notify layer control
+                // wait for async layer loads
+                layer.on('load', lang.hitch(this, function() {
+                    topic.publish('layerControl/addLayerControls', [{
+                        type: 'feature',
+                        layer: layer,
+                        title: title
+                    }]);
+                }))
             }
 
-            var renderer = new SimpleRenderer({
-                colors: null
-            });
+            layer = layer ? layer : this._labelLayers[layerId].layer;
+
+            // var renderer = new SimpleRenderer(layer.renderer.getSymbol());
             var label = new LabelClass({
                 labelExpressionInfo: {
                     value: '{' + this.activeField + '}'
@@ -209,9 +228,9 @@ define([
             symbol.setColor(new Color(this.activeColor));
             label.symbol = symbol;
 
-            this._labelLayers[layerId].layer.setRenderer(renderer);
-            this._labelLayers[layerId].layer.setLabelingInfo([label]);
-            this._labelLayers[layerId].layer.setVisibility(true);
+            // layer.setRenderer(renderer);
+            layer.setLabelingInfo([label]);
+            layer.setVisibility(true);
 
             // update haslabels
             this.set('hasLabels', true);
@@ -222,7 +241,7 @@ define([
                 domClass.add(iconNode, this.cssClasses);
             }
         },
-        removeLabels: function () {
+        removeLabels: function() {
             //toggle visibility
             var id = this.activeLayer.id;
             this._labelLayers[id].layer.setVisibility(false);
@@ -235,8 +254,8 @@ define([
         /**
          * empties a store
          */
-        emptyStore: function (store) {
-            store.query().forEach(function (item) {
+        emptyStore: function(store) {
+            store.query().forEach(function(item) {
                 store.remove(item.id);
             });
         }
