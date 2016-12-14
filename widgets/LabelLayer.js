@@ -14,7 +14,6 @@ define([
     'esri/Color',
     'dojo/text!./LabelLayer/templates/LabelLayer.html',
     'dojo/i18n!./LabelLayer/nls/LabelLayer',
-    './LabelLayer/const/colors',
     'dojo/topic',
     'dijit/CheckedMenuItem',
     'dijit/form/Button',
@@ -24,7 +23,7 @@ define([
     'dijit/layout/ContentPane',
     'dijit/form/CheckBox'
 ], function(declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
-    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors, topic, CheckedMenuItem) {
+    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, topic, CheckedMenuItem) {
 
 
     var EXCLUDE_TYPES = [
