@@ -14,6 +14,9 @@ define({
         },
         removeButton: {
             label: 'Remove'
+        },
+        defaultLabelSelect: {
+            label: 'Default Labels'
         }
     }
 });

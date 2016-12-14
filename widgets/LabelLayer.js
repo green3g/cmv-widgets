@@ -16,13 +16,15 @@ define([
     'dojo/i18n!./LabelLayer/nls/LabelLayer',
     './LabelLayer/const/colors',
     'dojo/topic',
+    'dijit/CheckedMenuItem',
     'dijit/form/Button',
     'dijit/form/FilteringSelect',
     'dijit/form/ComboBox',
     'dijit/layout/TabContainer',
-    'dijit/layout/ContentPane'
+    'dijit/layout/ContentPane',
+    'dijit/form/CheckBox'
 ], function(declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
-    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors, topic) {
+    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, colors, topic, CheckedMenuItem) {
 
 
     var EXCLUDE_TYPES = [
@@ -38,11 +40,61 @@ define([
         templateString: templateString,
         widgetsInTemplate: true,
         i18n: i18n,
+
+        // the map object
         map: null,
+
+        // css class to add to menu icon (optional)
         cssClasses: ['fa', 'fa-font'],
-        topic: 'layerControl/labels',
-        colors: colors.data,
-        activeColor: '',
+
+        // default layer objects (optional )
+        // example:
+        // assets: { // layer id
+        //    13: [{  // sublayer id
+        //        name: 'Diameter - Material', //displayed to user
+        //        value: '{diameter}" {material}' //label string
+        //    }]
+        defaultLabels: {},
+
+        // the default topics
+        topics: {
+            show: 'layerControl/showLabelPicker'
+        },
+
+        // colors name is displayed to user, id is a valid dojo/Color string
+        colors: [{
+            name: 'Black',
+            id: '#000'
+        }, {
+            name: 'White',
+            id: '#fff'
+        }, {
+            name: 'Red',
+            id: 'red'
+        }, {
+            name: 'Blue',
+            id: 'blue'
+        }, {
+            name: 'Orange',
+            id: '#ffb900'
+        }, {
+            name: 'Purple',
+            id: 'purple'
+        }, {
+            name: 'Green',
+            id: 'green'
+        }, {
+            name: 'Yellow',
+            id: 'yellow'
+        }],
+
+        // default color id
+        color: '#000',
+
+        //default font size
+        fontSize: 8,
+
+        append: true,
         /**
          * The layer infos objects array, use the set method to update
          * @type {Array}
@@ -76,19 +128,26 @@ define([
         },
         activeLayer: {},
         _setActiveLayerAttr: function(l) {
-            this.activeLayer = l;
-            if (!l.layer || !l.subLayer) {
+            if (!l.layer || !l.sublayer) {
                 return;
             }
 
-            this.set('hasLabels', Boolean(this._labelLayers[l.id]));
+            if (this.activeLayer === l) {
+                return;
+            }
+            this.activeLayer = l;
+
+            this.set('hasLabels', Boolean(this.labelLayers[l.id]));
 
             //reset the current field
             this.fieldSelect.set('value', null);
 
+            // set default label select
+            this.setDefaultLabels(this.activeLayer);
+
             // get the layer's fields
             var def = request({
-                url: l.layer.url + '/' + l.subLayer.id,
+                url: l.layer.url + '/' + l.sublayer,
                 content: {
                     'f': 'json'
                 }
@@ -113,10 +172,13 @@ define([
                 });
             }));
         },
-        activeField: null,
-        _labelLayers: {},
+        labelLayers: {},
         constructor: function() {
             this.inherited(arguments);
+
+            this.defaultLabelStore = new Memory({
+                data: []
+            });
 
             this.fieldStore = new Memory({
                 data: []
@@ -132,40 +194,42 @@ define([
         },
         postCreate: function() {
             this.inherited(arguments);
-            topic.subscribe(this.topic, lang.hitch(this, 'handleTopic'));
+
+            // topics we subscribe to
+            topic.subscribe(this.topics.show, lang.hitch(this, 'showParent'));
+
             this.own(this.parentWidget.on('show', lang.hitch(this, function() {
                 this.tabContainer.resize();
             })));
 
             this.own(this.layerSelect.on('change', lang.hitch(this, function(id) {
                 var layer = this.layerStore.get(id);
-                this.set('activeLayer', {
-                    id: id,
-                    layer: layer.layer,
-                    subLayer: {
-                        id: layer.sublayer
-                    }
-                });
+                this.set('activeLayer', layer);
             })));
 
-            this.own(this.colorSelect.on('change', lang.hitch(this, function(val) {
-                color = this.colorSelect.get('item');
-                if (!color) {
-                    color = {
-                        id: val.toLowerCase()
-                    };
-                }
-                this.set('activeColor', color.id);
-            })));
-            this.set('activeColor', this.colors[0].name);
-            this.colorSelect.set('value', this.activeColor);
+            this.colorSelect.set('value', this.color);
 
             this.own(this.fieldSelect.on('change', lang.hitch(this, function(id) {
-                this.set('activeField', id);
+                var str = ' {' + id + '}';
+                this.labelTextbox.set('value', this.append ? this.labelTextbox.value + str : str);
             })));
+
+            this.own(this.defaultLabelSelect.on('change', lang.hitch(this, function(id) {
+                if (!id) {
+                    return;
+                }
+                this.labelTextbox.set('value', this.defaultLabelStore.get(id).value);
+            })))
+
+
         },
-        handleTopic: function(event) {
-            this.set('activeLayer', event);
+        showParent: function(event) {
+
+            // set dropdown values
+            this.set('activeLayer', this.layerStore.get(event.layer.id + '_' + event.subLayer.id));
+            this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
+
+            // toggle parent
             if (this.parentWidget) {
                 if (!this.parentWidget.open && this.parentWidget.toggle) {
                     this.parentWidget.toggle();
@@ -174,19 +238,18 @@ define([
                     this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 211px; top: 190px; z-index: 950;');
                 }
             }
-            this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
         },
-        addLabels: function() {
+        addSelectedLabels: function() {
             var layerId = this.activeLayer.id;
             var layer;
-            if (!this._labelLayers[layerId]) {
+            if (!this.labelLayers[layerId]) {
 
                 var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function(l) {
-                    return l.id === this.activeLayer.subLayer.id;
+                    return l.id === this.activeLayer.sublayer;
                 }));
                 title = title.length ? title[0].name + ' Labels' : 'Labels';
 
-                var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.subLayer.id;
+                var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
                 var layerOptions = {
                     mode: FeatureLayer.MODE_AUTO,
                     outFields: ['*'],
@@ -195,37 +258,39 @@ define([
                     title: title
                 };
                 layer = new FeatureLayer(serviceURL, layerOptions);
-                this._labelLayers[layerId] = {
+                this.labelLayers[layerId] = {
                     layer: layer,
                     iconNode: this.activeLayer.iconNode
                 };
                 this.map.addLayer(layer);
 
-                // notify layer control
+                // notify layer control and identify
                 // wait for async layer loads
                 layer.on('load', lang.hitch(this, function() {
-                    topic.publish('layerControl/addLayerControls', [{
-                        type: 'feature',
-                        layer: layer,
-                        title: title
-                    }]);
-                }))
+                    ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function(t) {
+                        topic.publish(t, [{
+                            type: 'feature',
+                            layer: layer,
+                            title: title
+                        }]);
+                    });
+                }));
             }
 
-            layer = layer ? layer : this._labelLayers[layerId].layer;
+            layer = layer ? layer : this.labelLayers[layerId].layer;
 
             // var renderer = new SimpleRenderer(layer.renderer.getSymbol());
             var label = new LabelClass({
                 labelExpressionInfo: {
-                    value: '{' + this.activeField + '}'
+                    value: this.labelTextbox.value
                 },
                 useCodedValues: true,
                 labelPlacement: 'above-center'
             });
             var symbol = new TextSymbol();
-            symbol.font.setSize('10pt');
+            symbol.font.setSize(this.fontTextbox.value + 'pt');
             symbol.font.setFamily('Corbel');
-            symbol.setColor(new Color(this.activeColor));
+            symbol.setColor(new Color(this.colorSelect.value.toLowerCase()));
             label.symbol = symbol;
 
             // layer.setRenderer(renderer);
@@ -236,20 +301,38 @@ define([
             this.set('hasLabels', true);
 
             //modify the iconNode to show that a label is enabled on this layer
-            var iconNode = this._labelLayers[layerId].iconNode;
+            var iconNode = this.labelLayers[layerId].iconNode;
             if (iconNode) {
                 domClass.add(iconNode, this.cssClasses);
             }
         },
-        removeLabels: function() {
+        removeSelectedLabels: function() {
             //toggle visibility
             var id = this.activeLayer.id;
-            this._labelLayers[id].layer.setVisibility(false);
-            var iconNode = this._labelLayers[id].iconNode;
+            this.labelLayers[id].layer.setVisibility(false);
+            var iconNode = this.labelLayers[id].iconNode;
             if (iconNode) {
                 domClass.remove(iconNode, this.cssClasses);
             }
             this.set('hasLabels', false);
+        },
+        toggleAppend: function(append) {
+            this.append = true;
+        },
+        setDefaultLabels: function(layer) {
+            var layerId = layer.layer.id,
+                sublayer = layer.sublayer,
+                count = 1;
+            if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer]) {
+                this.emptyStore(this.defaultLabelStore);
+                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function(label) {
+                    label.id = count++;
+                    this.defaultLabelStore.put(label);
+                }))
+                this.tabContainer.selectChild(this.labelTab);
+            } else {
+                this.tabContainer.selectChild(this.advancedTab);
+            }
         },
         /**
          * empties a store
