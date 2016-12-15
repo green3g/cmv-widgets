@@ -55,8 +55,8 @@ sort: [{ attribute: 'name', descending: false}]
             <br />
 
 
-            <label for="fontTextbox">Fractional value:</label>
-            <input name="fontTextbox" type="number" value="${fontSize}"
+            <label for="fontTextbox">${i18n.fontSize.label}:</label>
+            <input name="fontTextbox" type="number" value="${fontSize}" data-dojo-type="dijit/form/TextBox"
             data-dojo-attach-point="fontTextbox" required="true" />
 
 
@@ -77,7 +77,7 @@ sort: [{ attribute: 'name', descending: false}]
 
             <br />
 
-            <span name="toggleAppend" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-event="change:toggleAppend">
+            <span name="toggleAppend" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="appendCheckbox">
               </span>
             <label for="toggleAppend">Add to existing label</label>
 
@@ -93,8 +93,4 @@ sort: [{ attribute: 'name', descending: false}]
 
         </div>
     </div>
-
-    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-font', showLabel:true" data-dojo-attach-point="addButton" data-dojo-attach-event="click: addSelectedLabels">${i18n.addButton.label}</div>
-
-    <div data-dojo-type="dijit/form/Button" data-dojo-props="iconClass:'fa fa-trash', showLabel:true" data-dojo-attach-point="removeButton" data-dojo-attach-event="click: removeSelectedLabels">${i18n.removeButton.label}</div>
 </div>

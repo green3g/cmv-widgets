@@ -120,11 +120,6 @@ define([
                 }
             });
         },
-        hasLabels: false,
-        _setHasLabelsAttr: function(has) {
-            this.hasLabels = has;
-            this.removeButton.set('disabled', !has);
-        },
         activeLayer: {},
         _setActiveLayerAttr: function(l) {
             if (!l.layer || !l.sublayer) {
@@ -135,8 +130,6 @@ define([
                 return;
             }
             this.activeLayer = l;
-
-            this.set('hasLabels', Boolean(this.labelLayers[l.id]));
 
             //reset the current field
             this.fieldSelect.set('value', null);
@@ -210,7 +203,7 @@ define([
 
             this.own(this.fieldSelect.on('change', lang.hitch(this, function(id) {
                 var str = ' {' + id + '}';
-                this.labelTextbox.set('value', this.append ? this.labelTextbox.value + str : str);
+                this.labelTextbox.set('value', this.appendCheckbox.checked ? this.labelTextbox.value + str : str);
             })));
 
             this.own(this.defaultLabelSelect.on('change', lang.hitch(this, function(id) {
@@ -218,7 +211,16 @@ define([
                     return;
                 }
                 this.labelTextbox.set('value', this.defaultLabelStore.get(id).value);
-            })))
+            })));
+
+            //update labels when stuff changes
+            var items = [this.colorSelect, this.labelTextbox, this.fontTextbox];
+            items.forEach(lang.hitch(this, function(item) {
+                this.own(item.on('change', lang.hitch(this, function() {
+                    this.addSelectedLabels();
+                })));
+
+            }))
 
 
         },
@@ -240,6 +242,9 @@ define([
         },
         addSelectedLabels: function() {
             var layerId = this.activeLayer.id;
+            if (!layerId) {
+                return;
+            }
             var layer;
             if (!this.labelLayers[layerId]) {
 
@@ -296,38 +301,23 @@ define([
             layer.setLabelingInfo([label]);
             layer.setVisibility(true);
 
-            // update haslabels
-            this.set('hasLabels', true);
-
             //modify the iconNode to show that a label is enabled on this layer
             var iconNode = this.labelLayers[layerId].iconNode;
             if (iconNode) {
                 domClass.add(iconNode, this.cssClasses);
             }
         },
-        removeSelectedLabels: function() {
-            //toggle visibility
-            var id = this.activeLayer.id;
-            this.labelLayers[id].layer.setVisibility(false);
-            var iconNode = this.labelLayers[id].iconNode;
-            if (iconNode) {
-                domClass.remove(iconNode, this.cssClasses);
-            }
-            this.set('hasLabels', false);
-        },
-        toggleAppend: function(append) {
-            this.append = true;
-        },
         setDefaultLabels: function(layer) {
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
-            if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer]) {
+            if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer] && this.defaultLabels[layerId][sublayer].length) {
                 this.emptyStore(this.defaultLabelStore);
-                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function(label) {
-                    label.id = count++;
-                    this.defaultLabelStore.put(label);
-                }))
+                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function(labelObj) {
+                    labelObj.id = count++;
+                    this.defaultLabelStore.put(labelObj);
+                }));
+                this.defaultLabelSelect.set('value', 1);
                 this.tabContainer.selectChild(this.labelTab);
             } else {
                 this.tabContainer.selectChild(this.advancedTab);
