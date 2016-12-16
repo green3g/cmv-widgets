@@ -65,7 +65,7 @@ labelLayer: {
 
 Use layer control to publish the topic when the layer a layer's menu is selected:
 
-```
+```javascript
 layerControl: {
     include: true,
     id: 'layerControl',
