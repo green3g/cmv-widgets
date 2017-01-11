@@ -14,7 +14,6 @@ define([
     'esri/Color',
     'dojo/text!./LabelLayer/templates/LabelLayer.html',
     'dojo/i18n!./LabelLayer/nls/LabelLayer',
-    'dojo/topic',
     'dijit/CheckedMenuItem',
     'dijit/form/Button',
     'dijit/form/FilteringSelect',
@@ -22,8 +21,8 @@ define([
     'dijit/layout/TabContainer',
     'dijit/layout/ContentPane',
     'dijit/form/CheckBox'
-], function(declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
-    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n, topic, CheckedMenuItem) {
+], function (declare, _WidgetBase, _Templated, topic, lang, FeatureLayer, SimpleRenderer,
+    domClass, Memory, request, LabelClass, TextSymbol, Color, templateString, i18n) {
 
 
     var EXCLUDE_TYPES = [
@@ -99,17 +98,17 @@ define([
          * @type {Array}
          */
         layerInfos: [],
-        _setLayerInfosAttr: function(layerInfos) {
+        _setLayerInfosAttr: function (layerInfos) {
             this.layerInfos = layerInfos;
             if (!layerInfos.length) {
                 return;
             }
             var store = this.layerStore;
-            layerInfos.forEach(function(l) {
+            layerInfos.forEach(function (l) {
                 if (l.layer.layerInfos) {
-                    l.layer.layerInfos.filter(function(sub) {
+                    l.layer.layerInfos.filter(function (sub) {
                         return sub.subLayerIds === null;
-                    }).forEach(function(sub) {
+                    }).forEach(function (sub) {
                         store.put({
                             id: l.layer.id + '_' + sub.id,
                             name: sub.name,
@@ -121,7 +120,7 @@ define([
             });
         },
         activeLayer: {},
-        _setActiveLayerAttr: function(l) {
+        _setActiveLayerAttr: function (l) {
             if (!l.layer || !l.sublayer) {
                 return;
             }
@@ -144,7 +143,7 @@ define([
                     'f': 'json'
                 }
             });
-            def.then(lang.hitch(this, function(layerProps) {
+            def.then(lang.hitch(this, function (layerProps) {
                 //update the field store
                 var store = this.fieldStore;
                 this.emptyStore(store);
@@ -154,9 +153,9 @@ define([
                 }
 
                 //exclude fields
-                layerProps.fields.filter(function(f) {
+                layerProps.fields.filter(function (f) {
                     return EXCLUDE_TYPES.indexOf(f.type) === -1;
-                }).forEach(function(f) {
+                }).forEach(function (f) {
                     store.put({
                         id: f.name,
                         name: f.alias
@@ -165,7 +164,7 @@ define([
             }));
         },
         labelLayers: {},
-        constructor: function() {
+        constructor: function () {
             this.inherited(arguments);
 
             this.defaultLabelStore = new Memory({
@@ -184,29 +183,29 @@ define([
                 data: this.colors
             });
         },
-        postCreate: function() {
+        postCreate: function () {
             this.inherited(arguments);
 
             // topics we subscribe to
             topic.subscribe(this.topics.show, lang.hitch(this, 'showParent'));
 
-            this.own(this.parentWidget.on('show', lang.hitch(this, function() {
+            this.own(this.parentWidget.on('show', lang.hitch(this, function () {
                 this.tabContainer.resize();
             })));
 
-            this.own(this.layerSelect.on('change', lang.hitch(this, function(id) {
+            this.own(this.layerSelect.on('change', lang.hitch(this, function (id) {
                 var layer = this.layerStore.get(id);
                 this.set('activeLayer', layer);
             })));
 
             this.colorSelect.set('value', this.color);
 
-            this.own(this.fieldSelect.on('change', lang.hitch(this, function(id) {
+            this.own(this.fieldSelect.on('change', lang.hitch(this, function (id) {
                 var str = ' {' + id + '}';
                 this.labelTextbox.set('value', this.appendCheckbox.checked ? this.labelTextbox.value + str : str);
             })));
 
-            this.own(this.defaultLabelSelect.on('change', lang.hitch(this, function(id) {
+            this.own(this.defaultLabelSelect.on('change', lang.hitch(this, function (id) {
                 if (!id) {
                     return;
                 }
@@ -215,16 +214,16 @@ define([
 
             //update labels when stuff changes
             var items = [this.colorSelect, this.labelTextbox, this.fontTextbox];
-            items.forEach(lang.hitch(this, function(item) {
-                this.own(item.on('change', lang.hitch(this, function() {
+            items.forEach(lang.hitch(this, function (item) {
+                this.own(item.on('change', lang.hitch(this, function () {
                     this.addSelectedLabels();
                 })));
 
-            }))
+            }));
 
 
         },
-        showParent: function(event) {
+        showParent: function (event) {
 
             // set dropdown values
             this.set('activeLayer', this.layerStore.get(event.layer.id + '_' + event.subLayer.id));
@@ -240,7 +239,7 @@ define([
                 }
             }
         },
-        addSelectedLabels: function() {
+        addSelectedLabels: function () {
             var layerId = this.activeLayer.id;
             if (!layerId) {
                 return;
@@ -248,7 +247,7 @@ define([
             var layer;
             if (!this.labelLayers[layerId]) {
 
-                var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function(l) {
+                var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function (l) {
                     return l.id === this.activeLayer.sublayer;
                 }));
                 title = title.length ? title[0].name + ' Labels' : 'Labels';
@@ -259,7 +258,8 @@ define([
                     outFields: ['*'],
                     id: layerId,
                     visible: true,
-                    title: title
+                    title: title,
+                    opacity: 0
                 };
                 layer = new FeatureLayer(serviceURL, layerOptions);
                 this.labelLayers[layerId] = {
@@ -270,8 +270,8 @@ define([
 
                 // notify layer control and identify
                 // wait for async layer loads
-                layer.on('load', lang.hitch(this, function() {
-                    ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function(t) {
+                layer.on('load', lang.hitch(this, function () {
+                    ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function (t) {
                         topic.publish(t, [{
                             type: 'feature',
                             layer: layer,
@@ -307,13 +307,13 @@ define([
                 domClass.add(iconNode, this.cssClasses);
             }
         },
-        setDefaultLabels: function(layer) {
+        setDefaultLabels: function (layer) {
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
             if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer] && this.defaultLabels[layerId][sublayer].length) {
                 this.emptyStore(this.defaultLabelStore);
-                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function(labelObj) {
+                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = count++;
                     this.defaultLabelStore.put(labelObj);
                 }));
@@ -327,8 +327,8 @@ define([
         /**
          * empties a store
          */
-        emptyStore: function(store) {
-            store.query().forEach(function(item) {
+        emptyStore: function (store) {
+            store.query().forEach(function (item) {
                 store.remove(item.id);
             });
         }
