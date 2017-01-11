@@ -318,6 +318,7 @@ define([
                     this.defaultLabelStore.put(labelObj);
                 }));
                 this.defaultLabelSelect.set('value', 1);
+                this.labelTextbox.set('value', this.defaultLabelStore.get(1).value);
                 this.addSelectedLabels();
                 this.tabContainer.selectChild(this.labelTab);
             } else {
