@@ -318,6 +318,7 @@ define([
                     this.defaultLabelStore.put(labelObj);
                 }));
                 this.defaultLabelSelect.set('value', 1);
+                this.addSelectedLabels();
                 this.tabContainer.selectChild(this.labelTab);
             } else {
                 this.tabContainer.selectChild(this.advancedTab);
