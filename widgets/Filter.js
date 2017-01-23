@@ -83,16 +83,18 @@ define([
             _setLayerInfosAttr: function (layerInfos) {
                 var store = this.layerStore;
                 layerInfos.forEach(function (l) {
-                    l.layer.layerInfos.filter(function (sub) {
-                        return sub.subLayerIds === null;
-                    }).forEach(function (sub) {
-                        store.put({
-                            id: l.layer.id + '_' + sub.id,
-                            name: sub.name,
-                            layer: l.layer,
-                            sublayer: sub.id
+                    if (l.layer.layerInfos) {
+                        l.layer.layerInfos.filter(function (sub) {
+                            return sub.subLayerIds === null;
+                        }).forEach(function (sub) {
+                            store.put({
+                                id: l.layer.id + '_' + sub.id,
+                                name: sub.name,
+                                layer: l.layer,
+                                sublayer: sub.id
+                            });
                         });
-                    });
+                    }
                 });
             },
             /**
