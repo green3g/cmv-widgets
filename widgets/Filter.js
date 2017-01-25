@@ -21,12 +21,12 @@ define([
 ],
     function (declare, _WidgetBase, _Templated, Memory, lang, request, topic, domStyle, Query, QueryTask, templateString, i18n) {
 
-        var string_convertor = function (val, op) {
+        function stringConvertor (val, op) {
             if (op.id === 'contains') {
                 val = '%' + val + '%';
             }
             return '\'' + val + '\'';
-        };
+        }
 
         var CONVERTORS = {
             esriFieldTypeInteger: parseInt,
@@ -35,8 +35,8 @@ define([
             esriFieldTypeDate: Date,
             esriFieldTypeDouble: parseFloat,
             esriFieldTypeSingle: parseFloat,
-            esriFieldTypeString: string_convertor,
-            default: string_convertor
+            esriFieldTypeString: stringConvertor,
+            default: stringConvertor
         };
 
         var EXCLUDE_TYPES = [
