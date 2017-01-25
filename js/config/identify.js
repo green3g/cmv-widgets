@@ -80,9 +80,9 @@ define([
           //for our content formatter, we call the function, since
           //it returns a function
           content: formatters.relationship({
-            objectIdField: 'Object ID',
+            objectIdField: 'OBJECTID',
             url: 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/1',
-            relationshipId: 2,
+            relationshipId: 1,
             columns: [{
               field: 'FIELD_KID',
               label: 'Field KID'

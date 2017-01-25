@@ -7,13 +7,14 @@ define([
 ], function(units, Extent, esriConfig, GeometryService, ImageParameters) {
 
   // the root
-  var baseURL = './';
+  var baseURL = '/gis/static_apps/cmv-widgets-demo/';
 
   // url to your proxy page, must be on same machine hosting you app. See proxy folder for readme.
-  esriConfig.defaults.io.proxyUrl = baseURL + 'PHP/proxy.php';
+  esriConfig.defaults.io.proxyUrl = baseURL + 'DotNet/proxy.ashx';
   esriConfig.defaults.io.alwaysUseProxy = false;
   // url to your geometry server.
   esriConfig.defaults.geometryService = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+  // esriConfig.defaults.io.corsEnabledServers.push('sampleserver3.arcgisonline.com');
 
   //image parameters for dynamic services, set to png32 for higher quality exports.
   var imageParameters = new ImageParameters();
