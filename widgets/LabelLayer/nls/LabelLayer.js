@@ -4,16 +4,22 @@ define({
             label: 'Choose a layer'
         },
         fieldSelect: {
-            label: 'Choose a field'
+            label: 'Add/Change label field'
         },
         colorSelect: {
-            label: 'Choose a color'
+            label: 'Label color'
         },
         addButton: {
             label: 'Apply'
         },
         removeButton: {
             label: 'Remove'
+        },
+        defaultLabelSelect: {
+            label: 'Default labels'
+        },
+        fontSize: {
+            label: 'Label size'
         }
     }
 });

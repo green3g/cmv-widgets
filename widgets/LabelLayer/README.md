@@ -23,7 +23,26 @@ labelLayer: {
     path: 'roemhildtg/LabelLayer',
     options: {
         map: true,
-        layerControlLayerInfos: true
+        layerControlLayerInfos: true,
+        defaultLabels: {
+            assets: { // layer id
+                13: [{  // sublayer id
+                    name: 'Diameter - Material', //displayed to user
+                    value: '{diameter}" {material}' //label string
+            }]
+        },
+        
+        // override the default colors
+        colors: [{
+            name: 'Black',
+            id: '#000'
+        }],
+        
+        // set the default color choice using the id
+        color: '#000',
+        
+        //default font size
+        fontSize: 8,
     }
 },
 ```
@@ -39,15 +58,14 @@ labelLayer: {
     position: 15,
     path: 'roemhildtg/LabelLayer',
     options: {
-        map: true,
-        layerControlLayerInfos: true
+        //options here (see above)
     }
 },
 ```
 
 Use layer control to publish the topic when the layer a layer's menu is selected:
 
-```
+```javascript
 layerControl: {
     include: true,
     id: 'layerControl',
@@ -58,10 +76,11 @@ layerControl: {
     position: 0,
     options: {
         subLayerMenu: {
+        
             // this is the magic
             dynamic: [{
-                label: 'Add/Remove Map Labels',
-                topic: 'labels',
+                label: 'Labels',
+                topic: 'showLabelPicker',
                 iconClass: 'fa fa-font fa-fw'
             }]
         },
