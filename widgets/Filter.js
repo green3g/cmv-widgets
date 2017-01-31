@@ -75,6 +75,16 @@ define([
             operators: OPERATORS,
             defaultOperator: 'equal',
             convertors: CONVERTORS,
+            showMapButton: true,
+            _setShowMapButtonpAttr: function (show) {
+                this.mapButton.domNode.style = show ? '' : 'display:none';
+                this.showMapButton = show;
+            },
+            showTableButton: true,
+            _setShowTableButtonAttr: function (show) {
+                this.tableButton.domNode.style = show ? '' : 'display:none';
+                this.showTableButton = show;
+            },
             /**
              * The layer infos objects array, use the set method to update
              * @property {Array}
