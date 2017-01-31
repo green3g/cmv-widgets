@@ -244,18 +244,6 @@ define([
                     // server: baseURL + 'widgets/AppSettings/php/'
                 }
             },
-            filter: {
-                include: true,
-                id: 'settings',
-                position: 2,
-                open: true,
-                type: 'titlePane',
-                path: 'widgets/Filter',
-                title: 'Filter/Query Map',
-                options: {
-                    layerControlLayerInfos: true
-                }
-            },
             //widget config
             timeSlider: {
                 include: true,
