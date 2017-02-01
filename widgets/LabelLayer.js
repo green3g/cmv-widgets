@@ -254,7 +254,7 @@ define([
 
                 var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
                 var layerOptions = {
-                    mode: FeatureLayer.MODE_SNAPSHOT,
+                    mode: FeatureLayer.MODE_ONDEMAND,
                     outFields: ['*'],
                     id: layerId,
                     visible: true,
