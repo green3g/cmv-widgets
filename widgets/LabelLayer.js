@@ -52,7 +52,7 @@ define([
         //        name: 'Diameter - Material', //displayed to user
         //        value: '{diameter}" {material}' //label string
         //    }]
-        defaultLabels: {},
+        labelSelections: {},
 
         // the default topics
         topics: {
@@ -134,7 +134,7 @@ define([
             this.fieldSelect.set('value', null);
 
             // set default label select
-            this.setDefaultLabels(this.activeLayer);
+            this.setLabelSelections(this.activeLayer);
 
             // get the layer's fields
             var def = request({
@@ -167,7 +167,7 @@ define([
         constructor: function () {
             this.inherited(arguments);
 
-            this.defaultLabelStore = new Memory({
+            this.labelSelectionStore = new Memory({
                 data: []
             });
 
@@ -209,7 +209,7 @@ define([
                 if (!id) {
                     return;
                 }
-                this.labelTextbox.set('value', this.defaultLabelStore.get(id).value);
+                this.labelTextbox.set('value', this.labelSelectionStore.get(id).value);
             })));
 
             //update labels when stuff changes
@@ -244,81 +244,89 @@ define([
             if (!layerId) {
                 return;
             }
-            var layer;
-            if (!this.labelLayers[layerId]) {
 
-                var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function (l) {
-                    return l.id === this.activeLayer.sublayer;
-                }));
-                title = title.length ? title[0].name + ' Labels' : 'Labels';
+            var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
+            var layerInfos = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function (l) {
+                return l.id === this.activeLayer.sublayer;
+            }));
+            var title = layerInfos.length ? layerInfos[0].name + ' Labels' : 'Labels';
 
-                var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
-                var layerOptions = {
-                    mode: FeatureLayer.MODE_ONDEMAND,
-                    outFields: ['*'],
-                    id: layerId,
-                    visible: true,
-                    title: title,
-                    opacity: 0
-                };
-                layer = new FeatureLayer(serviceURL, layerOptions);
-                this.labelLayers[layerId] = {
-                    layer: layer,
-                    iconNode: this.activeLayer.iconNode
-                };
-                this.map.addLayer(layer);
+            var layerInfo;
+            layerInfo = this.labelLayers[layerId] = this.labelLayers[layerId] || {
+                layer: this.createLayer({id: layerId, url: serviceURL, title: title}),
+                iconNode: this.activeLayer.iconNode
+            };
 
-                // notify layer control and identify
-                // wait for async layer loads
-                layer.on('load', lang.hitch(this, function () {
-                    ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function (t) {
-                        topic.publish(t, [{
-                            type: 'feature',
-                            layer: layer,
-                            title: title
-                        }]);
-                    });
-                }));
-            }
-
-            layer = layer ? layer : this.labelLayers[layerId].layer;
-
-            // var renderer = new SimpleRenderer(layer.renderer.getSymbol());
-            var label = new LabelClass({
-                labelExpressionInfo: {
-                    value: this.labelTextbox.value
-                },
-                useCodedValues: true,
-                labelPlacement: 'above-center'
-            });
-            var symbol = new TextSymbol();
-            symbol.font.setSize(this.fontTextbox.value + 'pt');
-            symbol.font.setFamily('Corbel');
-            symbol.setColor(new Color(this.colorSelect.value.toLowerCase()));
-            label.symbol = symbol;
-
-            // layer.setRenderer(renderer);
-            layer.setLabelingInfo([label]);
-            layer.setVisibility(true);
+            layerInfo.labelInfo = {
+                expression: this.labelTextbox.value,
+                size: this.fontTextbox.value,
+                color: this.colorSelect.value
+            };
+            layerInfo.layer.setLabelingInfo([
+                this.createLabel(layerInfo.labelInfo)
+            ]);
+            layerInfo.layer.setVisibility(true);
 
             //modify the iconNode to show that a label is enabled on this layer
             var iconNode = this.labelLayers[layerId].iconNode;
             if (iconNode) {
                 domClass.add(iconNode, this.cssClasses);
             }
+
+            this.saveLabelLayers();
         },
-        setDefaultLabels: function (layer) {
+        createLayer: function (args) {
+            var layerOptions = {
+                mode: FeatureLayer.MODE_ONDEMAND,
+                outFields: ['*'],
+                id: args.id,
+                visible: true,
+                title: args.title || 'Labels',
+                opacity: 0
+            };
+            var layer = new FeatureLayer(args.url, layerOptions);
+            this.map.addLayer(layer);
+
+            // notify layer control and identify
+            // wait for async layer loads
+            layer.on('load', lang.hitch(this, function () {
+                ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function (t) {
+                    topic.publish(t, [{
+                        type: 'feature',
+                        layer: layer,
+                        title: args.title
+                    }]);
+                });
+            }));
+            return layer;
+        },
+        createLabel: function (args) {
+            var label = new LabelClass({
+                labelExpressionInfo: {
+                    value: args.expression
+                },
+                useCodedValues: true,
+                labelPlacement: 'above-center'
+            });
+            var symbol = new TextSymbol();
+            symbol.font.setSize(args.size + 'pt');
+            symbol.font.setFamily('Corbel');
+            symbol.setColor(new Color(args.color.toLowerCase()));
+            label.symbol = symbol;
+            return label;
+        },
+        setLabelSelections: function (layer) {
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
-            if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer] && this.defaultLabels[layerId][sublayer].length) {
-                this.emptyStore(this.defaultLabelStore);
-                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
+            if (this.labelSelections[layerId] && this.labelSelections[layerId][sublayer] && this.labelSelections[layerId][sublayer].length) {
+                this.emptyStore(this.labelSelectionStore);
+                this.labelSelections[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = count++;
-                    this.defaultLabelStore.put(labelObj);
+                    this.labelSelectionStore.put(labelObj);
                 }));
                 this.defaultLabelSelect.set('value', 1);
-                this.labelTextbox.set('value', this.defaultLabelStore.get(1).value);
+                this.labelTextbox.set('value', this.labelSelectionStore.get(1).value);
                 this.addSelectedLabels();
                 this.tabContainer.selectChild(this.labelTab);
             } else {
