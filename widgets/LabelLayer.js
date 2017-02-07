@@ -45,7 +45,7 @@ define([
         // css class to add to menu icon (optional)
         cssClasses: ['fa', 'fa-font'],
 
-        // default layer objects (optional )
+        // selectable layer objects to dislplay in dropdown (optional )
         // example:
         // assets: { // layer id
         //    13: [{  // sublayer id
@@ -53,6 +53,39 @@ define([
         //        value: '{diameter}" {material}' //label string
         //    }]
         labelSelections: {},
+
+        // automatically created labels
+        // [{
+        //        layer: 'layer_id',
+        //        sublayer: 13, // only for dynamic layers
+        //        visible: true,
+        //        name: 'Diameter - Material', //displayed to user
+        //        expression: '{diameter}" {material}' //label string
+        //        color: '#000',
+        //        fontSize: 8
+        //  }]
+        defaultLabels: [],
+        _setDefaultLabelsAttr: function (labels) {
+            labels.forEach(lang.hitch(this, function (label) {
+                var layer = this.map.getLayer(label.layer);
+                var labelLayer;
+                if (this.labelLayers[layer.id]) {
+                    labelLayer = this.labelLayers[layer.id];
+                } else if (layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
+                    labelLayer = this.createLayerFromDynamic(layer, label.sublayer);
+                } else if (this.activeLayer.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                    labelLayer = layer;
+                } else {
+                    return;
+                }
+                this.setLabel(labelLayer, {
+                    color: label.color || this.color,
+                    size: label.fontSize || this.fontSize,
+                    expression: label.expression
+                });
+                labelLayer.setVisibility(label.visible);
+            }));
+        },
 
         // the default topics
         topics: {
@@ -224,7 +257,6 @@ define([
 
         },
         showParent: function (event) {
-
             // set dropdown values
             this.set('activeLayer', this.layerStore.get(event.layer.id + '_' + event.subLayer.id));
             this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
@@ -245,37 +277,60 @@ define([
                 return;
             }
 
-            var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
-            var layerInfos = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function (l) {
-                return l.id === this.activeLayer.sublayer;
-            }));
-            var title = layerInfos.length ? layerInfos[0].name + ' Labels' : 'Labels';
+            var layer;
+            if (this.labelLayers[layerId]) {
+                layer = this.labelLayers[layerId];
+            } else if (this.activeLayer.layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
+                layer = this.createLayerFromDynamic(this.activeLayer.layer, this.activeLayer.sublayer);
+            } else if (this.activeLayer.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                layer = this.activeLayer.layer;
+            } else {
+                return;
+            }
 
-            var layerInfo;
-            layerInfo = this.labelLayers[layerId] = this.labelLayers[layerId] || {
-                layer: this.createLayer({id: layerId, url: serviceURL, title: title}),
-                iconNode: this.activeLayer.iconNode
-            };
-
-            layerInfo.labelInfo = {
+            var labelInfo = {
                 expression: this.labelTextbox.value,
                 size: this.fontTextbox.value,
                 color: this.colorSelect.value
             };
-            layerInfo.layer.setLabelingInfo([
-                this.createLabel(layerInfo.labelInfo)
-            ]);
-            layerInfo.layer.setVisibility(true);
 
-            //modify the iconNode to show that a label is enabled on this layer
-            var iconNode = this.labelLayers[layerId].iconNode;
-            if (iconNode) {
-                domClass.add(iconNode, this.cssClasses);
-            }
-
-            this.saveLabelLayers();
+            this.setLabel(layer, labelInfo);
+            layer.setVisibility(true);
+            this.labelLayers[layerId] = layer;
         },
-        createLayer: function (args) {
+        setLabel: function (layer, labelInfo) {
+
+            var label = new LabelClass({
+                labelExpressionInfo: {
+                    value: labelInfo.expression
+                },
+                useCodedValues: true,
+                labelPlacement: 'above-center'
+            });
+            var symbol = new TextSymbol();
+            symbol.font.setSize(labelInfo.size + 'pt');
+            symbol.font.setFamily('Corbel');
+            symbol.setColor(new Color(labelInfo.color.toLowerCase()));
+            label.symbol = symbol;
+
+            layer.setLabelingInfo([label]);
+        },
+        createLayerFromDynamic: function (layer, sublayerId) {
+
+            var serviceURL = layer.url + '/' + sublayerId;
+
+            // generate a unique layer id
+            var layerId = layer.id + '_' + sublayerId;
+
+            // get a nice layer title
+            var layerInfos = layer.layerInfos.filter(lang.hitch(this, function (l) {
+                return l.id === sublayerId;
+            }));
+            var title = layerInfos.length ? layerInfos[0].name + ' Labels' : 'Labels';
+
+            return this.createFeatureLayer({id: layerId, url: serviceURL, title: title});
+        },
+        createFeatureLayer: function (args) {
             var layerOptions = {
                 mode: FeatureLayer.MODE_ONDEMAND,
                 outFields: ['*'],
@@ -299,21 +354,6 @@ define([
                 });
             }));
             return layer;
-        },
-        createLabel: function (args) {
-            var label = new LabelClass({
-                labelExpressionInfo: {
-                    value: args.expression
-                },
-                useCodedValues: true,
-                labelPlacement: 'above-center'
-            });
-            var symbol = new TextSymbol();
-            symbol.font.setSize(args.size + 'pt');
-            symbol.font.setFamily('Corbel');
-            symbol.setColor(new Color(args.color.toLowerCase()));
-            label.symbol = symbol;
-            return label;
         },
         setLabelSelections: function (layer) {
             var layerId = layer.layer.id,
