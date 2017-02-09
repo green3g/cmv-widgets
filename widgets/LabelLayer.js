@@ -352,6 +352,10 @@ define([
                         title: args.title
                     }]);
                 });
+                topic.publish('growler/growl', {
+                    title: 'Label Added',
+                    message: 'The label was added to the selected layer'
+                });
             }));
             return layer;
         },
