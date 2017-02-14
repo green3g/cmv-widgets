@@ -257,9 +257,13 @@ define([
 
         },
         showParent: function (event) {
+            var layer = lang.mixin({
+                id: event.layer.id + (event.subLayer ? '_' + event.subLayer.id : '')
+            }, event);
+
             // set dropdown values
-            this.set('activeLayer', this.layerStore.get(event.layer.id + '_' + event.subLayer.id));
-            this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
+            this.set('activeLayer', layer);
+            this.layerSelect.set('value', layer.id);
 
             // toggle parent
             if (this.parentWidget) {
