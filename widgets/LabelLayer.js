@@ -33,6 +33,7 @@ define([
         'esriFieldTypeGlobalID'
     ];
 
+    var idCounter = 0;
 
     return declare([_WidgetBase, _Templated], {
         templateString: templateString,
@@ -62,18 +63,30 @@ define([
         //        name: 'Diameter - Material', //displayed to user
         //        expression: '{diameter}" {material}' //label string
         //        color: '#000',
-        //        fontSize: 8
+        //        fontSize: 8,
+        //        url: 'url to feature layer ' //if we want to create it,
+        //        title: 'layer title',
         //  }]
         defaultLabels: [],
         _setDefaultLabelsAttr: function (labels) {
             labels.forEach(lang.hitch(this, function (label) {
                 var layer = this.map.getLayer(label.layer);
+
+                // if the layer doesn't exist, create it
+                if (!layer) {
+                    layer = this.createFeatureLayer(label);
+                    this.layerStore.put({
+                        id: layer.id,
+                        name: label.title,
+                        layer: layer
+                    });
+                }
                 var labelLayer;
                 if (this.labelLayers[layer.id]) {
                     labelLayer = this.labelLayers[layer.id];
                 } else if (layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
                     labelLayer = this.createLayerFromDynamic(layer, label.sublayer);
-                } else if (this.activeLayer.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                } else if (layer.declaredClass === 'esri.layers.FeatureLayer') {
                     labelLayer = layer;
                 } else {
                     return;
@@ -138,7 +151,13 @@ define([
             }
             var store = this.layerStore;
             layerInfos.forEach(function (l) {
-                if (l.layer.layerInfos) {
+                if (l.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                    store.put({
+                        id: l.layer.id,
+                        name: l.title,
+                        layer: l.layer
+                    });
+                } else if (l.layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
                     l.layer.layerInfos.filter(function (sub) {
                         return sub.subLayerIds === null;
                     }).forEach(function (sub) {
@@ -154,7 +173,7 @@ define([
         },
         activeLayer: {},
         _setActiveLayerAttr: function (l) {
-            if (!l.layer || !l.sublayer) {
+            if (!l.layer) {
                 return;
             }
 
@@ -171,7 +190,7 @@ define([
 
             // get the layer's fields
             var def = request({
-                url: l.layer.url + '/' + l.sublayer,
+                url: l.layer.url + (l.sublayer ? '/' + l.sublayer : ''),
                 content: {
                     'f': 'json'
                 }
@@ -338,7 +357,7 @@ define([
             var layerOptions = {
                 mode: FeatureLayer.MODE_ONDEMAND,
                 outFields: ['*'],
-                id: args.id,
+                id: args.id || args.layer || 'labels-' + idCounter ++,
                 visible: true,
                 title: args.title || 'Labels',
                 opacity: 0
@@ -355,10 +374,6 @@ define([
                         layer: layer,
                         title: args.title
                     }]);
-                });
-                topic.publish('growler/growl', {
-                    title: 'Label Added',
-                    message: 'The label was added to the selected layer'
                 });
             }));
             return layer;
