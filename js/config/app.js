@@ -50,11 +50,11 @@
 
     ) {
         var controller = new(declare([
-            _ControllerBase,
             _ConfigMixin,
             _LayoutMixin,
             _MapMixin,
-            _WidgetsMixin
+            _WidgetsMixin,
+            _ControllerBase
         ]))();
         controller.startup();
     });
