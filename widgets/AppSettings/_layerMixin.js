@@ -75,27 +75,7 @@ define([
             //since the javascript api visibleLayers property starts
             //with a different set of layers than what is actually turned
             //on, we need to iterate through, find the parent layers,
-            array.forEach(this.layerInfos, lang.hitch(this, function (layer) {
-                var id = layer.layer.id;
-                var visibleLayers;
-                if (layer.layer.hasOwnProperty('visibleLayers')) {
-                    visibleLayers = [];
-                    array.forEach(layer.layer.visibleLayers, function (subLayerId) {
-                        if (subLayerId !== -1 &&
-                                layer.layer.hasOwnProperty('layerInfos') &&
-                                layer.layer.layerInfos[subLayerId].subLayerIds === null) {
-                            visibleLayers.push(subLayerId);
-                        }
-                    });
-                    if (visibleLayers.length === 0) {
-                        visibleLayers.push(-1);
-                    }
-                }
-                setting.value[id] = {
-                    visible: layer.layer.visible,
-                    visibleLayers: visibleLayers
-                };
-            }));
+            array.forEach(this.layerInfos, lang.hitch(this, '_setLayerHandle'));
             this.own(topic.subscribe('layerControl/setVisibleLayers', lang.hitch(this, function (layer) {
                 setting.value[layer.id].visibleLayers = layer.visibleLayers;
                 this._saveAppSettings();
@@ -104,6 +84,43 @@ define([
                 setting.value[layer.id].visible = layer.visible;
                 this._saveAppSettings();
             })));
+            this.own(topic.subscribe('layerControl/addLayerControls', lang.hitch(this, '_handleLayerAdds')));
+        },
+        _setLayerHandle: function (layer) {
+            var setting = this._appSettings.layerVisibility;
+            var id = layer.layer.id;
+            var visibleLayers;
+            if (layer.layer.hasOwnProperty('visibleLayers')) {
+                visibleLayers = [];
+                array.forEach(layer.layer.visibleLayers, lang.hitch(this, function (subLayerId) {
+                    var layerInfo = this.getLayerInfo(layer.layer.layerInfos, subLayerId);
+                    if (layerInfo) {
+                        visibleLayers.push(subLayerId);
+                    }
+                }));
+                if (visibleLayers.length === 0) {
+                    visibleLayers.push(-1);
+                }
+            }
+            setting.value[id] = {
+                visible: layer.layer.visible,
+                visibleLayers: visibleLayers
+            };
+        },
+        _handleLayerAdds: function (layerInfos) {
+            layerInfos.forEach(lang.hitch(this, '_setLayerHandle'));
+        },
+        getLayerInfo: function (layerInfos, id) {
+
+            if (!layerInfos || !layerInfos.length || id === -1) {
+                return false;
+            }
+
+            var info = array.filter(layerInfos, function (inf) {
+                return inf.id === id;
+            });
+
+            return info[0];
         }
     });
 });

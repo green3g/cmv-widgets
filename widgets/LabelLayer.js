@@ -33,6 +33,7 @@ define([
         'esriFieldTypeGlobalID'
     ];
 
+    var idCounter = 0;
 
     return declare([_WidgetBase, _Templated], {
         templateString: templateString,
@@ -45,14 +46,59 @@ define([
         // css class to add to menu icon (optional)
         cssClasses: ['fa', 'fa-font'],
 
-        // default layer objects (optional )
+        // selectable layer objects to dislplay in dropdown (optional )
         // example:
         // assets: { // layer id
         //    13: [{  // sublayer id
         //        name: 'Diameter - Material', //displayed to user
         //        value: '{diameter}" {material}' //label string
         //    }]
-        defaultLabels: {},
+        labelSelections: {},
+
+        // automatically created labels
+        // [{
+        //        layer: 'layer_id',
+        //        sublayer: 13, // only for dynamic layers
+        //        visible: true,
+        //        name: 'Diameter - Material', //displayed to user
+        //        expression: '{diameter}" {material}' //label string
+        //        color: '#000',
+        //        fontSize: 8,
+        //        url: 'url to feature layer ' //if we want to create it,
+        //        title: 'layer title',
+        //  }]
+        defaultLabels: [],
+        _setDefaultLabelsAttr: function (labels) {
+            labels.forEach(lang.hitch(this, function (label) {
+                var layer = this.map.getLayer(label.layer);
+
+                // if the layer doesn't exist, create it
+                if (!layer) {
+                    layer = this.createFeatureLayer(label);
+                    this.layerStore.put({
+                        id: layer.id,
+                        name: label.title,
+                        layer: layer
+                    });
+                }
+                var labelLayer;
+                if (this.labelLayers[layer.id]) {
+                    labelLayer = this.labelLayers[layer.id];
+                } else if (layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
+                    labelLayer = this.createLayerFromDynamic(layer, label.sublayer);
+                } else if (layer.declaredClass === 'esri.layers.FeatureLayer') {
+                    labelLayer = layer;
+                } else {
+                    return;
+                }
+                this.setLabel(labelLayer, {
+                    color: label.color || this.color,
+                    size: label.fontSize || this.fontSize,
+                    expression: label.expression
+                });
+                labelLayer.setVisibility(label.visible);
+            }));
+        },
 
         // the default topics
         topics: {
@@ -105,7 +151,13 @@ define([
             }
             var store = this.layerStore;
             layerInfos.forEach(function (l) {
-                if (l.layer.layerInfos) {
+                if (l.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                    store.put({
+                        id: l.layer.id,
+                        name: l.title,
+                        layer: l.layer
+                    });
+                } else if (l.layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
                     l.layer.layerInfos.filter(function (sub) {
                         return sub.subLayerIds === null;
                     }).forEach(function (sub) {
@@ -121,7 +173,7 @@ define([
         },
         activeLayer: {},
         _setActiveLayerAttr: function (l) {
-            if (!l.layer || !l.sublayer) {
+            if (!l.layer) {
                 return;
             }
 
@@ -134,11 +186,11 @@ define([
             this.fieldSelect.set('value', null);
 
             // set default label select
-            this.setDefaultLabels(this.activeLayer);
+            this.setLabelSelections(this.activeLayer);
 
             // get the layer's fields
             var def = request({
-                url: l.layer.url + '/' + l.sublayer,
+                url: l.layer.url + (l.sublayer ? '/' + l.sublayer : ''),
                 content: {
                     'f': 'json'
                 }
@@ -167,7 +219,7 @@ define([
         constructor: function () {
             this.inherited(arguments);
 
-            this.defaultLabelStore = new Memory({
+            this.labelSelectionStore = new Memory({
                 data: []
             });
 
@@ -209,7 +261,7 @@ define([
                 if (!id) {
                     return;
                 }
-                this.labelTextbox.set('value', this.defaultLabelStore.get(id).value);
+                this.labelTextbox.set('value', this.labelSelectionStore.get(id).value);
             })));
 
             //update labels when stuff changes
@@ -224,10 +276,13 @@ define([
 
         },
         showParent: function (event) {
+            var layer = lang.mixin({
+                id: event.layer.id + (event.subLayer ? '_' + event.subLayer.id : '')
+            }, event);
 
             // set dropdown values
-            this.set('activeLayer', this.layerStore.get(event.layer.id + '_' + event.subLayer.id));
-            this.layerSelect.set('value', event.layer.id + '_' + event.subLayer.id);
+            this.set('activeLayer', layer);
+            this.layerSelect.set('value', layer.id);
 
             // toggle parent
             if (this.parentWidget) {
@@ -244,81 +299,97 @@ define([
             if (!layerId) {
                 return;
             }
+
             var layer;
-            if (!this.labelLayers[layerId]) {
-
-                var title = this.activeLayer.layer.layerInfos.filter(lang.hitch(this, function (l) {
-                    return l.id === this.activeLayer.sublayer;
-                }));
-                title = title.length ? title[0].name + ' Labels' : 'Labels';
-
-                var serviceURL = this.activeLayer.layer.url + '/' + this.activeLayer.sublayer;
-                var layerOptions = {
-                    mode: FeatureLayer.MODE_AUTO,
-                    outFields: ['*'],
-                    id: layerId,
-                    visible: true,
-                    title: title,
-                    opacity: 0
-                };
-                layer = new FeatureLayer(serviceURL, layerOptions);
-                this.labelLayers[layerId] = {
-                    layer: layer,
-                    iconNode: this.activeLayer.iconNode
-                };
-                this.map.addLayer(layer);
-
-                // notify layer control and identify
-                // wait for async layer loads
-                layer.on('load', lang.hitch(this, function () {
-                    ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function (t) {
-                        topic.publish(t, [{
-                            type: 'feature',
-                            layer: layer,
-                            title: title
-                        }]);
-                    });
-                }));
+            if (this.labelLayers[layerId]) {
+                layer = this.labelLayers[layerId];
+            } else if (this.activeLayer.layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
+                layer = this.createLayerFromDynamic(this.activeLayer.layer, this.activeLayer.sublayer);
+            } else if (this.activeLayer.layer.declaredClass === 'esri.layers.FeatureLayer') {
+                layer = this.activeLayer.layer;
+            } else {
+                return;
             }
 
-            layer = layer ? layer : this.labelLayers[layerId].layer;
+            var labelInfo = {
+                expression: this.labelTextbox.value,
+                size: this.fontTextbox.value,
+                color: this.colorSelect.value
+            };
 
-            // var renderer = new SimpleRenderer(layer.renderer.getSymbol());
+            this.setLabel(layer, labelInfo);
+            layer.setVisibility(true);
+            this.labelLayers[layerId] = layer;
+        },
+        setLabel: function (layer, labelInfo) {
+
             var label = new LabelClass({
                 labelExpressionInfo: {
-                    value: this.labelTextbox.value
+                    value: labelInfo.expression
                 },
                 useCodedValues: true,
                 labelPlacement: 'above-center'
             });
             var symbol = new TextSymbol();
-            symbol.font.setSize(this.fontTextbox.value + 'pt');
+            symbol.font.setSize(labelInfo.size + 'pt');
             symbol.font.setFamily('Corbel');
-            symbol.setColor(new Color(this.colorSelect.value.toLowerCase()));
+            symbol.setColor(new Color(labelInfo.color.toLowerCase()));
             label.symbol = symbol;
 
-            // layer.setRenderer(renderer);
             layer.setLabelingInfo([label]);
-            layer.setVisibility(true);
-
-            //modify the iconNode to show that a label is enabled on this layer
-            var iconNode = this.labelLayers[layerId].iconNode;
-            if (iconNode) {
-                domClass.add(iconNode, this.cssClasses);
-            }
         },
-        setDefaultLabels: function (layer) {
+        createLayerFromDynamic: function (layer, sublayerId) {
+
+            var serviceURL = layer.url + '/' + sublayerId;
+
+            // generate a unique layer id
+            var layerId = layer.id + '_' + sublayerId;
+
+            // get a nice layer title
+            var layerInfos = layer.layerInfos.filter(lang.hitch(this, function (l) {
+                return l.id === sublayerId;
+            }));
+            var title = layerInfos.length ? layerInfos[0].name + ' Labels' : 'Labels';
+
+            return this.createFeatureLayer({id: layerId, url: serviceURL, title: title});
+        },
+        createFeatureLayer: function (args) {
+            var layerOptions = {
+                mode: FeatureLayer.MODE_ONDEMAND,
+                outFields: ['*'],
+                id: args.id || args.layer || 'labels-' + idCounter ++,
+                visible: true,
+                title: args.title || 'Labels',
+                opacity: 0
+            };
+            var layer = new FeatureLayer(args.url, layerOptions);
+            this.map.addLayer(layer);
+
+            // notify layer control and identify
+            // wait for async layer loads
+            layer.on('load', lang.hitch(this, function () {
+                ['layerControl/addLayerControls', 'identify/addLayerInfos'].forEach(function (t) {
+                    topic.publish(t, [{
+                        type: 'feature',
+                        layer: layer,
+                        title: args.title
+                    }]);
+                });
+            }));
+            return layer;
+        },
+        setLabelSelections: function (layer) {
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
-            if (this.defaultLabels[layerId] && this.defaultLabels[layerId][sublayer] && this.defaultLabels[layerId][sublayer].length) {
-                this.emptyStore(this.defaultLabelStore);
-                this.defaultLabels[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
+            if (this.labelSelections[layerId] && this.labelSelections[layerId][sublayer] && this.labelSelections[layerId][sublayer].length) {
+                this.emptyStore(this.labelSelectionStore);
+                this.labelSelections[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = count++;
-                    this.defaultLabelStore.put(labelObj);
+                    this.labelSelectionStore.put(labelObj);
                 }));
                 this.defaultLabelSelect.set('value', 1);
-                this.labelTextbox.set('value', this.defaultLabelStore.get(1).value);
+                this.labelTextbox.set('value', this.labelSelectionStore.get(1).value);
                 this.addSelectedLabels();
                 this.tabContainer.selectChild(this.labelTab);
             } else {
