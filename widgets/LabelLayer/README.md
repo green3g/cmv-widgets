@@ -7,7 +7,11 @@ modification capabilities planned (currently supports color).
 Useful in either any of the cmv types, and uses `dojo.topic` to open or show itself
 when the topic is published.
 
-![./docs/CAPTURE.png](./docs/CAPTURE.png)
+Configure predefined labels:
+![./docs/label-basic.png](./docs/label-basic.png)
+
+Allow users to build complex labels:
+![./docs/label-advanced.png](./docs/label-advanced.png)
 
 ## CMV config
 
@@ -22,27 +26,43 @@ labelLayer: {
     position: 15,
     path: 'roemhildtg/LabelLayer',
     options: {
+        // required!
         map: true,
-        layerControlLayerInfos: true,
-        defaultLabels: {
-            assets: { // layer id
-                13: [{  // sublayer id
-                    name: 'Diameter - Material', //displayed to user
-                    value: '{diameter}" {material}' //label string
-            }]
-        },
-        
-        // override the default colors
-        colors: [{
-            name: 'Black',
-            id: '#000'
-        }],
-        
-        // set the default color choice using the id
-        color: '#000',
-        
-        //default font size
-        fontSize: 8,
+        layerControlLayerInfos: true
+
+
+        // automatically created labels
+        // [{
+        //        layer: 'layer_id',
+        //        sublayer: 13, // only for dynamic layers
+        //        visible: true,
+        //        name: 'Diameter - Material', //displayed to user
+        //        expression: '{diameter}" {material}' //label string
+        //        color: '#000',
+        //        fontSize: 8,
+        //        url: 'url to feature layer ' //if we want to create it,
+        //        title: 'layer title',
+        //  }]
+        // the available select dropdowns for each layer
+        // labelSelections: {
+        //     assets: { // layer id
+        //         13: [{  // sublayer id
+        //             name: 'Diameter - Material', //displayed to user
+        //             value: '{diameter}" {material}' //label string
+        //     }]
+        // },
+        //
+        // // override the default colors
+        // colors: [{
+        //     name: 'Black',
+        //     id: '#000'
+        // }],
+        //
+        // // set the default color choice using the id
+        // color: '#000',
+        //
+        // //default font size
+        // fontSize: 8,
     }
 },
 ```
@@ -75,9 +95,18 @@ layerControl: {
     open: true,
     position: 0,
     options: {
+
+        // add a menu option to feature layers
+        menu: {
+          feature: [{
+              label: 'Labels',
+              topic: 'showLabelPicker',
+              iconClass: 'fa fa-font fa-fw'
+          }]
+        },
+
+        // add a sublayer menu for dynamic layers
         subLayerMenu: {
-        
-            // this is the magic
             dynamic: [{
                 label: 'Labels',
                 topic: 'showLabelPicker',
