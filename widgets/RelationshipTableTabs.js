@@ -10,7 +10,7 @@ define([
     'dojo/topic',
     './RelationshipTable/RelationshipTable'
 ], function (declare, _WidgetBase, array, lang, ready, registry, _Container, TabContainer, topic, RelationshipTable) {
-    return declare('RelationshipTableTabs', [_WidgetBase, _Container], {
+    return declare([_WidgetBase, _Container], {
         //tab position for the TabContainer
         tabPosition: 'top',
         //optional relationships information
