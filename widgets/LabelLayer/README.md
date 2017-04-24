@@ -32,7 +32,7 @@ labelLayer: {
 
 
         // automatically created labels
-        // [{
+        // defaultLabels: [{
         //        layer: 'layer_id',
         //        sublayer: 13, // only for dynamic layers
         //        visible: true,
