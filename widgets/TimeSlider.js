@@ -5,8 +5,9 @@ define([
     'dojo/_base/array',
     'esri/TimeExtent', 
     'esri/dijit/TimeSlider',
-    'dijit/_Container'
-], function(declare, _WidgetBase, lang, array, TimeExtent, TimeSlider, _Container) {
+    'dijit/_Container',
+    'dojo/on'
+], function(declare, _WidgetBase, lang, array, TimeExtent, TimeSlider, _Container, on) {
 	return declare([_WidgetBase, _Container], {
 		map: null,
 		startTime: new Date('1/1/1921'),
@@ -43,6 +44,14 @@ define([
 			this.inherited(arguments);
 			this.timeSlider.startup();
 			this.setLabels();
+			if (this.getParent) {
+				var parent = this.getParent();
+				if (parent) {
+					this.own(on(parent, 'hide', lang.hitch(this, function () {
+						this.timeSlider.setThumbIndexes([0, this.timeSlider.timeStops.length - 1]);
+					})));
+				}
+			}
 		},
 		setLabels: function() {
 			//add labels for every other time stop
