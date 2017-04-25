@@ -15,6 +15,11 @@ Allow users to build complex labels:
 
 ## CMV config
 
+**Map Options**
+
+This widget requires the map option `showLabels: true` enabled in order for
+labels to show up in your map. 
+
 **Title Pane**
 
 ```javascript
