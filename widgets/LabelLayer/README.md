@@ -18,7 +18,7 @@ Allow users to build complex labels:
 **Map Options**
 
 This widget requires the map option `showLabels: true` enabled in order for
-labels to show up in your map. 
+labels to show up in your map.
 
 **Title Pane**
 
@@ -33,29 +33,44 @@ labelLayer: {
     options: {
         // required!
         map: true,
-        layerControlLayerInfos: true
+        layerControlLayerInfos: true,
 
 
+        // OPTIONAL!!
+        // label layer options to exclude layers and exclude fields
+        // similar to cmv identify config
+        labelInfos: {
+          <layerId>: { // a string like 'assets'
+            exclude: false, // exclude this entire layer
+            <subLayerId>: { // a number representign the map service layer id
+              exclude: false, // set the sublayer to be excluded from the label widget
+              fields: [{
+                alias: 'Field Label',
+                name: 'field_name'
+              }],
+
+              // the available select dropdowns for each layer
+              selections: [{  // sublayer id
+                  name: 'Diameter - Material', //displayed to user
+                  value: '{diameter}" {material}' //label string
+              }]
+            }
+          }
+        },
+        //
         // automatically created labels
-        // defaultLabels: [{
-        //        layer: 'layer_id',
-        //        sublayer: 13, // only for dynamic layers
-        //        visible: true,
-        //        name: 'Diameter - Material', //displayed to user
-        //        expression: '{diameter}" {material}' //label string
-        //        color: '#000',
-        //        fontSize: 8,
-        //        url: 'url to feature layer ' //if we want to create it,
-        //        title: 'layer title',
-        //  }]
-        // the available select dropdowns for each layer
-        // labelSelections: {
-        //     assets: { // layer id
-        //         13: [{  // sublayer id
-        //             name: 'Diameter - Material', //displayed to user
-        //             value: '{diameter}" {material}' //label string
-        //     }]
-        // },
+        defaultLabels: [{
+               layer: 'layer_id',
+               sublayer: 13, // only for dynamic layers
+               visible: true,
+               name: 'Diameter - Material', //displayed to user
+               expression: '{diameter}" {material}' //label string
+               color: '#000',
+               fontSize: 8,
+               url: 'url to feature layer ' //if we want to create it,
+               title: 'layer title',
+         }],
+        //
         //
         // // override the default colors
         // colors: [{
@@ -140,3 +155,42 @@ require(['roemhildtg/LabelLayer'], function(LabelLayer){
   }, 'domNode');
 });
 ```
+
+## Changelog
+
+#### 4/27/2017:
+
+**Change Notes:**
+
+ * Added the ability to exclude layers by id and sublayer id
+ * Added the ability to exclude fields from a layer by overriding the field config
+ * Fixed an issue with the creation of default label layers
+ * Added a loading icon when fields are being retrieved from the server
+
+ **New Config API:**
+ Changes to the config were made to simplify excluding layers and fields. As a
+ result, existing configs will have to be migrated.
+
+  * `labelInfos` is the new primary config property. This is similar to the cmv identify config. Each label infos consts of a nested object
+  * `labelSelections` has been changed to a property on the `labelInfos` called `selections`
+  * Note: `defaultLabels` has not changed its position in the config
+
+  Old Config:
+  ```javascript
+  labelSelections: [{
+    name: 'My label name',
+    value: '{label_field} - {other_field}'
+  }]
+  ```
+
+  New Config:
+  ```javascript
+  layerId: {
+    0: {
+      selections: [{
+        name: 'My label name',
+        value: '{label_field} - {other_field}'
+      }]
+    }
+  }
+  ```
