@@ -15,13 +15,14 @@ sort: [{ attribute: 'name', descending: false}]
     <br />
 
 
-    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:70%;">
+    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:82%;">
         <div data-dojo-type="dijit/layout/ContentPane" title="Labels" data-dojo-attach-point="tabBasic">
 
-            <label for="fieldSelect">${i18n.defaultLabelSelect.label}:
+            <div data-dojo-attach-point="defaultLabelWrapper">
+                <label for="fieldSelect">${i18n.defaultLabelSelect.label}:
         </label>
-            <br />
-            <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+                <br />
+                <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
 store:this.labelSelectionStore,
 searchAttr:'name',
 fetchProperties: {
@@ -30,17 +31,9 @@ sort: [{ attribute: 'name', descending: false}]
 " data-dojo-attach-point="defaultLabelSelect" name="layer" />
 
 
-        </div>
-
-
-
-
-
-
-        <div data-dojo-type="dijit/layout/ContentPane" title="Advanced" data-dojo-attach-point="tabAdvanced">
-
-
-
+                <br />
+                <br />
+            </div>
             <label for="fieldSelect">${i18n.fieldSelect.label}:
                 <span data-dojo-attach-point="fieldSpinner" class="dijitHidden"><i class="fa fa-spinner fa-spin"></i></span>
                       </label>
@@ -57,9 +50,8 @@ sort: [{ attribute: 'name', descending: false}]
 
             <br />
 
-            <span name="toggleAppend" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="appendCheckbox" data-dojo-props="checked:false">
-                        </span>
-            <label for="toggleAppend">Add to existing label</label>
+            <input name="appendCheckbox" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="appendCheckbox" data-dojo-props="checked:false" />
+            <label for="appendCheckbox">${i18n.appendCheckbox.label}</label>
 
             <br />
             <br />
@@ -68,18 +60,26 @@ sort: [{ attribute: 'name', descending: false}]
             <label for="labelTextbox">Label String:</label>
             <input type="text" name="labelTextbox" value="" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="labelTextbox" data-dojo-props="trim:true, propercase:true" />
 
-            <hr />
+        </div>
 
-            <label for="fieldSelect">${i18n.colorSelect.label}:
-                  </label>
-            <br />
+
+
+
+
+
+        <div data-dojo-type="dijit/layout/ContentPane" title="Advanced" data-dojo-attach-point="tabAdvanced">
+
+
+
+            <label for="colorSelect">${i18n.colorSelect.label}:
+                            </label>
             <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
     store:this.colorStore,
     searchAttr:'name',
     fetchProperties: {
       sort: [{ attribute: 'name', descending: false}]
     }
-    " data-dojo-attach-point="colorSelect" name="layer" />
+    " data-dojo-attach-point="colorSelect" name="colorSelect" />
 
             <br />
 

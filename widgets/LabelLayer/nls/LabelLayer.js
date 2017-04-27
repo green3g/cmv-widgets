@@ -1,10 +1,13 @@
 define({
     root: {
+        appendCheckbox: {
+            label: 'Add to existing label'
+        },
         layerSelect: {
             label: 'Choose a layer'
         },
         fieldSelect: {
-            label: 'Add/Change label field'
+            label: 'Other Labels'
         },
         colorSelect: {
             label: 'Label color'

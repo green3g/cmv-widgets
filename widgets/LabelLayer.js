@@ -437,9 +437,11 @@ define([
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
-            if (this.labelInfos[layerId] &&
-              this.labelInfos[layerId][sublayer] &&
-              this.labelInfos[layerId][sublayer].selections) {
+            var hasSelections = this.labelInfos[layerId] &&
+                this.labelInfos[layerId][sublayer] &&
+                this.labelInfos[layerId][sublayer].selections;
+            this.tabContainer.selectChild(this.tabBasic);
+            if (hasSelections) {
                 this.emptyStore(this.labelSelectionStore);
                 this.labelInfos[layerId][sublayer].selections.forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = count++;
@@ -448,9 +450,9 @@ define([
                 this.defaultLabelSelect.set('value', 1);
                 this.labelTextbox.set('value', this.labelSelectionStore.get(1).value);
                 this.addSelectedLabels();
-                this.tabContainer.selectChild(this.tabBasic);
+                domClass.remove(this.defaultLabelWrapper, 'dijitHidden');
             } else {
-                this.tabContainer.selectChild(this.tabAdvanced);
+                domClass.add(this.defaultLabelWrapper, 'dijitHidden');
             }
         },
         /**
