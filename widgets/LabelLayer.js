@@ -200,7 +200,7 @@ define([
         },
         activeLayer: {},
         _setActiveLayerAttr: function (l) {
-            if (!l.layer) {
+            if (!l || !l.layer) {
                 return;
             }
 
