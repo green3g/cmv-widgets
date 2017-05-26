@@ -30,6 +30,7 @@ define([
         'esriFieldTypeGeometry',
         'esriFieldTypeRaster',
         'esriFieldTypeGUID',
+        'esriFieldTypeOID',
         'esriFieldTypeGlobalID'
     ];
 
@@ -43,17 +44,25 @@ define([
         // the map object
         map: null,
 
-        // css class to add to menu icon (optional)
-        cssClasses: ['fa', 'fa-font'],
-
-        // selectable layer objects to dislplay in dropdown (optional )
-        // example:
-        // assets: { // layer id
-        //    13: [{  // sublayer id
+        // label layer options to exclude layers and exclude fields
+        // similar to cmv identify config
+        // {
+        //  <layerId>: { // a string like 'assets'
+        //    exclude: false, // exclude this entire layer
+        //    <subLayerId>: { // a number representign the map service layer id
+        //      exclude: false, // set the entire layer to be excluded from the label widget
+        //      fields: [{
+        //        alias: 'Field Label',
+        //        name: 'field_name'
+        //      }],
+        //      selections: [{  // sublayer id
         //        name: 'Diameter - Material', //displayed to user
         //        value: '{diameter}" {material}' //label string
         //    }]
-        labelSelections: {},
+        //    }
+        //  }
+        // }
+        labelInfos: {},
 
         // automatically created labels
         // [{
@@ -97,6 +106,7 @@ define([
                     expression: label.expression
                 });
                 labelLayer.setVisibility(label.visible);
+                this.labelLayers[labelLayer.id] = labelLayer;
             }));
         },
 
@@ -150,7 +160,14 @@ define([
                 return;
             }
             var store = this.layerStore;
-            layerInfos.forEach(function (l) {
+            layerInfos.forEach(lang.hitch(this, function (l) {
+
+                // check for exclusions of entire layer id
+                if (this.labelInfos.hasOwnProperty(l.layer.id) &&
+                    this.labelInfos[l.layer.id].exclude) {
+                    return;
+                }
+
                 if (l.layer.declaredClass === 'esri.layers.FeatureLayer') {
                     store.put({
                         id: l.layer.id,
@@ -158,9 +175,19 @@ define([
                         layer: l.layer
                     });
                 } else if (l.layer.declaredClass === 'esri.layers.ArcGISDynamicMapServiceLayer') {
-                    l.layer.layerInfos.filter(function (sub) {
+
+                    l.layer.layerInfos.filter(lang.hitch(this, function (sub) {
+
+                        // check for sublayer exclude
+                        if (this.labelInfos.hasOwnProperty(l.layer.id) &&
+                            this.labelInfos[l.layer.id].hasOwnProperty(sub.id) &&
+                            this.labelInfos[l.layer.id][sub.id].exclude) {
+                            return false;
+                        }
+
+                        // filter out group layers
                         return sub.subLayerIds === null;
-                    }).forEach(function (sub) {
+                    })).forEach(function (sub) {
                         store.put({
                             id: l.layer.id + '_' + sub.id,
                             name: sub.name,
@@ -169,11 +196,11 @@ define([
                         });
                     });
                 }
-            });
+            }));
         },
         activeLayer: {},
         _setActiveLayerAttr: function (l) {
-            if (!l.layer) {
+            if (!l || !l.layer) {
                 return;
             }
 
@@ -183,37 +210,67 @@ define([
             this.activeLayer = l;
 
             //reset the current field
+            this.emptyStore(this.fieldStore);
             this.fieldSelect.set('value', null);
 
             // set default label select
             this.setLabelSelections(this.activeLayer);
 
-            // get the layer's fields
-            var def = request({
-                url: l.layer.url + (l.sublayer ? '/' + l.sublayer : ''),
-                content: {
-                    'f': 'json'
-                }
-            });
-            def.then(lang.hitch(this, function (layerProps) {
-                //update the field store
-                var store = this.fieldStore;
-                this.emptyStore(store);
 
-                if (!layerProps.fields) {
-                    return;
-                }
+            var fields;
+            // if fields are provided use those
+            if (this.labelInfos.hasOwnProperty(l.layer.id) &&
+                this.labelInfos[l.layer.id].hasOwnProperty(l.sublayer) &&
+                this.labelInfos[l.layer.id][l.sublayer].fields) {
+                fields = this.labelInfos[l.layer.id][l.sublayer].fields;
+                this._setFields(fields);
+            } else {
 
-                //exclude fields
-                layerProps.fields.filter(function (f) {
-                    return EXCLUDE_TYPES.indexOf(f.type) === -1;
-                }).forEach(function (f) {
-                    store.put({
-                        id: f.name,
-                        name: f.alias
+                // display a spinner
+                this.set('fieldsLoading', true);
+
+                // get the layer's fields
+                var def = request({
+                    url: l.layer.url + (l.sublayer ? '/' + l.sublayer : ''),
+                    content: {
+                        'f': 'json'
+                    }
+                });
+                def.then(lang.hitch(this, function (layerProps) {
+
+                    if (!layerProps.fields) {
+                        return;
+                    }
+
+                    // otherwise use the rest service results
+                    // exclude esri object id types
+                    fields = layerProps.fields.filter(function (f) {
+                        return EXCLUDE_TYPES.indexOf(f.type) === -1;
                     });
+                    this._setFields(fields);
+                    this.set('fieldsLoading', false);
+
+                }));
+            }
+        },
+        _setFields: function (fields) {
+
+            fields.forEach(lang.hitch(this, function (f) {
+                this.fieldStore.put({
+                    id: f.name,
+                    name: f.alias
                 });
             }));
+        },
+        /**
+         * Display a field loading spinner
+         * set using `this.set('fieldsLoading', true)`
+         * @type {Boolean} fieldsLoading
+         */
+        fieldsLoading: false,
+        _setFieldsLoadingAttr: function (loading) {
+            this.fieldsLoading = loading;
+            domClass[loading ? 'remove' : 'add'](this.fieldSpinner, 'dijitHidden');
         },
         labelLayers: {},
         constructor: function () {
@@ -272,8 +329,6 @@ define([
                 })));
 
             }));
-
-
         },
         showParent: function (event) {
             var layer = lang.mixin({
@@ -281,7 +336,7 @@ define([
             }, event);
 
             // set dropdown values
-            this.set('activeLayer', layer);
+            this.set('activeLayer', this.layerStore.get(layer.id));
             this.layerSelect.set('value', layer.id);
 
             // toggle parent
@@ -357,7 +412,7 @@ define([
             var layerOptions = {
                 mode: FeatureLayer.MODE_ONDEMAND,
                 outFields: ['*'],
-                id: args.id || args.layer || 'labels-' + idCounter ++,
+                id: args.id || args.layer || 'labels-' + idCounter++,
                 visible: true,
                 title: args.title || 'Labels',
                 opacity: 0
@@ -382,18 +437,22 @@ define([
             var layerId = layer.layer.id,
                 sublayer = layer.sublayer,
                 count = 1;
-            if (this.labelSelections[layerId] && this.labelSelections[layerId][sublayer] && this.labelSelections[layerId][sublayer].length) {
+            var hasSelections = this.labelInfos[layerId] &&
+                this.labelInfos[layerId][sublayer] &&
+                this.labelInfos[layerId][sublayer].selections;
+            this.tabContainer.selectChild(this.tabBasic);
+            if (hasSelections) {
                 this.emptyStore(this.labelSelectionStore);
-                this.labelSelections[layerId][sublayer].forEach(lang.hitch(this, function (labelObj) {
+                this.labelInfos[layerId][sublayer].selections.forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = count++;
                     this.labelSelectionStore.put(labelObj);
                 }));
                 this.defaultLabelSelect.set('value', 1);
                 this.labelTextbox.set('value', this.labelSelectionStore.get(1).value);
                 this.addSelectedLabels();
-                this.tabContainer.selectChild(this.labelTab);
+                domClass.remove(this.defaultLabelWrapper, 'dijitHidden');
             } else {
-                this.tabContainer.selectChild(this.advancedTab);
+                domClass.add(this.defaultLabelWrapper, 'dijitHidden');
             }
         },
         /**

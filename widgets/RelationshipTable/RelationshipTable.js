@@ -8,10 +8,9 @@ define([
     'dgrid/OnDemandGrid',
     'dgrid/extensions/ColumnHider',
     'dgrid/extensions/DijitRegistry',
-    'dojo/topic',
-    'dojo/Deferred'
-], function (declare, _WidgetBase, array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic, Deferred) {
-    return declare('RelationshipTable', [_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
+    'dojo/topic'
+], function (declare, _WidgetBase, array, lang, request, Memory, OnDemandGrid, ColumnHider, DijitRegistry, topic) {
+    return declare([_WidgetBase, OnDemandGrid, ColumnHider, DijitRegistry], {
         //object id field for the feature layer (use field alias)
         objectIdField: null,
         //field value mappings of attributes from the feature layer to query related records from

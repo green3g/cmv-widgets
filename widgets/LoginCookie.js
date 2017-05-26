@@ -6,7 +6,7 @@ define(['dojo/_base/declare',
     'esri/IdentityManager'
 ], function (declare, window, lang, cookie, esriId) {
     var global = window.global;
-    return declare('cmv.LoginCookie', [], {
+    return declare(null, {
         /**
          * the local storage or cookie key name
          * @type {String}
@@ -16,7 +16,7 @@ define(['dojo/_base/declare',
          * initializes the event listener to store credentials and
          * loads existing credentials into the identity manager
          */
-        constructor: function (params, domNode) {
+        constructor: function (params) {
             this.inherited(arguments);
             lang.mixin(this, params);
 
@@ -30,6 +30,7 @@ define(['dojo/_base/declare',
          * Store the credentials in local storage for next time
          */
         storeCredentials: function () {
+          
             // make sure there are some credentials to persist
             if (esriId.credentials.length === 0) {
                 return;
@@ -73,12 +74,13 @@ define(['dojo/_base/declare',
                 try {
                     idObject = JSON.parse(idJson);
                     esriId.initialize(idObject);
+                    // console.log('creds loaded from local storage', idObject);
                 } catch (e) {
                     //TODO: growl
                     // console.log(e);
                 }
             } else {
-                // console.log("didn't find anything to load :(");
+                // console.log('didn\'t find anything to load :(');
             }
         },
         /**

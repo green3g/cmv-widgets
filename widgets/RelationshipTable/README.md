@@ -137,6 +137,8 @@ Key                    | Type       | Default                                   
 
 Related Records comes with a simple content formatter for cmv. Add the required file to your `identify.js` and use it to include relationship queries in your popup.
 
+The factory is a function where you pass an array of objects. Each object needs the properties defined in the constructor options above.
+
 ```javascript
 define([
   'roemhildtg/RelationshipTable/identify/factory'
@@ -160,7 +162,8 @@ identifies: {
                     label: 'Category',
                     field: 'Category'
                 }]
-        }])
+        }// , { ... more relationships } if your dynamic layer has more relationships, you can add more than one
+        ])
     }
   }
 }
