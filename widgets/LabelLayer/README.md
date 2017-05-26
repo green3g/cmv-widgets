@@ -1,17 +1,19 @@
 # Label Layer Widget
 
-Create and modify client side label layers using existing dynamic map layers. Features
+Create and modify client side label layers using existing dynamic and feature map layers. Features
 automatic indexing of all dynamic map layers in `layerInfos` and minor font
 modification capabilities planned (currently supports color).
 
 Useful in either any of the cmv types, and uses `dojo.topic` to open or show itself
 when the topic is published.
 
+In addition, supports automatically added labels.
+
 Configure predefined labels:
-![./docs/label-basic.png](./docs/label-basic.png)
+![./docs/label-basic.png](./docs/basic.png)
 
 Allow users to build complex labels:
-![./docs/label-advanced.png](./docs/label-advanced.png)
+![./docs/label-advanced.png](./docs/advanced.png)
 
 ## CMV config
 
