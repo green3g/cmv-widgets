@@ -10,9 +10,11 @@ when the topic is published.
 In addition, supports automatically added labels.
 
 Configure predefined labels:
+
 ![./docs/label-basic.png](./docs/basic.png)
 
 Allow users to build complex labels:
+
 ![./docs/label-advanced.png](./docs/advanced.png)
 
 ## CMV config
