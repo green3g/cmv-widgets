@@ -34,6 +34,10 @@ define([
         'esriFieldTypeGlobalID'
     ];
 
+    var EXCLUDE_NAMES = [
+        'Enabled'
+    ];
+
     var idCounter = 0;
 
     return declare([_WidgetBase, _Templated], {
@@ -209,10 +213,6 @@ define([
             }
             this.activeLayer = l;
 
-            //reset the current field
-            this.emptyStore(this.fieldStore);
-            this.fieldSelect.set('value', null);
-
             // set default label select
             this.setLabelSelections(this.activeLayer);
 
@@ -245,7 +245,8 @@ define([
                     // otherwise use the rest service results
                     // exclude esri object id types
                     fields = layerProps.fields.filter(function (f) {
-                        return EXCLUDE_TYPES.indexOf(f.type) === -1;
+                        return EXCLUDE_TYPES.indexOf(f.type) === -1 &&
+                            EXCLUDE_NAMES.indexOf(f.name) === -1;
                     });
                     this._setFields(fields);
                     this.set('fieldsLoading', false);
@@ -253,12 +254,36 @@ define([
                 }));
             }
         },
+        setLabelSelections: function (layer) {
+            var layerId = layer.layer.id,
+                sublayer = layer.sublayer,
+                count = 1;
+            var hasSelections = this.labelInfos[layerId] &&
+                this.labelInfos[layerId][sublayer] &&
+                this.labelInfos[layerId][sublayer].selections;
+            this.tabContainer.selectChild(this.tabBasic);
+            if (hasSelections) {
+                this.emptyStore(this.labelSelectionStore);
+                this.labelInfos[layerId][sublayer].selections.forEach(lang.hitch(this, function (labelObj) {
+                    labelObj.id = '_' + count++;
+                    labelObj.label = labelObj.name;
+                    this.labelSelectionStore.put(labelObj);
+                }));
+                this.labelSelect.set('value', '_' + 1);
+                this.labelTextbox.set('value', this.labelSelectionStore.get('_' + 1).value);
+                this.addSelectedLabels();
+                domClass.remove(this.defaultLabelWrapper, 'dijitHidden');
+            } else {
+                domClass.add(this.defaultLabelWrapper, 'dijitHidden');
+            }
+        },
         _setFields: function (fields) {
 
             fields.forEach(lang.hitch(this, function (f) {
-                this.fieldStore.put({
+                this.labelSelectionStore.put({
                     id: f.name,
-                    name: f.alias
+                    name: f.alias || f.name,
+                    value: '{' + f.name + '}'
                 });
             }));
         },
@@ -277,10 +302,6 @@ define([
             this.inherited(arguments);
 
             this.labelSelectionStore = new Memory({
-                data: []
-            });
-
-            this.fieldStore = new Memory({
                 data: []
             });
 
@@ -309,16 +330,15 @@ define([
 
             this.colorSelect.set('value', this.color);
 
-            this.own(this.fieldSelect.on('change', lang.hitch(this, function (id) {
-                var str = ' {' + id + '}';
-                this.labelTextbox.set('value', this.appendCheckbox.checked ? this.labelTextbox.value + str : str);
-            })));
-
-            this.own(this.defaultLabelSelect.on('change', lang.hitch(this, function (id) {
+            this.own(this.labelSelect.on('change', lang.hitch(this, function (id) {
                 if (!id) {
                     return;
                 }
-                this.labelTextbox.set('value', this.labelSelectionStore.get(id).value);
+                var newLabel = this.labelSelectionStore.get(id).value;
+                if (this.appendCheckbox.checked) {
+                    newLabel = this.labelTextbox.value + ' ' + newLabel;
+                }
+                this.labelTextbox.set('value', newLabel);
             })));
 
             //update labels when stuff changes
@@ -345,7 +365,7 @@ define([
                     this.parentWidget.toggle();
                 } else if (this.parentWidget.show) {
                     this.parentWidget.show();
-                    this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 211px; top: 190px; z-index: 950;');
+                    this.parentWidget.set('style', 'position: absolute; opacity: 1; left: 350px; top: 190px; z-index: 950;');
                 }
             }
         },
@@ -432,28 +452,6 @@ define([
                 });
             }));
             return layer;
-        },
-        setLabelSelections: function (layer) {
-            var layerId = layer.layer.id,
-                sublayer = layer.sublayer,
-                count = 1;
-            var hasSelections = this.labelInfos[layerId] &&
-                this.labelInfos[layerId][sublayer] &&
-                this.labelInfos[layerId][sublayer].selections;
-            this.tabContainer.selectChild(this.tabBasic);
-            if (hasSelections) {
-                this.emptyStore(this.labelSelectionStore);
-                this.labelInfos[layerId][sublayer].selections.forEach(lang.hitch(this, function (labelObj) {
-                    labelObj.id = count++;
-                    this.labelSelectionStore.put(labelObj);
-                }));
-                this.defaultLabelSelect.set('value', 1);
-                this.labelTextbox.set('value', this.labelSelectionStore.get(1).value);
-                this.addSelectedLabels();
-                domClass.remove(this.defaultLabelWrapper, 'dijitHidden');
-            } else {
-                domClass.add(this.defaultLabelWrapper, 'dijitHidden');
-            }
         },
         /**
          * empties a store

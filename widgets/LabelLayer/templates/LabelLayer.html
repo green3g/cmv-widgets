@@ -14,66 +14,48 @@ sort: [{ attribute: 'name', descending: false}]
     <br />
     <br />
 
+  <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:82%;">
+    <div data-dojo-type="dijit/layout/ContentPane" title="Labels" data-dojo-attach-point="tabBasic">
 
-    <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:82%;">
-        <div data-dojo-type="dijit/layout/ContentPane" title="Labels" data-dojo-attach-point="tabBasic">
-
-            <div data-dojo-attach-point="defaultLabelWrapper">
-                <label for="fieldSelect">${i18n.defaultLabelSelect.label}:
+      <div data-dojo-attach-point="defaultLabelWrapper">
+        <label for="fieldSelect">${i18n.labelSelect.label}:
+<span data-dojo-attach-point="fieldSpinner" class="dijitHidden"><i class="fa fa-spinner fa-spin"></i></span>
         </label>
-                <br />
-                <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+        <br />
+        <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
 store:this.labelSelectionStore,
 searchAttr:'name',
 fetchProperties: {
-sort: [{ attribute: 'name', descending: false}]
+sort: [{ attribute: 'id', descending: false}]
 }
-" data-dojo-attach-point="defaultLabelSelect" name="layer" />
+" data-dojo-attach-point="labelSelect" name="layer" />
+
+        <br />
+        <input name="appendCheckbox" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="appendCheckbox" data-dojo-props="checked:false" />
+        <label for="appendCheckbox">${i18n.appendCheckbox.label}</label>
+
+        <br />
+        <br />
+      </div>
 
 
-                <br />
-                <br />
-            </div>
-            <label for="fieldSelect">${i18n.fieldSelect.label}:
-                <span data-dojo-attach-point="fieldSpinner" class="dijitHidden"><i class="fa fa-spinner fa-spin"></i></span>
-                      </label>
-            <br />
-            <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
-                store:this.fieldStore,
-                searchAttr:'name',
-                fetchProperties: {
-                  sort: [{ attribute: 'name', descending: false}]
-                },
-                required: false
-                " data-dojo-attach-point="fieldSelect" name="layer" />
+      <label for="labelTextbox">Label String:</label>
+      <input type="text" name="labelTextbox" value="" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="labelTextbox" data-dojo-props="trim:true, propercase:true" />
 
-
-            <br />
-
-            <input name="appendCheckbox" checked data-dojo-type="dijit/form/CheckBox" data-dojo-attach-point="appendCheckbox" data-dojo-props="checked:false" />
-            <label for="appendCheckbox">${i18n.appendCheckbox.label}</label>
-
-            <br />
-            <br />
-
-
-            <label for="labelTextbox">Label String:</label>
-            <input type="text" name="labelTextbox" value="" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="labelTextbox" data-dojo-props="trim:true, propercase:true" />
-
-        </div>
+    </div>
 
 
 
 
 
 
-        <div data-dojo-type="dijit/layout/ContentPane" title="Advanced" data-dojo-attach-point="tabAdvanced">
+    <div data-dojo-type="dijit/layout/ContentPane" title="Advanced" data-dojo-attach-point="tabAdvanced">
 
 
 
-            <label for="colorSelect">${i18n.colorSelect.label}:
+      <label for="colorSelect">${i18n.colorSelect.label}:
                             </label>
-            <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
+      <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="
     store:this.colorStore,
     searchAttr:'name',
     fetchProperties: {
@@ -81,14 +63,14 @@ sort: [{ attribute: 'name', descending: false}]
     }
     " data-dojo-attach-point="colorSelect" name="colorSelect" />
 
-            <br />
+      <br />
 
 
-            <label for="fontTextbox">${i18n.fontSize.label}:</label>
-            <input name="fontTextbox" type="number" value="${fontSize}" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="fontTextbox" required="true" />
+      <label for="fontTextbox">${i18n.fontSize.label}:</label>
+      <input name="fontTextbox" type="number" value="${fontSize}" data-dojo-type="dijit/form/TextBox" data-dojo-attach-point="fontTextbox" required="true" />
 
 
 
-        </div>
     </div>
+  </div>
 </div>
