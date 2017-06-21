@@ -17,9 +17,9 @@ sort: [{ attribute: 'name', descending: false}]
   <div data-dojo-type="dijit/layout/TabContainer" data-dojo-attach-point="tabContainer" style="height:82%;">
     <div data-dojo-type="dijit/layout/ContentPane" title="Labels" data-dojo-attach-point="tabBasic">
 
+      <span data-dojo-attach-point="fieldSpinner" class="dijitHidden"><i class="fa fa-spinner fa-spin"></i> Loading fields...</span>
       <div data-dojo-attach-point="defaultLabelWrapper">
         <label for="fieldSelect">${i18n.labelSelect.label}:
-<span data-dojo-attach-point="fieldSpinner" class="dijitHidden"><i class="fa fa-spinner fa-spin"></i></span>
         </label>
         <br />
         <input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="

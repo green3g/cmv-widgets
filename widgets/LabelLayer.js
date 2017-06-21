@@ -263,6 +263,7 @@ define([
                 this.labelInfos[layerId][sublayer].selections;
             this.tabContainer.selectChild(this.tabBasic);
             if (hasSelections) {
+                this.set('hasLabels', true);
                 this.emptyStore(this.labelSelectionStore);
                 this.labelInfos[layerId][sublayer].selections.forEach(lang.hitch(this, function (labelObj) {
                     labelObj.id = '_' + count++;
@@ -272,12 +273,15 @@ define([
                 this.labelSelect.set('value', '_' + 1);
                 this.labelTextbox.set('value', this.labelSelectionStore.get('_' + 1).value);
                 this.addSelectedLabels();
-                domClass.remove(this.defaultLabelWrapper, 'dijitHidden');
             } else {
-                domClass.add(this.defaultLabelWrapper, 'dijitHidden');
+                this.set('hasLabels', false);
             }
         },
         _setFields: function (fields) {
+            if (!fields.length) {
+                return;
+            }
+            this.set('hasLabels', true);
 
             fields.forEach(lang.hitch(this, function (f) {
                 this.labelSelectionStore.put({
@@ -286,6 +290,10 @@ define([
                     value: '{' + f.name + '}'
                 });
             }));
+        },
+        hasLabels: false,
+        _setHasLabelsAttr: function (labels) {
+            domClass[labels ? 'remove' : 'add'](this.fieldSpinner, 'dijitHidden');
         },
         /**
          * Display a field loading spinner
