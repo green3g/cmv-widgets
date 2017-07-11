@@ -13,7 +13,7 @@ define([
     esriConfig.defaults.io.proxyUrl = baseURL + 'DotNet/proxy.ashx';
     esriConfig.defaults.io.alwaysUseProxy = false;
     // url to your geometry server.
-    esriConfig.defaults.geometryService = new GeometryService('http://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
+    esriConfig.defaults.geometryService = new GeometryService('https://tasks.arcgisonline.com/ArcGIS/rest/services/Geometry/GeometryServer');
     // esriConfig.defaults.io.corsEnabledServers.push('sampleserver3.arcgisonline.com');
 
     //image parameters for dynamic services, set to png32 for higher quality exports.
@@ -63,7 +63,7 @@ define([
         // 3 'mode' options: MODE_SNAPSHOT = 0, MODE_ONDEMAND = 1, MODE_SELECTION = 2
         operationalLayers: [{
             type: 'feature',
-            url: 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/1',
+            url: 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/1',
             title: 'Well fields',
             options: {
                 id: 'wellFields',
@@ -83,7 +83,7 @@ define([
             }
         }, {
             type: 'feature',
-            url: 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/0',
+            url: 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/0',
             title: 'Petrolium',
             options: {
                 id: 'Petrolium',
@@ -93,7 +93,7 @@ define([
             }
         }, {
             type: 'dynamic',
-            url: 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSWells/MapServer',
+            url: 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSWells/MapServer',
             title: 'Time Enabled Kansas Wells',
             options: {
                 id: 'timeKansas',
@@ -111,7 +111,7 @@ define([
             }
         }, {
             type: 'dynamic',
-            url: 'http://sampleserver6.arcgisonline.com/arcgis/rest/services/DamageAssessment/MapServer',
+            url: 'https://sampleserver6.arcgisonline.com/arcgis/rest/services/DamageAssessment/MapServer',
             title: 'Damage Assessment',
             options: {
                 id: 'DamageAssessment',

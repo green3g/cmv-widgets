@@ -32,7 +32,7 @@ define([
           //it returns a function
                     content: factory([{
                         objectIdField: 'OBJECTID',
-                        url: 'http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/1',
+                        url: 'https://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Petroleum/KSPetro/MapServer/1',
                         relationshipId: 1,
                         columns: [{
                             field: 'FIELD_KID',
