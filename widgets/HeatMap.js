@@ -33,12 +33,13 @@ define([
             topic.subscribe(this.topic, lang.hitch(this, 'initHeatMap'));
         },
         initHeatMap: function (r) {
-            var layerId = r.layer.id + r.subLayer.id;
-            if (!this._heatMapLayers[r.layer.id]) {
-                this._heatMapLayers[r.layer.id] = {};
-            }
+            var layerId = [
+                r.layer.id, 
+                (r.subLayer ? r.subLayer.id : 'feature'),
+                 'heatmap'
+            ].join('-');
             if (!this._heatMapLayers[layerId]) {
-                var serviceURL = r.layer.url + '/' + r.subLayer.id;
+                var serviceURL = r.layer.url + (r.subLayer ? '/' + r.subLayer.id : '');
                 var heatmapFeatureLayerOptions = {
                     mode: FeatureLayer.MODE_SNAPSHOT,
                     outFields: ['*'],
