@@ -224,6 +224,7 @@ define([
                 this.labelInfos[l.layer.id][l.sublayer].fields) {
                 fields = this.labelInfos[l.layer.id][l.sublayer].fields;
                 this._setFields(fields);
+                this.set('fieldsLoading', false);
             } else {
 
                 // display a spinner
@@ -251,6 +252,8 @@ define([
                     this._setFields(fields);
                     this.set('fieldsLoading', false);
 
+                })).otherwise(lang.hitch(this, function(){
+                    this.set('fieldsLoading', false);
                 }));
             }
         },
