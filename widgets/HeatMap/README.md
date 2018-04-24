@@ -3,12 +3,12 @@ HeatMap
 
 Dynamically renders heatmaps on point layers. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/). Credit to [@ERS-Long](https://github.com/ERS-Long/HeatMap)
 
-##Requirements:
+## Requirements:
 
 * Layer must be type point
 * Layer must have a field of type `esriFieldTypeGeometry`
 
-##Configuration:
+## Configuration:
 
 ```JavaScript
 //layerControl widget options:
@@ -34,7 +34,7 @@ heatmap: {
 }
 ```
 
-##Alternative configuration:
+## Alternative configuration:
 
 Widget developers can use this widget by publishing the following topic: `LayerControl/heatMap` and passing the correct parameters.
 
