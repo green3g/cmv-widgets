@@ -3,7 +3,7 @@ MetadataDialog
 
 Queries the rest endpoint of a sublayer and displays its service description. In some cases, public access to the rest endpoint of the server is not accessible to read the metadata, so this widget works around that issue. For usage in CMV (v1.3.4) with [sublayer menu option on the LayerControl](http://docs.cmv.io/en/latest/widgets/LayerControl/).
 
-##Configuration:
+## Configuration:
 
 ```JavaScript
 //layerControl widget options:
@@ -27,7 +27,7 @@ metadata: {
 }
 ```
 
-##Alternative configuration:
+## Alternative configuration:
 
 Widget developers can use this widget by publishing the following topic: `LayerControl/heatMap` and passing the correct parameters.
 
