@@ -39,7 +39,7 @@ define([
                  'heatmap'
             ].join('-');
             if (!this._heatMapLayers[layerId]) {
-                var serviceURL = r.layer.url + (r.subLayer ? '/' + r.subLayer.id : '');
+                var serviceURL = r.layer.url + (r.subLayer ? '/' + r.subLayer.id : ((r.layer.layerInfos.length === 1) ? '/0' : ''));
                 var heatmapFeatureLayerOptions = {
                     mode: FeatureLayer.MODE_SNAPSHOT,
                     outFields: ['*'],
