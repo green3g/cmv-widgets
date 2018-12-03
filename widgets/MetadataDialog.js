@@ -72,7 +72,7 @@ define([
          * @return {[type]}       [description]
          */
         _fetchMetadata: function(event) {
-          var url  = event.layer.url + '/' + event.subLayer.id;
+          var url  = event.layer.url + (event.subLayer ? '/' + event.subLayer.id : ((event.layer.layerInfos.length === 1) ? '/0' : ''));
             new request({
                     url: url,
                     content: {
